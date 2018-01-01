@@ -1,0 +1,9 @@
+{
+	"warn_unknown_command": { "other": "Outdated command" },
+	"back_btn": { "other": "Back" },
+	"fwd_btn": { "other": "Forward" },
+	"add_list_btn": { "other": "Create new.." },
+	"choose_wallet": { "other": "Chose a wallet" },
+	"disclaimer_message" : { "other": "Бот используется только для ТЕСТИРОВАНИЯ. Данные могут быть неточными, а некоторые функции могут быть недоступны." },
+	"select_language" : { "other": "Выберите язык"}
+}
