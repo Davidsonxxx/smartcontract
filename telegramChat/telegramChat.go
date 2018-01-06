@@ -40,12 +40,16 @@ func makeMessage(chatId int64, message string, messageToReplace int64, markup *t
 	if messageToReplace == 0 {
 		msg := tgbotapi.NewMessage(chatId, message)
 		msg.ParseMode = "HTML"
-		msg.ReplyMarkup = markup
+		if markup != nil {
+			msg.ReplyMarkup = markup
+		}
 		return msg
 	} else {
 		msg := tgbotapi.NewEditMessageText(chatId, int(messageToReplace), message)
 		msg.ParseMode = "HTML"
-		msg.ReplyMarkup = markup
+		if markup != nil {
+			msg.ReplyMarkup = markup
+		}
 		return msg
 	}
 }
@@ -101,4 +105,20 @@ func (telegramChat *TelegramChat) SendDialog(chatId int64, dialog *dialog.Dialog
 	}
 
 	return
+}
+
+func (telegramChat *TelegramChat) RemoveMessage(chatId int64, messageId int64) {
+	if messageId == 0 {
+		return
+	}
+
+	deleteConfig := tgbotapi.DeleteMessageConfig {
+		ChatID: chatId,
+		MessageID: int(messageId),
+	}
+
+	_, err := telegramChat.bot.DeleteMessage(deleteConfig)
+	if err != nil {
+
+	}
 }

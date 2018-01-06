@@ -21,12 +21,12 @@ func MakeMainMenuDialogFactory() dialogFactory.DialogFactory {
 	return &(mainMenuDialogFactory{
 		variants: []mainMenuItemVariantPrototype{
 			mainMenuItemVariantPrototype{
-				id: "wallets",
+				id: "wl",
 				textId: "wallets",
 				process: showWallets,
 			},
 			mainMenuItemVariantPrototype{
-				id: "exch",
+				id: "ex",
 				textId: "exchange_rates",
 				process: showExchangeRates,
 			},
@@ -35,12 +35,14 @@ func MakeMainMenuDialogFactory() dialogFactory.DialogFactory {
 }
 
 func showWallets(data *processing.ProcessData) bool {
-	data.SendMessage("test message 1")
+	data.SubstitudeMessage(data.Trans("not_supported"))
+	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
 	return true
 }
 
 func showExchangeRates(data *processing.ProcessData) bool {
-	data.SendMessage("test message 2")
+	data.SubstitudeMessage(data.Trans("not_supported"))
+	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
 	return true
 }
 

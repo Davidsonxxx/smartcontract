@@ -3,7 +3,13 @@
 	"back_btn": { "other": "Back" },
 	"fwd_btn": { "other": "Forward" },
 	"add_list_btn": { "other": "Create new.." },
-	"choose_wallet": { "other": "Chose a wallet" },
-	"disclaimer_message" : { "other": "This bot used for TESTING. Data may be innacurate and some functions unavailable." },
-	"select_language" : { "other": "Select language"}
+	"choose_wallet": { "other": "Choose a wallet" },
+	"disclaimer_message": { "other": "This bot used for TESTING. Data may be innacurate and some functions unavailable." },
+	"select_language": { "other": "Select language" },
+	"not_supported": { "other": "This action is not supported." },
+	"choose_wallet_type": { "other": "What kind of wallet do you want to create" },
+	"watch_only": { "other": "Watch only" },
+	"full_wallet": { "other": "Full wallet" },
+	"wallets": { "other": "Wallets" },
+	"exchange_rates": { "other": "Exchange rates" }
 }

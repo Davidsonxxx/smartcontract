@@ -93,6 +93,7 @@ func main() {
 	dialogManager := &(dialogManager.DialogManager{})
 	dialogManager.RegisterDialogFactory("ls", dialogFactories.MakeLanguageSelectDialogFactory())
 	dialogManager.RegisterDialogFactory("mn", dialogFactories.MakeMainMenuDialogFactory())
+	dialogManager.RegisterDialogFactory("cw", dialogFactories.MakeCreateWalletDialogFactory())
 	dialogManager.RegisterTextInputProcessorManager(dialogFactories.GetTextInputProcessorManager())
 
 	staticData := &processing.StaticProccessStructs{
@@ -123,7 +124,7 @@ func main() {
 			processMessageUpdate(&update, staticData, dialogManager, &processors)
 		}
 		if update.CallbackQuery != nil {
-			processCallbackUpdate(&update, chat.GetBot(), staticData, dialogManager, &processors)
+			processCallbackUpdate(&update, staticData, dialogManager, &processors)
 		}
 	}
 }

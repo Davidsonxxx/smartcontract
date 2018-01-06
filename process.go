@@ -16,19 +16,24 @@ func startCommand(data *processing.ProcessData) {
 	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
 }
 
-func settingsCommand(data *processing.ProcessData) {
-	data.SendDialog(data.Static.MakeDialogFn("ls", data.UserId, data.Trans, data.Static))
+func walletsCommand(data *processing.ProcessData) {
+	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
 }
 
 func createWalletCommand(data *processing.ProcessData) {
+	data.SendDialog(data.Static.MakeDialogFn("cw", data.UserId, data.Trans, data.Static))
+}
 
+func settingsCommand(data *processing.ProcessData) {
+	data.SendDialog(data.Static.MakeDialogFn("ls", data.UserId, data.Trans, data.Static))
 }
 
 func makeUserCommandProcessors() ProcessorFuncMap {
 	return map[string]ProcessorFunc{
 		"start":      startCommand,
-		"settings":   settingsCommand,
+		"wallets":    walletsCommand,
 		"new_wallet": createWalletCommand,
+		"settings":   settingsCommand,
 	}
 }
 
@@ -107,7 +112,7 @@ func processMessageUpdate(update *tgbotapi.Update, staticData *processing.Static
 	}
 }
 
-func processCallbackUpdate(update *tgbotapi.Update, bot *tgbotapi.BotAPI, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
+func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
 	userId := staticData.Db.GetUserId(int64(update.CallbackQuery.From.ID), strings.ToLower(update.CallbackQuery.From.LanguageCode))
 	data := processing.ProcessData{
 		Static:            staticData,

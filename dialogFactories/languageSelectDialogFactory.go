@@ -23,7 +23,7 @@ func MakeLanguageSelectDialogFactory() dialogFactory.DialogFactory {
 func applyNewLanguage(data *processing.ProcessData, newLang string) bool {
 	data.Static.Db.SetUserLanguage(data.UserId, newLang)
 	data.Trans = data.Static.FindTransFunction(data.UserId)
-	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SubstitudeDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
 	return true
 }
 
