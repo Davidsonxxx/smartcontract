@@ -12,12 +12,12 @@ type ProcessorFunc func(*processing.ProcessData)
 type ProcessorFuncMap map[string]ProcessorFunc
 
 func startCommand(data *processing.ProcessData) {
-	data.Static.Chat.SendMessage(data.ChatId, data.Trans("disclaimer_message"))
-	data.Static.Chat.SendDialog(data.ChatId, data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SendMessage(data.Trans("disclaimer_message"))
+	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
 }
 
 func settingsCommand(data *processing.ProcessData) {
-	data.Static.Chat.SendDialog(data.ChatId, data.Static.MakeDialogFn("ls", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("ls", data.UserId, data.Trans, data.Static))
 }
 
 func createWalletCommand(data *processing.ProcessData) {
@@ -67,8 +67,8 @@ func processCommand(data *processing.ProcessData, dialogManager *dialogManager.D
 	}
 
 	// if we here that means that no command was processed
-	data.Static.Chat.SendMessage(data.ChatId, data.Trans("warn_unknown_command"))
-	data.Static.Chat.SendDialog(data.ChatId, data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SendMessage(data.Trans("warn_unknown_command"))
+	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
 	return false
 }
 
@@ -76,7 +76,7 @@ func processPlainMessage(data *processing.ProcessData, dialogManager *dialogMana
 	success := dialogManager.ProcessText(data)
 
 	if !success {
-		data.Static.Chat.SendMessage(data.ChatId, data.Trans("warn_unknown_command"))
+		data.SendMessage(data.Trans("warn_unknown_command"))
 	}
 }
 
@@ -107,13 +107,14 @@ func processMessageUpdate(update *tgbotapi.Update, staticData *processing.Static
 	}
 }
 
-func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
+func processCallbackUpdate(update *tgbotapi.Update, bot *tgbotapi.BotAPI, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
 	userId := staticData.Db.GetUserId(int64(update.CallbackQuery.From.ID), strings.ToLower(update.CallbackQuery.From.LanguageCode))
 	data := processing.ProcessData{
-		Static: staticData,
-		ChatId: int64(update.CallbackQuery.From.ID),
-		UserId: userId,
-		Trans:  staticData.FindTransFunction(userId),
+		Static:            staticData,
+		ChatId:            int64(update.CallbackQuery.From.ID),
+		UserId:            userId,
+		Trans:             staticData.FindTransFunction(userId),
+		AnsweredMessageId: int64(update.CallbackQuery.Message.MessageID),
 	}
 
 	message := update.CallbackQuery.Data
@@ -125,16 +126,5 @@ func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.Stati
 		data.Command = message[1:]
 	}
 
-	isSucceeded := processCommand(&data, dialogManager, processors)
-	if isSucceeded {
-		// deleteConfig := tgbotapi.DeleteMessageConfig{
-		// 	ChatID: data.ChatId,
-		// 	MessageID:,
-		// }
-
-		// _, err := tgbotapi.DeleteMessage(deleteConfig)
-		// if err != nil {
-
-		// }
-	}
+	processCommand(&data, dialogManager, processors)
 }

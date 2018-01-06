@@ -23,14 +23,7 @@ func MakeLanguageSelectDialogFactory() dialogFactory.DialogFactory {
 func applyNewLanguage(data *processing.ProcessData, newLang string) bool {
 	data.Static.Db.SetUserLanguage(data.UserId, newLang)
 	data.Trans = data.Static.FindTransFunction(data.UserId)
-	data.Static.Chat.SendDialog(data.ChatId, data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
-	return true
-}
-
-func selectRussian(data *processing.ProcessData) bool {
-	data.Static.Db.SetUserLanguage(data.UserId, "ru-ru")
-	data.Trans = data.Static.FindTransFunction(data.UserId)
-	data.Static.Chat.SendDialog(data.ChatId, data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
 	return true
 }
 

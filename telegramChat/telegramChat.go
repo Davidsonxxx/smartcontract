@@ -1,7 +1,6 @@
 package telegramChat
 
 import (
-	"bytes"
 	"fmt"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/dialog"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
@@ -37,10 +36,30 @@ func (telegramChat *TelegramChat) GetBotUsername() string {
 	return telegramChat.bot.Self.UserName
 }
 
-func (telegramChat *TelegramChat) SendMessage(chatId int64, message string) (messageId int64) {
-	msg := tgbotapi.NewMessage(chatId, message)
-	msg.ParseMode = "HTML"
-	telegramChat.bot.Send(msg)
+func makeMessage(chatId int64, message string, messageToReplace int64, markup *tgbotapi.InlineKeyboardMarkup) tgbotapi.Chattable {
+	if messageToReplace == 0 {
+		msg := tgbotapi.NewMessage(chatId, message)
+		msg.ParseMode = "HTML"
+		msg.ReplyMarkup = markup
+		return msg
+	} else {
+		msg := tgbotapi.NewEditMessageText(chatId, int(messageToReplace), message)
+		msg.ParseMode = "HTML"
+		msg.ReplyMarkup = markup
+		return msg
+	}
+}
+
+func (telegramChat *TelegramChat) SendMessage(chatId int64, message string, messageToReplace int64) (messageId int64) {
+
+	packedMessage := makeMessage(chatId, message, messageToReplace, nil)
+
+	sentMessage, err := telegramChat.bot.Send(packedMessage)
+
+	if err == nil {
+		messageId = int64(sentMessage.MessageID)
+	}
+
 	return
 }
 
@@ -52,10 +71,7 @@ func getCommand(dialogId string, variantId string, additionalId string) string {
 	}
 }
 
-func (telegramChat *TelegramChat) SendDialog(chatId int64, dialog *dialog.Dialog) (messageId int64) {
-	var buffer bytes.Buffer
-
-	buffer.WriteString(dialog.Text)
+func (telegramChat *TelegramChat) SendDialog(chatId int64, dialog *dialog.Dialog, messageToReplace int64) (messageId int64) {
 
 	markup := tgbotapi.NewInlineKeyboardMarkup()
 
@@ -76,9 +92,13 @@ func (telegramChat *TelegramChat) SendDialog(chatId int64, dialog *dialog.Dialog
 	}
 	markup.InlineKeyboard = append(markup.InlineKeyboard, currentRow)
 
-	msg := tgbotapi.NewMessage(chatId, buffer.String())
-	msg.ParseMode = "HTML"
-	msg.ReplyMarkup = &markup
-	telegramChat.bot.Send(msg)
+	packedMessage := makeMessage(chatId, dialog.Text, messageToReplace, &markup)
+
+	sentMessage, err := telegramChat.bot.Send(packedMessage)
+
+	if err == nil {
+		messageId = int64(sentMessage.MessageID)
+	}
+
 	return
 }

@@ -35,12 +35,12 @@ func MakeMainMenuDialogFactory() dialogFactory.DialogFactory {
 }
 
 func showWallets(data *processing.ProcessData) bool {
-	data.Static.Chat.SendMessage(data.ChatId, "test message 1")
+	data.SendMessage("test message 1")
 	return true
 }
 
 func showExchangeRates(data *processing.ProcessData) bool {
-	data.Static.Chat.SendMessage(data.ChatId, "test message 2")
+	data.SendMessage("test message 2")
 	return true
 }
 

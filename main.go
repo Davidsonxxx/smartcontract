@@ -123,7 +123,7 @@ func main() {
 			processMessageUpdate(&update, staticData, dialogManager, &processors)
 		}
 		if update.CallbackQuery != nil {
-			processCallbackUpdate(&update, staticData, dialogManager, &processors)
+			processCallbackUpdate(&update, chat.GetBot(), staticData, dialogManager, &processors)
 		}
 	}
 }

@@ -6,6 +6,6 @@ import (
 )
 
 type Chat interface {
-	SendMessage(chatId int64, message string) int64
-	SendDialog(chatId int64, dialog *dialog.Dialog) int64
+	SendMessage(chatId int64, message string, messageToReplace int64) int64
+	SendDialog(chatId int64, dialog *dialog.Dialog, messageToReplace int64) int64
 }
