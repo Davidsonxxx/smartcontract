@@ -77,6 +77,7 @@ func (staticData *StaticProccessStructs) FindTransFunction(userId int64) i18n.Tr
 	// ToDo: cache user's lang
 	lang := staticData.Db.GetUserLanguage(userId)
 
+	// replace empty language to default one (some clients don't send user's language)
 	if len(lang) <= 0 {
 		log.Printf("User %d has empty language. Setting to default.", userId)
 		lang = staticData.Config.DefaultLanguage
@@ -84,6 +85,14 @@ func (staticData *StaticProccessStructs) FindTransFunction(userId int64) i18n.Tr
 	}
 
 	if foundTrans, ok := staticData.Trans[lang]; ok {
+		return foundTrans
+	}
+
+	// unknown language, use default instead
+	if foundTrans, ok := staticData.Trans[staticData.Config.DefaultLanguage]; ok {
+		log.Printf("User %d has unknown language (%s). Setting to default.", userId, lang)
+		lang = staticData.Config.DefaultLanguage
+		staticData.Db.SetUserLanguage(userId, lang)
 		return foundTrans
 	}
 
