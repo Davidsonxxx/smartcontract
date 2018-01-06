@@ -77,25 +77,26 @@ func (staticData *StaticProccessStructs) FindTransFunction(userId int64) i18n.Tr
 	// ToDo: cache user's lang
 	lang := staticData.Db.GetUserLanguage(userId)
 
-	if len(lang) > 0 {
-		foundTrans, ok := staticData.Trans[lang]
-		if ok {
-			return foundTrans
-		} else {
-			log.Printf("Translator didn't found: %s", lang)
-		}
-	} else {
-		log.Printf("User %d has empty language", userId)
+	if len(lang) <= 0 {
+		log.Printf("User %d has empty language. Setting to default.", userId)
+		lang = staticData.Config.DefaultLanguage
+		staticData.Db.SetUserLanguage(userId, lang)
 	}
 
-	// fall to default translation
+	if foundTrans, ok := staticData.Trans[lang]; ok {
+		return foundTrans
+	}
+
+	// something gone wrong
+	log.Printf("Translator didn't found: %s", lang)
+	// fall to the first available translator
 	for lang, trans := range staticData.Trans {
-		log.Printf("Found default translator: %s", lang)
+		log.Printf("Using first available translator: %s", lang)
 		return trans
 	}
 
-	// there are no translators
-	log.Fatal("No available translations")
+	// something gone completely wrong
+	log.Fatal("There are no available translators")
 	// we will probably crash but there is nothing else we can do
 	translator, _ := i18n.Tfunc(staticData.Config.DefaultLanguage)
 	return translator
