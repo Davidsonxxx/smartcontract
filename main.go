@@ -98,6 +98,7 @@ func main() {
 	dialogManager.RegisterDialogFactory("wa", dialogFactories.MakeWalletDialogFactory())
 	dialogManager.RegisterDialogFactory("ws", dialogFactories.MakeWalletSettingsDialogFactory())
 	dialogManager.RegisterDialogFactory("rc", dialogFactories.MakeReceiveDialogFactory())
+	dialogManager.RegisterDialogFactory("de", dialogFactories.MakeDeleteConfirmationDialogFactory())
 	dialogManager.RegisterTextInputProcessorManager(dialogFactories.GetTextInputProcessorManager())
 
 	staticData := &processing.StaticProccessStructs{

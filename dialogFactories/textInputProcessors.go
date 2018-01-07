@@ -29,7 +29,7 @@ func processNewWatchOnlyWalletKey(additionalId int64, data *processing.ProcessDa
 	walletName := data.Static.GetUserStateNewWalletName(data.UserId)
 	walletId := data.Static.Db.CreateWatchOnlyWallet(data.UserId, walletName, currencies.Bitcoin, data.Message)
 	data.SendMessage(data.Trans("wallet_created"))
-	data.SendDialog(data.Static.MakeDialogFn("ws", walletId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
 }
 

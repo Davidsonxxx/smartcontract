@@ -60,6 +60,7 @@ func (database *Database) Connect(fileName string) error {
 
 	database.execQuery("CREATE TABLE IF NOT EXISTS" +
 		" wallets(id INTEGER NOT NULL PRIMARY KEY" +
+		",is_removed INTEGER" + // NULL for alive wallets
 		",user_id INTEGER NOT NULL" +
 		",name STRING NOT NULL" +
 		",currency INTEGER NOT NULL" +
@@ -208,7 +209,7 @@ func (database *Database) GetUserChatId(userId int64) (chatId int64) {
 }
 
 func (database *Database) GetUserWallets(userId int64) (ids []int64, names []string) {
-	rows, err := database.conn.Query(fmt.Sprintf("SELECT id, name FROM wallets WHERE user_id=%d", userId))
+	rows, err := database.conn.Query(fmt.Sprintf("SELECT id, name FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -231,7 +232,7 @@ func (database *Database) GetUserWallets(userId int64) (ids []int64, names []str
 }
 
 func (database *Database) GetWalletName(walletId int64) (name string) {
-	rows, err := database.conn.Query(fmt.Sprintf("SELECT name FROM wallets WHERE id=%d", walletId))
+	rows, err := database.conn.Query(fmt.Sprintf("SELECT name FROM wallets WHERE id=%d AND is_removed IS NULL", walletId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -338,11 +339,12 @@ func (database *Database) CreateVirtualWallet(userId int64, name string, currenc
 }
 
 func (database *Database) DeleteWallet(walletId int64) {
-	database.execQuery(fmt.Sprintf("DELETE FROM wallets WHERE id=%d", walletId))
+	// give a way to recover things (don't delete completely)
+	database.execQuery(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET is_removed=1 WHERE id=%d",  walletId))
 }
 
 func (database *Database) IsWalletBelongsToUser(userId int64, walletId int64) bool {
-	rows, err := database.conn.Query(fmt.Sprintf("SELECT COUNT(*) FROM wallets WHERE id=%d AND user_id=%d", walletId, userId))
+	rows, err := database.conn.Query(fmt.Sprintf("SELECT COUNT(*) FROM wallets WHERE id=%d AND user_id=%d AND is_removed IS NULL", walletId, userId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -395,5 +397,5 @@ func (database *Database) GetUserLanguage(userId int64) (language string) {
 }
 
 func (database *Database) RenameWallet(walletId int64, newName string) {
-	database.execQuery(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET name='%s' WHERE id=%d", newName, walletId))
+	database.execQuery(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET name='%s' WHERE id=%d AND is_removed IS NULL", newName, walletId))
 }

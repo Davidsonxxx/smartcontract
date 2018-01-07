@@ -54,7 +54,7 @@ func renameWallet(walletId int64, data *processing.ProcessData) bool {
 }
 
 func deleteWallet(walletId int64, data *processing.ProcessData) bool {
-	data.SubstitudeMessage("test 2")
+	data.SubstitudeDialog(data.Static.MakeDialogFn("de", walletId, data.Trans, data.Static))
 	return true
 }
 
