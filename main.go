@@ -95,6 +95,7 @@ func main() {
 	dialogManager.RegisterDialogFactory("mn", dialogFactories.MakeMainMenuDialogFactory())
 	dialogManager.RegisterDialogFactory("cw", dialogFactories.MakeCreateWalletDialogFactory())
 	dialogManager.RegisterDialogFactory("wl", dialogFactories.MakeWalletsListDialogFactory())
+	dialogManager.RegisterDialogFactory("wp", dialogFactories.MakeWalletDialogFactory())
 	dialogManager.RegisterTextInputProcessorManager(dialogFactories.GetTextInputProcessorManager())
 
 	staticData := &processing.StaticProccessStructs{

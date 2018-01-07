@@ -14,5 +14,11 @@
 	"help_info": { "other": "There is no info yet. Stay tuned" },
 	"send_wallet_name" : { "other": "Choose a name for your wallet" },
 	"send_public_key" : { "other": "Send the public key of your wallet.\n<b>Warning: Do not send the private key.</b>" },
-	"wallet_created" : { "other": "Wallet was successfully created" }
+	"wallet_created" : { "other": "Wallet was successfully created" },
+	"main_menu_title" : { "other": "" },
+	"send" : { "other": "Send" },
+	"receive" : { "other": "Receive" },
+	"history" : { "other": "History" },
+	"settings" : { "other": "Settings" },
+	"back_to_list" : { "other": "Back to the list" }
 }
