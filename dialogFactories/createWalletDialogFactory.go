@@ -60,7 +60,7 @@ func (factory *createWalletDialogFactory) createVariants(staticData *processing.
 	return
 }
 
-func (factory *createWalletDialogFactory) MakeDialog(itemId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
+func (factory *createWalletDialogFactory) MakeDialog(userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
 	return &dialog.Dialog{
 		Text:     trans("choose_wallet_type"),
 		Variants: factory.createVariants(staticData, trans),

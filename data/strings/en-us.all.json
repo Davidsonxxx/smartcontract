@@ -1,8 +1,7 @@
 {
-	"warn_unknown_command": { "other": "Outdated command" },
 	"back_btn": { "other": "Back" },
 	"fwd_btn": { "other": "Forward" },
-	"add_list_btn": { "other": "Create new.." },
+	"add_wallet_btn": { "other": "Create new.." },
 	"choose_wallet": { "other": "Choose a wallet" },
 	"disclaimer_message": { "other": "This bot used for TESTING. Data may be innacurate and some functions unavailable." },
 	"select_language": { "other": "Select language" },

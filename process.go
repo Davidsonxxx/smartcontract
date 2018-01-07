@@ -17,7 +17,7 @@ func startCommand(data *processing.ProcessData) {
 }
 
 func walletsCommand(data *processing.ProcessData) {
-	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
 }
 
 func createWalletCommand(data *processing.ProcessData) {
@@ -77,7 +77,7 @@ func processCommand(data *processing.ProcessData, dialogManager *dialogManager.D
 	}
 
 	// if we here that means that no command was processed
-	data.SendMessage(data.Trans("warn_unknown_command"))
+	data.SendMessage(data.Trans("help_info"))
 	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
 	return false
 }
@@ -86,7 +86,7 @@ func processPlainMessage(data *processing.ProcessData, dialogManager *dialogMana
 	success := dialogManager.ProcessText(data)
 
 	if !success {
-		data.SendMessage(data.Trans("warn_unknown_command"))
+		data.SendMessage(data.Trans("help_info"))
 	}
 }
 

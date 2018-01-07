@@ -35,8 +35,7 @@ func MakeMainMenuDialogFactory() dialogFactory.DialogFactory {
 }
 
 func showWallets(data *processing.ProcessData) bool {
-	data.SubstitudeMessage(data.Trans("not_supported"))
-	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SubstitudeDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
 	return true
 }
 
@@ -58,7 +57,7 @@ func (factory *mainMenuDialogFactory) createVariants(staticData *processing.Stat
 	return
 }
 
-func (factory *mainMenuDialogFactory) MakeDialog(itemId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
+func (factory *mainMenuDialogFactory) MakeDialog(userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
 	return &dialog.Dialog{
 		Text:     trans("main_menu_title"),
 		Variants: factory.createVariants(staticData, trans),
