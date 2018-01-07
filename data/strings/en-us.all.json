@@ -11,5 +11,9 @@
 	"watch_only": { "other": "Watch only" },
 	"full_wallet": { "other": "Full wallet" },
 	"wallets": { "other": "Wallets" },
-	"exchange_rates": { "other": "Exchange rates" }
+	"exchange_rates": { "other": "Exchange rates" },
+	"help_info": { "other": "There is no info yet. Stay tuned" },
+	"send_wallet_name" : { "other": "Choose a name for your wallet" },
+	"send_public_key" : { "other": "Send the public key of your wallet.\n<b>Warning: Do not send the private key.</b>" },
+	"wallet_created" : { "other": "Wallet was successfully created" }
 }

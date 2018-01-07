@@ -27,7 +27,9 @@ type AwaitingTextProcessorData struct {
 
 type UserState struct {
 	awaitingTextProcessor *AwaitingTextProcessorData
-	currentPage int
+	currentPage int // temporary data for lists handling
+	// temporary data for wallets creation
+	newWalletName string
 }
 
 type StaticProccessStructs struct {
@@ -69,6 +71,20 @@ func (staticData *StaticProccessStructs) GetUserStateCurrentPage(userId int64) i
 		return state.currentPage
 	} else {
 		return 0
+	}
+}
+
+func (staticData *StaticProccessStructs) SetUserStateNewWalletName(userId int64, walletName string) {
+	state := staticData.userStates[userId]
+	state.newWalletName = walletName
+	staticData.userStates[userId] = state
+}
+
+func (staticData *StaticProccessStructs) GetUserStateNewWalletName(userId int64) string {
+	if state, ok := staticData.userStates[userId]; ok {
+		return state.newWalletName
+	} else {
+		return "Empty Name"
 	}
 }
 

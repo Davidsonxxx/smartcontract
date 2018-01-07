@@ -91,7 +91,7 @@ func main() {
 	chat.SetDebugModeEnabled(config.ExtendedLog)
 
 	dialogManager := &(dialogManager.DialogManager{})
-	dialogManager.RegisterDialogFactory("ls", dialogFactories.MakeLanguageSelectDialogFactory())
+	dialogManager.RegisterDialogFactory("lc", dialogFactories.MakeLanguageSelectDialogFactory())
 	dialogManager.RegisterDialogFactory("mn", dialogFactories.MakeMainMenuDialogFactory())
 	dialogManager.RegisterDialogFactory("cw", dialogFactories.MakeCreateWalletDialogFactory())
 	dialogManager.RegisterTextInputProcessorManager(dialogFactories.GetTextInputProcessorManager())

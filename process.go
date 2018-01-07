@@ -25,7 +25,11 @@ func createWalletCommand(data *processing.ProcessData) {
 }
 
 func settingsCommand(data *processing.ProcessData) {
-	data.SendDialog(data.Static.MakeDialogFn("ls", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("lc", data.UserId, data.Trans, data.Static))
+}
+
+func helpCommand(data *processing.ProcessData) {
+	data.SendMessage(data.Trans("help_info"))
 }
 
 func makeUserCommandProcessors() ProcessorFuncMap {
@@ -34,6 +38,7 @@ func makeUserCommandProcessors() ProcessorFuncMap {
 		"wallets":    walletsCommand,
 		"new_wallet": createWalletCommand,
 		"settings":   settingsCommand,
+		"help":       helpCommand,
 	}
 }
 
