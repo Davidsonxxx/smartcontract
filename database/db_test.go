@@ -236,3 +236,36 @@ func TestUsersLanguage(t *testing.T) {
 		assert.Equal("", lang2)
 	}
 }
+
+func TestWalletRenaming(t *testing.T) {
+	assert := require.New(t)
+	db := createDbAndConnect(t)
+	defer clearDb()
+	if db == nil {
+		t.Fail()
+		return
+	}
+	defer db.Disconnect()
+
+	userId := db.GetUserId(123, "")
+
+	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", currencies.Bitcoin, "key1")
+
+	{
+		ids, names := db.GetUserWallets(userId)
+		if len(ids) > 0 && len(names) > 0 {
+			assert.Equal(walletId, ids[0])
+			assert.Equal("testwallet", names[0])
+		}
+	}
+
+	db.RenameWallet(walletId, "test2")
+
+	{
+		ids, names := db.GetUserWallets(userId)
+		if len(ids) > 0 && len(names) > 0 {
+			assert.Equal(walletId, ids[0])
+			assert.Equal("test2", names[0])
+		}
+	}
+}

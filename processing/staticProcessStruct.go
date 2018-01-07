@@ -22,7 +22,7 @@ type StaticConfiguration struct {
 
 type AwaitingTextProcessorData struct {
 	ProcessorId string
-	AdditionalId string
+	AdditionalId int64
 }
 
 type UserState struct {
@@ -46,9 +46,9 @@ func (staticData *StaticProccessStructs) Init() {
 	staticData.userStates = make(map[int64]UserState)
 }
 
-func (staticData *StaticProccessStructs) SetUserStateTextProcessor(userId int64, proessor *AwaitingTextProcessorData) {
+func (staticData *StaticProccessStructs) SetUserStateTextProcessor(userId int64, processor *AwaitingTextProcessorData) {
 	state := staticData.userStates[userId]
-	state.awaitingTextProcessor = proessor
+	state.awaitingTextProcessor = processor
 	staticData.userStates[userId] = state
 }
 

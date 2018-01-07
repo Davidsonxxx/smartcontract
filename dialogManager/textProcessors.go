@@ -4,7 +4,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
 )
 
-type TextProcessorFunc func(string, *processing.ProcessData) bool
+type TextProcessorFunc func(int64, *processing.ProcessData) bool
 
 type TextProcessorsMap map[string]TextProcessorFunc
 

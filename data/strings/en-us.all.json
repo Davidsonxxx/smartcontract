@@ -25,5 +25,6 @@
 	"back_to_list" : { "other": "Back to the list" },
 	"rename" : { "other": "Rename" },
 	"delete" : { "other": "Delete" },
-	"back_to_wallet" : { "other": "Back to the wallet" }
+	"back_to_wallet" : { "other": "Back to the wallet" },
+	"rename_wallet_request" : { "other": "Choose a new name for your wallet" }
 }

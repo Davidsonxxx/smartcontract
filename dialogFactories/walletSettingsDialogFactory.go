@@ -45,7 +45,11 @@ func MakeWalletSettingsDialogFactory() dialogFactory.DialogFactory {
 }
 
 func renameWallet(walletId int64, data *processing.ProcessData) bool {
-	data.SubstitudeMessage("test 1")
+	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
+		ProcessorId: "renamingWallet",
+		AdditionalId: walletId,
+	})
+	data.SubstitudeMessage(data.Trans("rename_wallet_request"))
 	return true
 }
 
@@ -55,7 +59,7 @@ func deleteWallet(walletId int64, data *processing.ProcessData) bool {
 }
 
 func backToWallet(walletId int64, data *processing.ProcessData) bool {
-	data.SubstitudeDialog(data.Static.MakeDialogFn("wp", walletId, data.Trans, data.Static))
+	data.SubstitudeDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
 }
 

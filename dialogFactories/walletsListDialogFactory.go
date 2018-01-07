@@ -136,7 +136,7 @@ func openWallet(additionalId string, data *processing.ProcessData) bool {
 	}
 
 	if data.Static.Db.IsWalletBelongsToUser(data.UserId, id) {
-		data.SubstitudeDialog(data.Static.MakeDialogFn("wp", id, data.Trans, data.Static))
+		data.SubstitudeDialog(data.Static.MakeDialogFn("wa", id, data.Trans, data.Static))
 		return true
 	} else {
 		return false

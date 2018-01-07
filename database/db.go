@@ -341,32 +341,6 @@ func (database *Database) DeleteWallet(walletId int64) {
 	database.execQuery(fmt.Sprintf("DELETE FROM wallets WHERE id=%d", walletId))
 }
 
-// func (database *Database) IsWalletExists(walletId int64) bool {
-// 	rows, err := database.conn.Query(fmt.Sprintf("SELECT COUNT(*) FROM wallets WHERE id=%d", walletId))
-// 	if err != nil {
-// 		log.Fatal(err.Error())
-// 	}
-// 	defer rows.Close()
-
-// 	if rows.Next() {
-// 		var count int
-// 		err := rows.Scan(&count)
-// 		if err != nil {
-// 			log.Fatal(err.Error())
-// 		} else {
-// 			if count > 1 || count < 0 {
-// 				log.Fatal("unique count of some walletId is not 0 or 1")
-// 			}
-
-// 			if count >= 1 {
-// 				return true
-// 			}
-// 		}
-// 	}
-
-// 	return false
-// }
-
 func (database *Database) IsWalletBelongsToUser(userId int64, walletId int64) bool {
 	rows, err := database.conn.Query(fmt.Sprintf("SELECT COUNT(*) FROM wallets WHERE id=%d AND user_id=%d", walletId, userId))
 	if err != nil {
@@ -418,4 +392,8 @@ func (database *Database) GetUserLanguage(userId int64) (language string) {
 	}
 
 	return
+}
+
+func (database *Database) RenameWallet(walletId int64, newName string) {
+	database.execQuery(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET name='%s' WHERE id=%d", newName, walletId))
 }

@@ -11,11 +11,12 @@ func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
 		Processors : dialogManager.TextProcessorsMap {
 			"newWatchOnlyWalletName" : processNewWatchOnlyWalletName,
 			"newWatchOnlyWalletKey" : processNewWatchOnlyWalletKey,
+			"renamingWallet" : processRenamingWallet,
 		},
 	}
 }
 
-func processNewWatchOnlyWalletName(additionalId string, data *processing.ProcessData) bool {
+func processNewWatchOnlyWalletName(additionalId int64, data *processing.ProcessData) bool {
 	data.Static.SetUserStateNewWalletName(data.UserId, data.Message)
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
 		ProcessorId: "newWatchOnlyWalletKey",
@@ -24,10 +25,20 @@ func processNewWatchOnlyWalletName(additionalId string, data *processing.Process
 	return true
 }
 
-func processNewWatchOnlyWalletKey(additionalId string, data *processing.ProcessData) bool {
+func processNewWatchOnlyWalletKey(additionalId int64, data *processing.ProcessData) bool {
 	walletName := data.Static.GetUserStateNewWalletName(data.UserId)
-	data.Static.Db.CreateWatchOnlyWallet(data.UserId, walletName, currencies.Bitcoin, data.Message)
+	walletId := data.Static.Db.CreateWatchOnlyWallet(data.UserId, walletName, currencies.Bitcoin, data.Message)
 	data.SendMessage(data.Trans("wallet_created"))
-	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("ws", walletId, data.Trans, data.Static))
+	return true
+}
+
+func processRenamingWallet(walletId int64, data *processing.ProcessData) bool {
+	if walletId == 0 {
+		return false
+	}
+
+	data.Static.Db.RenameWallet(walletId, data.Message)
+	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
 }
