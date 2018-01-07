@@ -65,22 +65,24 @@ func isFullWallet(walletId int64, staticData *processing.StaticProccessStructs) 
 }
 
 func sendFromWallet(walletId int64, data *processing.ProcessData) bool {
-	data.SubstitudeMessage("test 1")
+	data.SubstitudeMessage(data.Trans("not_supported"))
+	data.SendDialog(data.Static.MakeDialogFn("wp", data.UserId, data.Trans, data.Static))
 	return true
 }
 
 func receiveToWallet(walletId int64, data *processing.ProcessData) bool {
-	data.SubstitudeMessage("test 2")
+	data.SubstitudeDialog(data.Static.MakeDialogFn("rc", walletId, data.Trans, data.Static))
 	return true
 }
 
 func showHistory(walletId int64, data *processing.ProcessData) bool {
-	data.SubstitudeMessage("test 3")
+	data.SubstitudeMessage(data.Trans("not_supported"))
+	data.SendDialog(data.Static.MakeDialogFn("wp", data.UserId, data.Trans, data.Static))
 	return true
 }
 
 func walletSettings(walletId int64, data *processing.ProcessData) bool {
-	data.SubstitudeMessage("test 4")
+	data.SubstitudeDialog(data.Static.MakeDialogFn("ws", walletId, data.Trans, data.Static))
 	return true
 }
 
