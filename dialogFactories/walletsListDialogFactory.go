@@ -5,14 +5,19 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/dialog"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactory"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"log"
 	"strconv"
 )
 
+const maxItemsOnPage int = 10
+const maxItemsInRow int = 2
+
 type walletsListDialogVariantPrototype struct {
+	isListItem bool
 	id string
-	additionalIdFn func(*walletsListDialogCache) string
+	additionalIdFn func(*walletsListDialogCache, int) string
 	textId string
-	textFn func(*walletsListDialogCache) string
+	textFn func(*walletsListDialogCache, int) string
 	// nil if the variant is always active
 	isActiveFn func(*walletsListDialogCache) bool
 	process func(string, *processing.ProcessData) bool
@@ -46,42 +51,14 @@ func MakeWalletsListDialogFactory() dialogFactory.DialogFactory {
 				process: addWallet,
 			},
 			walletsListDialogVariantPrototype{
-				id: "it1",
-				additionalIdFn: getFirstItemId,
-				textFn: getFirstItemText,
-				isActiveFn: isFirstElementVisible,
+				isListItem: true,
+				id: "it",
+				additionalIdFn: getItemId,
+				textFn: getItemText,
 				process: openWallet,
 			},
 			walletsListDialogVariantPrototype{
-				id: "it2",
-				additionalIdFn: getSecondItemId,
-				textFn: getSecondItemText,
-				isActiveFn: isSecondElementVisible,
-				process: openWallet,
-			},
-			walletsListDialogVariantPrototype{
-				id: "it3",
-				additionalIdFn: getThirdItemId,
-				textFn: getThirdItemText,
-				isActiveFn: isThirdElementVisible,
-				process: openWallet,
-			},
-			walletsListDialogVariantPrototype{
-				id: "it4",
-				additionalIdFn: getFourthItemId,
-				textFn: getFourthItemText,
-				isActiveFn: isFourthElementVisible,
-				process: openWallet,
-			},
-			walletsListDialogVariantPrototype{
-				id: "it5",
-				additionalIdFn: getFifthItemId,
-				textFn: getFifthItemText,
-				isActiveFn: isFifthElementVisible,
-				process: openWallet,
-			},
-			walletsListDialogVariantPrototype{
-				id: "back",
+				id: "bck",
 				textId: "back_btn",
 				isActiveFn: isNotTheFirstPage,
 				process: moveBack,
@@ -108,73 +85,13 @@ func isNotTheLastPage(cahce *walletsListDialogCache) bool {
 	return cahce.currentPage + 1 < cahce.pagesCount
 }
 
-func isFirstElementVisible(cahce *walletsListDialogCache) bool {
-	return cahce.countOnPage > 0
-}
-
-func isSecondElementVisible(cahce *walletsListDialogCache) bool {
-	return cahce.countOnPage > 1
-}
-
-func isThirdElementVisible(cahce *walletsListDialogCache) bool {
-	return cahce.countOnPage > 2
-}
-
-func isFourthElementVisible(cahce *walletsListDialogCache) bool {
-	return cahce.countOnPage > 3
-}
-
-func isFifthElementVisible(cahce *walletsListDialogCache) bool {
-	return cahce.countOnPage > 4
-}
-
-func getFirstItemText(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4
+func getItemText(cahce *walletsListDialogCache, itemIndex int) string {
+	index := cahce.currentPage * maxItemsOnPage + itemIndex
 	return cahce.cachedItems[int64(index)].text
 }
 
-func getSecondItemText(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4 + 1
-	return cahce.cachedItems[int64(index)].text
-}
-
-func getThirdItemText(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4 + 2
-	return cahce.cachedItems[int64(index)].text
-}
-
-func getFourthItemText(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4 + 3
-	return cahce.cachedItems[int64(index)].text
-}
-
-func getFifthItemText(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4 + 4
-	return cahce.cachedItems[int64(index)].text
-}
-
-func getFirstItemId(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4
-	return strconv.FormatInt(cahce.cachedItems[int64(index)].id, 10)
-}
-
-func getSecondItemId(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4 + 1
-	return strconv.FormatInt(cahce.cachedItems[int64(index)].id, 10)
-}
-
-func getThirdItemId(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4 + 2
-	return strconv.FormatInt(cahce.cachedItems[int64(index)].id, 10)
-}
-
-func getFourthItemId(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4 + 3
-	return strconv.FormatInt(cahce.cachedItems[int64(index)].id, 10)
-}
-
-func getFifthItemId(cahce *walletsListDialogCache) string {
-	index := cahce.currentPage * 4 + 4
+func getItemId(cahce *walletsListDialogCache, itemIndex int) string {
+	index := cahce.currentPage * maxItemsOnPage + itemIndex
 	return strconv.FormatInt(cahce.cachedItems[int64(index)].id, 10)
 }
 
@@ -188,7 +105,7 @@ func moveForward(additionalId string, data *processing.ProcessData) bool {
 	itemsCount := len(ids)
 	var pagesCount int
 	if itemsCount > 2 {
-		pagesCount = (itemsCount - 2) / 4 + 1
+		pagesCount = (itemsCount - 2) / maxItemsOnPage + 1
 	} else {
 		pagesCount = 1
 	}
@@ -235,32 +152,40 @@ func (factory *walletsListDialogFactory) createVariants(userId int64, trans i18n
 	col := 0
 
 	for _, variant := range factory.variants {
-		if variant.isActiveFn == nil || variant.isActiveFn(cache) {
-			var text string
 
-			if variant.textFn != nil {
-				text = variant.textFn(cache)
-			} else {
-				text = trans(variant.textId)
+		if variant.isListItem {
+			for i := 0; i < cache.countOnPage; i++ {
+				if variant.textFn == nil || variant.additionalIdFn == nil {
+					log.Printf("List element doesn't have a valid functions")
+					continue
+				}
+
+				variants = append(variants, dialog.Variant{
+					Id:   variant.id + strconv.Itoa(i),
+					Text: variant.textFn(cache, i),
+					RowId: row,
+					AdditionalId: variant.additionalIdFn(cache, i),
+				})
+
+				col = col + 1
+				if col >= maxItemsInRow {
+					row = row + 1
+					col = 0
+				}
 			}
+		} else {
+			if variant.isActiveFn == nil || variant.isActiveFn(cache) {
+				variants = append(variants, dialog.Variant{
+					Id:   variant.id,
+					Text: trans(variant.textId),
+					RowId: row,
+				})
 
-			var additionalId string
-
-			if variant.additionalIdFn != nil {
-				additionalId = variant.additionalIdFn(cache)
-			}
-
-			variants = append(variants, dialog.Variant{
-				Id:   variant.id,
-				Text: text,
-				AdditionalId: additionalId,
-				RowId: row,
-			})
-
-			col = col + 1
-			if col > 1 {
-				row = row + 1
-				col = 0
+				col = col + 1
+				if col >= maxItemsInRow {
+					row = row + 1
+					col = 0
+				}
 			}
 		}
 	}
@@ -286,14 +211,14 @@ func getListDialogCache(userId int64, staticData *processing.StaticProccessStruc
 	cache.currentPage = staticData.GetUserStateCurrentPage(userId)
 	count := len(cache.cachedItems)
 	if count > 2 {
-		cache.pagesCount = (count - 2) / 4 + 1
+		cache.pagesCount = (count - 2) / maxItemsOnPage + 1
 	} else {
 		cache.pagesCount = 1
 	}
 
-	cache.countOnPage = count - cache.currentPage * 4
-	if cache.countOnPage > 5 {
-		cache.countOnPage = 4
+	cache.countOnPage = count - cache.currentPage * maxItemsOnPage
+	if cache.countOnPage > maxItemsOnPage + 1 {
+		cache.countOnPage = maxItemsOnPage
 	}
 
 	return
@@ -308,7 +233,11 @@ func (factory *walletsListDialogFactory) MakeDialog(userId int64, trans i18n.Tra
 
 func (factory *walletsListDialogFactory) ProcessVariant(variantId string, additionalId string, data *processing.ProcessData) bool {
 	for _, variant := range factory.variants {
-		if variant.id == variantId {
+		if variant.isListItem {
+			if variant.id == variantId[0:2] { // "id"
+				return variant.process(additionalId, data)
+			}
+		} else if variant.id == variantId {
 			return variant.process(additionalId, data)
 		}
 	}
