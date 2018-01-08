@@ -1,6 +1,7 @@
 package dialogFactories
 
 import (
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/dialog"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactory"
@@ -90,8 +91,10 @@ func backToList(walletId int64, data *processing.ProcessData) bool {
 	return true
 }
 
-func (factory *walletDialogFactory) getListItemDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
-	return fmt.Sprintf("<b>%s</b>", staticData.Db.GetWalletName(walletId))
+func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
+	walletAddress := staticData.Db.GetWalletAddress(walletId)
+	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
+	return fmt.Sprintf("<b>%s</b>\n%s (%s)", staticData.Db.GetWalletName(walletId), walletAddress.Address, currencyCode)
 }
 
 func (factory *walletDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {
@@ -112,7 +115,7 @@ func (factory *walletDialogFactory) createVariants(walletId int64, trans i18n.Tr
 
 func (factory *walletDialogFactory) MakeDialog(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
 	return &dialog.Dialog{
-		Text:     factory.getListItemDialogText(walletId, trans, staticData),
+		Text:     factory.getDialogText(walletId, trans, staticData),
 		Variants: factory.createVariants(walletId, trans, staticData),
 	}
 }

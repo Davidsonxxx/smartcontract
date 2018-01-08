@@ -21,7 +21,7 @@ func processNewWatchOnlyWalletName(additionalId int64, data *processing.ProcessD
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
 		ProcessorId: "newWatchOnlyWalletKey",
 	})
-	data.SendMessage(data.Trans("send_public_key"))
+	data.SendMessage(data.Trans("send_address"))
 	return true
 }
 

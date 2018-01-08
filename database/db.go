@@ -64,7 +64,7 @@ func (database *Database) Connect(fileName string) error {
 		",user_id INTEGER NOT NULL" +
 		",name STRING NOT NULL" +
 		",currency INTEGER NOT NULL" +
-		",public_key_storage TEXT NOT NULL" +
+		",address TEXT NOT NULL" +
 		",type INTEGER NOT NULL" +
 		",balance INTEGER" + // only for virtual wallets
 		",private_key_storage TEXT" + // NULL for watch-only wallets
@@ -277,39 +277,39 @@ func (database* Database) GetLastInsertedItemId() (id int64) {
 	return -1
 }
 
-func (database *Database) CreateWatchOnlyWallet(userId int64, name string, currency currencies.Currency, publicKey string) (newWalletId int64) {
+func (database *Database) CreateWatchOnlyWallet(userId int64, name string, currency currencies.Currency, address string) (newWalletId int64) {
 	database.execQuery(fmt.Sprintf(
 		"INSERT INTO wallets(" +
 		"user_id" +
 		",name" +
 		",currency" +
-		",public_key_storage" +
+		",address" +
 		",type" +
 		")VALUES(%d,'%s',%d,'%s',%d)",
 		userId,
 		sanitizeString(name),
 		currency,
-		sanitizeString(publicKey),
+		sanitizeString(address),
 		wallettypes.WatchOnly,
 	))
 
 	return database.GetLastInsertedItemId()
 }
 
-func (database *Database) CreateFullWallet(userId int64, name string, currency currencies.Currency, publicKey string, privateKey string) (newWalletId int64) {
+func (database *Database) CreateFullWallet(userId int64, name string, currency currencies.Currency, address string, privateKey string) (newWalletId int64) {
 	database.execQuery(fmt.Sprintf(
 		"INSERT INTO wallets(" +
 		"user_id" +
 		",name" +
 		",currency" +
-		",public_key_storage" +
+		",address" +
 		",type" +
 		",private_key_storage" +
 		")VALUES(%d,'%s',%d,'%s',%d,'%s')",
 		userId,
 		sanitizeString(name),
 		currency,
-		sanitizeString(publicKey),
+		sanitizeString(address),
 		wallettypes.Full,
 		sanitizeString(privateKey),
 	))
@@ -317,20 +317,20 @@ func (database *Database) CreateFullWallet(userId int64, name string, currency c
 	return database.GetLastInsertedItemId()
 }
 
-func (database *Database) CreateVirtualWallet(userId int64, name string, currency currencies.Currency, publicKey string) (newWalletId int64) {
+func (database *Database) CreateVirtualWallet(userId int64, name string, currency currencies.Currency, address string) (newWalletId int64) {
 	database.execQuery(fmt.Sprintf(
 		"INSERT INTO wallets(" +
 		"user_id" +
 		",name" +
 		",currency" +
-		",public_key_storage" +
+		",address" +
 		",type" +
 		",balance" +
 		")VALUES(%d,'%s',%s,'%s',%d,%d)",
 		userId,
 		sanitizeString(name),
 		currency,
-		sanitizeString(publicKey),
+		sanitizeString(address),
 		wallettypes.Virtual,
 		0, // init with zero balance
 	))
@@ -398,4 +398,59 @@ func (database *Database) GetUserLanguage(userId int64) (language string) {
 
 func (database *Database) RenameWallet(walletId int64, newName string) {
 	database.execQuery(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET name='%s' WHERE id=%d AND is_removed IS NULL", newName, walletId))
+}
+
+func (database *Database) GetWalletAddress(walletId int64) (addressData currencies.AddressData) {
+	rows, err := database.conn.Query(fmt.Sprintf("SELECT currency, address FROM wallets WHERE id=%d AND is_removed IS NULL LIMIT 1", walletId))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var currency int64
+		var address string
+
+		err := rows.Scan(&currency, &address)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		addressData = currencies.AddressData{
+			Currency: currencies.Currency(currency),
+			Address: address,
+		}
+	} else {
+		log.Fatalf("No wallet found with id %d", walletId)
+	}
+
+	return
+}
+
+func (database *Database) GetUserWalletAddresses(userId int64) (addresses []currencies.AddressData) {
+	rows, err := database.conn.Query(fmt.Sprintf("SELECT currency, address FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var currency int64
+		var address string
+
+		err := rows.Scan(&currency, &address)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		addresses = append(
+			addresses,
+			currencies.AddressData{
+				Currency: currencies.Currency(currency),
+				Address: address,
+			},
+		)
+	}
+
+	return
 }

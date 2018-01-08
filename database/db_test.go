@@ -269,3 +269,48 @@ func TestWalletRenaming(t *testing.T) {
 		}
 	}
 }
+
+func TestGettingWalletAddresses(t *testing.T) {
+	assert := require.New(t)
+	db := createDbAndConnect(t)
+	defer clearDb()
+	if db == nil {
+		t.Fail()
+		return
+	}
+	defer db.Disconnect()
+
+	userId1 := db.GetUserId(123, "")
+	userId2 := db.GetUserId(321, "")
+
+	walletId1 := db.CreateWatchOnlyWallet(userId1, "testwallet1", currencies.Bitcoin, "adr1")
+	walletId2 := db.CreateWatchOnlyWallet(userId1, "testwallet2", currencies.Ether, "adr2")
+	walletId3 := db.CreateWatchOnlyWallet(userId2, "testwallet3", currencies.Bitcoin, "adr3")
+
+	{
+		addr1 := db.GetWalletAddress(walletId1)
+		addr2 := db.GetWalletAddress(walletId2)
+		addr3 := db.GetWalletAddress(walletId3)
+
+		assert.Equal("adr1", addr1.Address)
+		assert.Equal(currencies.Bitcoin, addr1.Currency)
+		assert.Equal("adr2", addr2.Address)
+		assert.Equal(currencies.Ether, addr2.Currency)
+		assert.Equal("adr3", addr3.Address)
+		assert.Equal(currencies.Bitcoin, addr3.Currency)
+	}
+
+	{
+		addresses := db.GetUserWalletAddresses(userId1)
+		assert.Equal(2, len(addresses))
+		for _, address := range addresses {
+			if address.Currency == currencies.Bitcoin {
+				assert.Equal("adr1", address.Address)
+			} else if address.Currency == currencies.Ether {
+				assert.Equal("adr2", address.Address)
+			} else {
+				assert.Fail("Unexpected currency type")
+			}
+		}
+	}
+}
