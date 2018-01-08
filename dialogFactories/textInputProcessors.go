@@ -1,9 +1,10 @@
 package dialogFactories
 
 import (
+	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
+	"github.com/gameraccoon/telegram-bot-skeleton/processing"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogManager"
 )
 
 func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
@@ -27,7 +28,7 @@ func processNewWatchOnlyWalletName(additionalId int64, data *processing.ProcessD
 
 func processNewWatchOnlyWalletKey(additionalId int64, data *processing.ProcessData) bool {
 	walletName := data.Static.GetUserStateNewWalletName(data.UserId)
-	walletId := data.Static.Db.CreateWatchOnlyWallet(data.UserId, walletName, currencies.Bitcoin, data.Message)
+	walletId := database.CreateWatchOnlyWallet(data.Static.Db, data.UserId, walletName, currencies.Bitcoin, data.Message)
 	data.SendMessage(data.Trans("wallet_created"))
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
@@ -38,7 +39,7 @@ func processRenamingWallet(walletId int64, data *processing.ProcessData) bool {
 		return false
 	}
 
-	data.Static.Db.RenameWallet(walletId, data.Message)
+	database.RenameWallet(data.Static.Db, walletId, data.Message)
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
 }

@@ -2,14 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
+	"github.com/gameraccoon/telegram-bot-skeleton/processing"
+	"github.com/gameraccoon/telegram-bot-skeleton/telegramChat"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialog"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactories"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogManager"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/telegramChat"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -71,8 +71,7 @@ func main() {
 		log.Fatal("Default language should be in the list of available languages")
 	}
 
-	db := &database.Database{}
-	err = db.Connect("./accounts-data.db")
+	db, err := database.Init("./accounts-data.db")
 	defer db.Disconnect()
 
 	if err != nil {

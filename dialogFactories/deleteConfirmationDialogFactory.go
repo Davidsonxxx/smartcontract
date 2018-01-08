@@ -1,10 +1,11 @@
 package dialogFactories
 
 import (
-	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialog"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"strconv"
 )
 
@@ -52,7 +53,7 @@ func isWatchOnlyWallet(walletId int64, staticData *processing.StaticProccessStru
 }
 
 func deleteWalletFinally(walletId int64, data *processing.ProcessData) bool {
-	data.Static.Db.DeleteWallet(walletId)
+	database.DeleteWallet(data.Static.Db, walletId)
 	data.SubstitudeMessage(data.Trans("deleted_success"))
 	data.SendDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
 	return true
@@ -96,7 +97,7 @@ func (factory *deleteConfirmationDialogFactory) ProcessVariant(variantId string,
 		return false
 	}
 
-	if !data.Static.Db.IsWalletBelongsToUser(data.UserId, walletId) {
+	if !database.IsWalletBelongsToUser(data.Static.Db, data.UserId, walletId) {
 		return false
 	}
 

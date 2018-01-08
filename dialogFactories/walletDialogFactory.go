@@ -1,11 +1,12 @@
 package dialogFactories
 
 import (
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialog"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"fmt"
 	"strconv"
 )
@@ -92,9 +93,9 @@ func backToList(walletId int64, data *processing.ProcessData) bool {
 }
 
 func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
-	walletAddress := staticData.Db.GetWalletAddress(walletId)
+	walletAddress := database.GetWalletAddress(staticData.Db, walletId)
 	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
-	return fmt.Sprintf("<b>%s</b>\n%s (%s)", staticData.Db.GetWalletName(walletId), walletAddress.Address, currencyCode)
+	return fmt.Sprintf("<b>%s</b>\n%s (%s)", database.GetWalletName(staticData.Db, walletId), walletAddress.Address, currencyCode)
 }
 
 func (factory *walletDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {
@@ -127,7 +128,7 @@ func (factory *walletDialogFactory) ProcessVariant(variantId string, additionalI
 		return false
 	}
 
-	if !data.Static.Db.IsWalletBelongsToUser(data.UserId, walletId) {
+	if !database.IsWalletBelongsToUser(data.Static.Db, data.UserId, walletId) {
 		return false
 	}
 

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
+	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogManager"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/userFunctions"
 	"strings"
 )
 
@@ -91,12 +93,12 @@ func processPlainMessage(data *processing.ProcessData, dialogManager *dialogMana
 }
 
 func processMessageUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
-	userId := staticData.Db.GetUserId(update.Message.Chat.ID, strings.ToLower(update.Message.From.LanguageCode))
+	userId := database.GetUserId(staticData.Db, update.Message.Chat.ID, strings.ToLower(update.Message.From.LanguageCode))
 	data := processing.ProcessData{
 		Static: staticData,
 		ChatId: update.Message.Chat.ID,
 		UserId: userId,
-		Trans:  staticData.FindTransFunction(userId),
+		Trans:  userFunctions.FindTransFunction(userId, staticData),
 	}
 
 	message := update.Message.Text
@@ -118,12 +120,12 @@ func processMessageUpdate(update *tgbotapi.Update, staticData *processing.Static
 }
 
 func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
-	userId := staticData.Db.GetUserId(int64(update.CallbackQuery.From.ID), strings.ToLower(update.CallbackQuery.From.LanguageCode))
+	userId := database.GetUserId(staticData.Db, int64(update.CallbackQuery.From.ID), strings.ToLower(update.CallbackQuery.From.LanguageCode))
 	data := processing.ProcessData{
 		Static:            staticData,
 		ChatId:            int64(update.CallbackQuery.From.ID),
 		UserId:            userId,
-		Trans:             staticData.FindTransFunction(userId),
+		Trans:             userFunctions.FindTransFunction(userId, staticData),
 		AnsweredMessageId: int64(update.CallbackQuery.Message.MessageID),
 	}
 

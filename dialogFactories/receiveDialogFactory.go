@@ -1,10 +1,11 @@
 package dialogFactories
 
 import (
-	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialog"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"strconv"
 )
 
@@ -64,7 +65,7 @@ func (factory *receiveDialogFactory) ProcessVariant(variantId string, additional
 		return false
 	}
 
-	if !data.Static.Db.IsWalletBelongsToUser(data.UserId, walletId) {
+	if !database.IsWalletBelongsToUser(data.Static.Db, data.UserId, walletId) {
 		return false
 	}
 

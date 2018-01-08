@@ -1,10 +1,12 @@
 package dialogFactories
 
 import (
-	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialog"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/userFunctions"
 )
 
 type languageSelectVariantPrototype struct {
@@ -21,8 +23,8 @@ func MakeLanguageSelectDialogFactory() dialogFactory.DialogFactory {
 }
 
 func applyNewLanguage(data *processing.ProcessData, newLang string) bool {
-	data.Static.Db.SetUserLanguage(data.UserId, newLang)
-	data.Trans = data.Static.FindTransFunction(data.UserId)
+	database.SetUserLanguage(data.Static.Db, data.UserId, newLang)
+	data.Trans = userFunctions.FindTransFunction(data.UserId, data.Static)
 	data.SubstitudeDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
 	return true
 }

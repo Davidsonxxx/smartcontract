@@ -1,9 +1,10 @@
 package dialogFactories
 
 import (
-	"gitlab.com/gameraccoon/telegram-accountant-bot/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialog"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
+	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
+	"github.com/gameraccoon/telegram-bot-skeleton/processing"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
 	"strconv"
@@ -101,7 +102,7 @@ func addWallet(additionalId string, data *processing.ProcessData) bool {
 }
 
 func moveForward(additionalId string, data *processing.ProcessData) bool {
-	ids, _ := data.Static.Db.GetUserWallets(data.UserId)
+	ids, _ := database.GetUserWallets(data.Static.Db, data.UserId)
 	itemsCount := len(ids)
 	var pagesCount int
 	if itemsCount > 2 {
@@ -135,7 +136,7 @@ func openWallet(additionalId string, data *processing.ProcessData) bool {
 		return false
 	}
 
-	if data.Static.Db.IsWalletBelongsToUser(data.UserId, id) {
+	if database.IsWalletBelongsToUser(data.Static.Db, data.UserId, id) {
 		data.SubstitudeDialog(data.Static.MakeDialogFn("wa", id, data.Trans, data.Static))
 		return true
 	} else {
@@ -197,7 +198,7 @@ func getListDialogCache(userId int64, staticData *processing.StaticProccessStruc
 
 	cache.cachedItems = make([]cachedItem, 0)
 
-	ids, names := staticData.Db.GetUserWallets(userId)
+	ids, names := database.GetUserWallets(staticData.Db, userId)
 	if len(ids) == len(names) {
 		for index, id := range ids {
 			cache.cachedItems = append(cache.cachedItems, cachedItem{
