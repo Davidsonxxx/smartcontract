@@ -44,7 +44,7 @@ func createWatchOnlyWallet(data *processing.ProcessData) bool {
 
 func createFullWallet(data *processing.ProcessData) bool {
 	data.SubstitudeMessage(data.Trans("not_supported"))
-	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
 	return true
 }
 

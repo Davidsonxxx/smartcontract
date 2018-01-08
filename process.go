@@ -13,7 +13,7 @@ type ProcessorFuncMap map[string]ProcessorFunc
 
 func startCommand(data *processing.ProcessData) {
 	data.SendMessage(data.Trans("disclaimer_message"))
-	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
 }
 
 func walletsCommand(data *processing.ProcessData) {
@@ -78,7 +78,7 @@ func processCommand(data *processing.ProcessData, dialogManager *dialogManager.D
 
 	// if we here that means that no command was processed
 	data.SendMessage(data.Trans("help_info"))
-	data.SendDialog(data.Static.MakeDialogFn("mn", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
 	return false
 }
 

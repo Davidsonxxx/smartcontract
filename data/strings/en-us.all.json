@@ -17,6 +17,7 @@
 	"wallet_created": { "other": "Wallet was successfully created" },
 	"main_menu_title": { "other": "Main menu" },
 	"receive_title": { "other": "Receive instructions not available" },
+	"history_title": { "other": "History not awailable" },
 	"settings_title": { "other": "Settings" },
 	"send": { "other": "Send" },
 	"receive": { "other": "Receive" },

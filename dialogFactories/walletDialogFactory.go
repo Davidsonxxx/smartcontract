@@ -76,8 +76,7 @@ func receiveToWallet(walletId int64, data *processing.ProcessData) bool {
 }
 
 func showHistory(walletId int64, data *processing.ProcessData) bool {
-	data.SubstitudeMessage(data.Trans("not_supported"))
-	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
+	data.SubstitudeDialog(data.Static.MakeDialogFn("hi", walletId, data.Trans, data.Static))
 	return true
 }
 
