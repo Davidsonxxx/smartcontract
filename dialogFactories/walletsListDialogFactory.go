@@ -1,12 +1,16 @@
 package dialogFactories
 
 import (
+	"fmt"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
+	"math"
 	"strconv"
 )
 
@@ -37,13 +41,11 @@ type walletsListDialogCache struct {
 }
 
 type walletsListDialogFactory struct {
-	textId string
 	variants []walletsListDialogVariantPrototype
 }
 
 func MakeWalletsListDialogFactory() dialogFactory.DialogFactory {
 	return &(walletsListDialogFactory{
-		textId: "choose_wallet",
 		variants: []walletsListDialogVariantPrototype{
 			walletsListDialogVariantPrototype{
 				id: "add",
@@ -224,9 +226,51 @@ func getListDialogCache(userId int64, staticData *processing.StaticProccessStruc
 	return
 }
 
+func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
+	walletAddresses := database.GetUserWalletAddresses(staticData.Db, userId)
+
+	if len(walletAddresses) == 0 {
+		return ""
+	}
+
+	groupedWallets := make(map[currencies.Currency] []string)
+
+	for _, walletAddress := range walletAddresses {
+		walletsSlice, ok := groupedWallets[walletAddress.Currency]
+		if ok {
+			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress.Address)
+		} else {
+			groupedWallets[walletAddress.Currency] = []string{ walletAddress.Address }
+		}
+	}
+
+	text := "Balance:\n"
+
+	for currency, wallets := range groupedWallets {
+		processor := cryptoFunctions.GetProcessor(currency)
+
+		if processor == nil {
+			return "Error"
+		}
+
+		var balance int64 = 0
+		if processor != nil {
+			balance = (*processor).GetSumBalance(wallets)
+		}
+		currencyCode := currencies.GetCurrencyCode(currency)
+		currencyDigits := currencies.GetCurrencyDigits(currency)
+		currencyDigitsStr := strconv.Itoa(currencyDigits)
+
+		var balanceFloat float64 = float64(balance) / math.Pow(10, float64(currencyDigits))
+		text = text + fmt.Sprintf("%."+currencyDigitsStr+"f %s", balanceFloat, currencyCode) + "\n"
+	}
+
+	return text
+}
+
 func (factory *walletsListDialogFactory) MakeDialog(userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
 	return &dialog.Dialog{
-		Text:     trans(factory.textId),
+		Text:     factory.GetDialogCaption(userId, trans, staticData) + trans("choose_wallet"),
 		Variants: factory.createVariants(userId, trans, staticData),
 	}
 }

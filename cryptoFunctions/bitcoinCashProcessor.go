@@ -33,11 +33,10 @@ func (processor *BitcoinCashProcessor) GetBalance(address string) int64 {
 		return -1
 	}
 
-	log.Print(string(body[:]))
-
 	var parsedResp = new(BitcoinCashResp)
 	err = json.Unmarshal(body, &parsedResp)
 	if(err != nil){
+		log.Print(string(body[:]))
 		log.Print(err)
 		return -1
 	}
@@ -53,4 +52,14 @@ func (processor *BitcoinCashProcessor) GetBalance(address string) int64 {
 	} else {
 		return 0
 	}
+}
+
+func (processor *BitcoinCashProcessor) GetSumBalance(addresses []string) int64 {
+	var sumBalance int64 = 0
+
+	for _, walletAddress := range addresses {
+		sumBalance = sumBalance + processor.GetBalance(walletAddress)
+	}
+
+	return sumBalance
 }

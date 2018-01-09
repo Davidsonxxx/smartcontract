@@ -11,8 +11,6 @@ type BitcoinGoldProcessor struct {
 }
 
 func (processor *BitcoinGoldProcessor) GetBalance(address string) int64 {
-	log.Printf("'%s'", address)
-
 	resp, err := http.Get("http://btgexp.com/ext/getbalance/" + address)
 	defer resp.Body.Close()
 	if err != nil {
@@ -20,15 +18,11 @@ func (processor *BitcoinGoldProcessor) GetBalance(address string) int64 {
 		return -1
 	}
 
-	log.Print(resp.Body)
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
 		return -1
 	}
-
-	log.Print(string(body[:]))
 
 	floatValue, err := strconv.ParseFloat(string(body[:]), 64)
 
@@ -38,4 +32,14 @@ func (processor *BitcoinGoldProcessor) GetBalance(address string) int64 {
 		log.Print(err)
 		return 0
 	}
+}
+
+func (processor *BitcoinGoldProcessor) GetSumBalance(addresses []string) int64 {
+	var sumBalance int64 = 0
+
+	for _, walletAddress := range addresses {
+		sumBalance = sumBalance + processor.GetBalance(walletAddress)
+	}
+
+	return sumBalance
 }
