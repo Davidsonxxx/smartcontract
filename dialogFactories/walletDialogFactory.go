@@ -6,6 +6,7 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"fmt"
 	"strconv"
@@ -94,8 +95,13 @@ func backToList(walletId int64, data *processing.ProcessData) bool {
 
 func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
 	walletAddress := database.GetWalletAddress(staticData.Db, walletId)
+	processor := cryptoFunctions.GetProcessor(currencies.Bitcoin)
+	var balance int = 0
+	if processor != nil {
+		balance = (*processor).GetBalance(walletAddress.Address)
+	}
 	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
-	return fmt.Sprintf("<b>%s</b>\n%s (%s)", database.GetWalletName(staticData.Db, walletId), walletAddress.Address, currencyCode)
+	return fmt.Sprintf("<b>%s</b>\n%d %s", database.GetWalletName(staticData.Db, walletId), balance, currencyCode)
 }
 
 func (factory *walletDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {
