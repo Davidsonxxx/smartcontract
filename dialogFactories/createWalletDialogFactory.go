@@ -25,11 +25,11 @@ func MakeCreateWalletDialogFactory() dialogFactory.DialogFactory {
 				textId: "watch_only",
 				process: createWatchOnlyWallet,
 			},
-			createWalletItemVariantPrototype{
-				id: "fl",
-				textId: "full_wallet",
-				process: createFullWallet,
-			},
+			// createWalletItemVariantPrototype{
+			// 	id: "fl",
+			// 	textId: "full_wallet",
+			// 	process: createFullWallet,
+			// },
 		},
 	})
 }

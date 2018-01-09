@@ -6,6 +6,8 @@ import (
 
 var processorsList map[currencies.Currency]currencies.CurrencyProcessor = map[currencies.Currency]currencies.CurrencyProcessor{
 	currencies.Bitcoin : &BitcoinProcessor{},
+	currencies.BitcoinCash : &BitcoinCashProcessor{},
+	currencies.BitcoinGold : &BitcoinGoldProcessor{},
 }
 
 func GetProcessor(currency currencies.Currency) *currencies.CurrencyProcessor {

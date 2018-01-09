@@ -18,7 +18,7 @@ func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
 }
 
 func processNewWatchOnlyWalletName(additionalId int64, data *processing.ProcessData) bool {
-	data.Static.SetUserStateNewWalletName(data.UserId, data.Message)
+	data.Static.SetUserStateValue(data.UserId, "walletName", data.Message)
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
 		ProcessorId: "newWatchOnlyWalletKey",
 	})
@@ -27,8 +27,17 @@ func processNewWatchOnlyWalletName(additionalId int64, data *processing.ProcessD
 }
 
 func processNewWatchOnlyWalletKey(additionalId int64, data *processing.ProcessData) bool {
-	walletName := data.Static.GetUserStateNewWalletName(data.UserId)
-	walletId := database.CreateWatchOnlyWallet(data.Static.Db, data.UserId, walletName, currencies.Bitcoin, data.Message)
+	walletName, ok := data.Static.GetUserStateValue(data.UserId, "walletName").(string)
+	if !ok {
+		return false
+	}
+
+	walletCurrency, ok := data.Static.GetUserStateValue(data.UserId, "walletCurrency").(currencies.Currency)
+	if !ok {
+		return false
+	}
+
+	walletId := database.CreateWatchOnlyWallet(data.Static.Db, data.UserId, walletName, walletCurrency, data.Message)
 	data.SendMessage(data.Trans("wallet_created"))
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true

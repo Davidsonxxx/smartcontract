@@ -99,6 +99,7 @@ func main() {
 	dialogManager.RegisterDialogFactory("rc", dialogFactories.MakeReceiveDialogFactory())
 	dialogManager.RegisterDialogFactory("de", dialogFactories.MakeDeleteConfirmationDialogFactory())
 	dialogManager.RegisterDialogFactory("hi", dialogFactories.MakeHistoryDialogFactory())
+	dialogManager.RegisterDialogFactory("cc", dialogFactories.MakeChooseCurrencyDialogFactory())
 	dialogManager.RegisterTextInputProcessorManager(dialogFactories.GetTextInputProcessorManager())
 
 	staticData := &processing.StaticProccessStructs{

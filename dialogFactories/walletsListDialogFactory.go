@@ -97,7 +97,7 @@ func getItemId(cahce *walletsListDialogCache, itemIndex int) string {
 }
 
 func addWallet(additionalId string, data *processing.ProcessData) bool {
-	data.SubstitudeDialog(data.Static.MakeDialogFn("cw", data.UserId, data.Trans, data.Static))
+	data.SubstitudeDialog(data.Static.MakeDialogFn("cc", data.UserId, data.Trans, data.Static))
 	return true
 }
 

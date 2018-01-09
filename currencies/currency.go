@@ -12,11 +12,13 @@ const (
 	Bitcoin Currency = 0
 	Ether Currency = 1
 	BitcoinCash Currency = 2
+	BitcoinGold Currency = 3
 )
 
 type currencyStaticData struct {
 	FullName string
 	Code string
+	Digits int // how mady decimal digits after zero can it have
 }
 
 var currencyStaticDataMap map[Currency]currencyStaticData
@@ -26,14 +28,22 @@ func init() {
 		Bitcoin : {
 			FullName: "Bitcoin",
 			Code: "BTC",
+			Digits: 8,
 		},
 		Ether : {
 			FullName: "Ether",
 			Code: "ETH",
+			Digits: 8,
 		},
 		BitcoinCash : {
 			FullName: "Bitcoin Cash",
 			Code: "BCH",
+			Digits: 8,
+		},
+		BitcoinGold : {
+			FullName: "Bitcoin Gold",
+			Code: "BTG",
+			Digits: 8,
 		},
 	}
 }
@@ -58,4 +68,15 @@ func GetCurrencyFullName(currency Currency) string {
 	}
 
 	return currencyData.FullName
+}
+
+func GetCurrencyDigits(currency Currency) int {
+	currencyData, ok := currencyStaticDataMap[currency]
+
+	if !ok {
+		log.Printf("Unknown currency: %d ", int8(currency))
+		return 0
+	}
+
+	return currencyData.Digits
 }

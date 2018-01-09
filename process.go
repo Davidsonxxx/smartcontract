@@ -23,7 +23,7 @@ func walletsCommand(data *processing.ProcessData) {
 }
 
 func createWalletCommand(data *processing.ProcessData) {
-	data.SendDialog(data.Static.MakeDialogFn("cw", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("cc", data.UserId, data.Trans, data.Static))
 }
 
 func settingsCommand(data *processing.ProcessData) {
