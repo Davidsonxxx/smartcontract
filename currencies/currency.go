@@ -31,9 +31,9 @@ func init() {
 			Digits: 8,
 		},
 		Ether : {
-			FullName: "Ether",
+			FullName: "Ethereum",
 			Code: "ETH",
-			Digits: 8,
+			Digits: 18,
 		},
 		BitcoinCash : {
 			FullName: "Bitcoin Cash",

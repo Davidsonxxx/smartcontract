@@ -27,6 +27,11 @@ func MakeChooseCurrencyDialogFactory() dialogFactory.DialogFactory {
 				rowId: 1,
 			},
 			chooseCurrencyItemVariantPrototype{
+				id: "eth",
+				currencyId: currencies.Ether,
+				rowId: 1,
+			},
+			chooseCurrencyItemVariantPrototype{
 				id: "bch",
 				currencyId: currencies.BitcoinCash,
 				rowId: 2,

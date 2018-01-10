@@ -8,8 +8,9 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"fmt"
-	"math"
+	"math/big"
 	"strconv"
 )
 
@@ -102,16 +103,21 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 		return "Error"
 	}
 
-	var balance int64 = 0
+	var balance *big.Int
 	if processor != nil {
 		balance = (*processor).GetBalance(walletAddress.Address)
 	}
+
+	if balance == nil {
+		return "Error"
+	}
+
 	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
 	currencyDigits := currencies.GetCurrencyDigits(walletAddress.Currency)
-	currencyDigitsStr := strconv.Itoa(currencyDigits)
 
-	var balanceFloat float64 = float64(balance) / math.Pow(10, float64(currencyDigits))
-	return fmt.Sprintf("<b>%s</b>\n%."+currencyDigitsStr+"f %s", database.GetWalletName(staticData.Db, walletId), balanceFloat, currencyCode)
+	balanceText := staticFunctions.FormatCurrencyAmount(balance, currencyDigits)
+
+	return fmt.Sprintf("<b>%s</b>\n%s %s", database.GetWalletName(staticData.Db, walletId), balanceText, currencyCode)
 }
 
 func (factory *walletDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {

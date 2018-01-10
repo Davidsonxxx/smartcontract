@@ -1,16 +1,16 @@
 package dialogFactories
 
 import (
-	"fmt"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
-	"math"
+	"math/big"
 	"strconv"
 )
 
@@ -250,19 +250,22 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		processor := cryptoFunctions.GetProcessor(currency)
 
 		if processor == nil {
-			return "Error"
+			continue
 		}
 
-		var balance int64 = 0
+		var balance *big.Int
 		if processor != nil {
 			balance = (*processor).GetSumBalance(wallets)
 		}
+		
+		if balance == nil {
+			return "Error"
+		}
+		
 		currencyCode := currencies.GetCurrencyCode(currency)
 		currencyDigits := currencies.GetCurrencyDigits(currency)
-		currencyDigitsStr := strconv.Itoa(currencyDigits)
 
-		var balanceFloat float64 = float64(balance) / math.Pow(10, float64(currencyDigits))
-		text = text + fmt.Sprintf("%."+currencyDigitsStr+"f %s", balanceFloat, currencyCode) + "\n"
+		text = text + staticFunctions.FormatCurrencyAmount(balance, currencyDigits) + " " + currencyCode + "\n"
 	}
 
 	return text

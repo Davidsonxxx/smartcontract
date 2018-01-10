@@ -5,40 +5,41 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"math/big"
 )
 
 type BitcoinGoldProcessor struct {
 }
 
-func (processor *BitcoinGoldProcessor) GetBalance(address string) int64 {
+func (processor *BitcoinGoldProcessor) GetBalance(address string) *big.Int {
 	resp, err := http.Get("http://btgexp.com/ext/getbalance/" + address)
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
-		return -1
+		return big.NewInt(-1)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
-		return -1
+		return big.NewInt(-1)
 	}
 
 	floatValue, err := strconv.ParseFloat(string(body[:]), 64)
 
 	if err == nil {
-		return int64(floatValue * 1.0E8)
+		return big.NewInt(int64(floatValue * 1.0E8))
 	} else {
 		log.Print(err)
-		return 0
+		return big.NewInt(-1)
 	}
 }
 
-func (processor *BitcoinGoldProcessor) GetSumBalance(addresses []string) int64 {
-	var sumBalance int64 = 0
+func (processor *BitcoinGoldProcessor) GetSumBalance(addresses []string) *big.Int {
+	sumBalance := big.NewInt(0)
 
 	for _, walletAddress := range addresses {
-		sumBalance = sumBalance + processor.GetBalance(walletAddress)
+		sumBalance.Add(sumBalance, processor.GetBalance(walletAddress))
 	}
 
 	return sumBalance

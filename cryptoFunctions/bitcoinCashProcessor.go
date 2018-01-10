@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"math/big"
 )
 
 type BitcoinCashProcessor struct {
@@ -19,18 +20,18 @@ type BitcoinCashResp struct {
 	Data []BitcoinCashRespData `json:"data"`
 }
 
-func (processor *BitcoinCashProcessor) GetBalance(address string) int64 {
+func (processor *BitcoinCashProcessor) GetBalance(address string) *big.Int {
 	resp, err := http.Get("https://api.blockchair.com/bitcoin-cash/dashboards/address/" + address)
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
-		return -1
+		return big.NewInt(-1)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
-		return -1
+		return big.NewInt(-1)
 	}
 
 	var parsedResp = new(BitcoinCashResp)
@@ -38,27 +39,27 @@ func (processor *BitcoinCashProcessor) GetBalance(address string) int64 {
 	if(err != nil){
 		log.Print(string(body[:]))
 		log.Print(err)
-		return -1
+		return big.NewInt(-1)
 	}
 
 	if len(parsedResp.Data) > 0 {
 		intValue, err := strconv.ParseInt(parsedResp.Data[0].SumValueUnspent, 10, 64)
 
 		if err == nil {
-			return intValue
+			return big.NewInt(intValue)
 		} else {
-			return 0
+			return big.NewInt(0)
 		}
 	} else {
-		return 0
+		return big.NewInt(0)
 	}
 }
 
-func (processor *BitcoinCashProcessor) GetSumBalance(addresses []string) int64 {
-	var sumBalance int64 = 0
+func (processor *BitcoinCashProcessor) GetSumBalance(addresses []string) *big.Int {
+	sumBalance := big.NewInt(0)
 
 	for _, walletAddress := range addresses {
-		sumBalance = sumBalance + processor.GetBalance(walletAddress)
+		sumBalance.Add(sumBalance, processor.GetBalance(walletAddress))
 	}
 
 	return sumBalance

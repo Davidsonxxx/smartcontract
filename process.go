@@ -5,7 +5,7 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/userFunctions"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strings"
 )
 
@@ -98,7 +98,7 @@ func processMessageUpdate(update *tgbotapi.Update, staticData *processing.Static
 		Static: staticData,
 		ChatId: update.Message.Chat.ID,
 		UserId: userId,
-		Trans:  userFunctions.FindTransFunction(userId, staticData),
+		Trans:  staticFunctions.FindTransFunction(userId, staticData),
 	}
 
 	message := update.Message.Text
@@ -125,7 +125,7 @@ func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.Stati
 		Static:            staticData,
 		ChatId:            int64(update.CallbackQuery.From.ID),
 		UserId:            userId,
-		Trans:             userFunctions.FindTransFunction(userId, staticData),
+		Trans:             staticFunctions.FindTransFunction(userId, staticData),
 		AnsweredMessageId: int64(update.CallbackQuery.Message.MessageID),
 	}
 
