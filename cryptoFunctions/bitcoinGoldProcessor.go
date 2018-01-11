@@ -16,13 +16,13 @@ func (processor *BitcoinGoldProcessor) GetBalance(address string) *big.Int {
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	floatValue, err := strconv.ParseFloat(string(body[:]), 64)
@@ -31,7 +31,7 @@ func (processor *BitcoinGoldProcessor) GetBalance(address string) *big.Int {
 		return big.NewInt(int64(floatValue * 1.0E8))
 	} else {
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 }
 
@@ -39,8 +39,15 @@ func (processor *BitcoinGoldProcessor) GetSumBalance(addresses []string) *big.In
 	sumBalance := big.NewInt(0)
 
 	for _, walletAddress := range addresses {
-		sumBalance.Add(sumBalance, processor.GetBalance(walletAddress))
+		balance := processor.GetBalance(walletAddress)
+		if balance != nil {
+			sumBalance.Add(sumBalance, balance)
+		}
 	}
 
 	return sumBalance
+}
+
+func (processor *BitcoinGoldProcessor) GetToUsdRate() *big.Float {
+	return getCurrencyToUsdRate("bitcoin-gold")
 }

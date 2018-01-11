@@ -31,13 +31,13 @@ func (processor *EtherProcessor) GetBalance(address string) *big.Int {
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	var parsedResp = new(EtherResp)
@@ -45,7 +45,7 @@ func (processor *EtherProcessor) GetBalance(address string) *big.Int {
 	if(err != nil){
 		log.Print(string(body[:]))
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	intValue := new(big.Int)
@@ -56,7 +56,7 @@ func (processor *EtherProcessor) GetBalance(address string) *big.Int {
 	} else {
 		log.Print(string(body[:]))
 		log.Print("Int parse problem")
-		return big.NewInt(-1)
+		return nil
 	}
 }
 
@@ -70,13 +70,13 @@ func (processor *EtherProcessor) GetSumBalance(addresses []string) *big.Int {
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	var parsedResp = new(EtherMultiResp)
@@ -84,7 +84,7 @@ func (processor *EtherProcessor) GetSumBalance(addresses []string) *big.Int {
 	if(err != nil){
 		log.Print(string(body[:]))
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	sum := big.NewInt(0)
@@ -102,4 +102,8 @@ func (processor *EtherProcessor) GetSumBalance(addresses []string) *big.Int {
 	}
 
 	return sum
+}
+
+func (processor *EtherProcessor) GetToUsdRate() *big.Float {
+	return getCurrencyToUsdRate("ethereum")
 }

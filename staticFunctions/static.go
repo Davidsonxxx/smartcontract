@@ -5,7 +5,6 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
-	"math/big"
 )
 
 func FindTransFunction(userId int64, staticData *processing.StaticProccessStructs) i18n.TranslateFunc {
@@ -44,16 +43,4 @@ func FindTransFunction(userId int64, staticData *processing.StaticProccessStruct
 	// we will probably crash but there is nothing else we can do
 	translator, _ := i18n.Tfunc(staticData.Config.DefaultLanguage)
 	return translator
-}
-
-func FormatCurrencyAmount(intValue *big.Int, digits int) string {
-	// isn't it a piece of shit?
-	// balanceFloat = balance / (10.0 ** currencyDigits)
-	var balanceFloat *big.Float = new(big.Float).Quo(new(big.Float).SetInt(intValue), new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(digits)), big.NewInt(0))))
-
-	if balanceFloat == nil {
-		return "Error"
-	}
-
-	return balanceFloat.Text('f', digits)
 }

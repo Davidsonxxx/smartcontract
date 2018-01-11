@@ -7,7 +7,6 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
 	"math/big"
@@ -245,6 +244,8 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 	}
 
 	text := "Balance:\n"
+	
+	usdSum := new(big.Float)
 
 	for currency, wallets := range groupedWallets {
 		processor := cryptoFunctions.GetProcessor(currency)
@@ -264,8 +265,26 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		
 		currencyCode := currencies.GetCurrencyCode(currency)
 		currencyDigits := currencies.GetCurrencyDigits(currency)
+		
+		floatBalance := cryptoFunctions.GetFloatBalance(balance, currencyDigits)
+		
+		if floatBalance == nil {
+			return "Error"
+		}
+		
+		if processor != nil {
+			toUsdRate := (*processor).GetToUsdRate()
 
-		text = text + staticFunctions.FormatCurrencyAmount(balance, currencyDigits) + " " + currencyCode + "\n"
+			if toUsdRate != nil {
+				usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
+			}
+		}
+
+		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"
+	}
+	
+	if usdSum != nil {
+		text = text + "Sum: " + usdSum.Text('f', 2) + " USD\n"
 	}
 
 	return text

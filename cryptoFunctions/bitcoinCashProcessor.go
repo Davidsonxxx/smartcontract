@@ -25,13 +25,13 @@ func (processor *BitcoinCashProcessor) GetBalance(address string) *big.Int {
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	var parsedResp = new(BitcoinCashResp)
@@ -39,7 +39,7 @@ func (processor *BitcoinCashProcessor) GetBalance(address string) *big.Int {
 	if(err != nil){
 		log.Print(string(body[:]))
 		log.Print(err)
-		return big.NewInt(-1)
+		return nil
 	}
 
 	if len(parsedResp.Data) > 0 {
@@ -48,10 +48,10 @@ func (processor *BitcoinCashProcessor) GetBalance(address string) *big.Int {
 		if err == nil {
 			return big.NewInt(intValue)
 		} else {
-			return big.NewInt(0)
+			return nil
 		}
 	} else {
-		return big.NewInt(0)
+		return nil
 	}
 }
 
@@ -59,8 +59,15 @@ func (processor *BitcoinCashProcessor) GetSumBalance(addresses []string) *big.In
 	sumBalance := big.NewInt(0)
 
 	for _, walletAddress := range addresses {
-		sumBalance.Add(sumBalance, processor.GetBalance(walletAddress))
+		balance := processor.GetBalance(walletAddress)
+		if balance != nil {
+			sumBalance.Add(sumBalance, balance)
+		}
 	}
 
 	return sumBalance
+}
+
+func (processor *BitcoinCashProcessor) GetToUsdRate() *big.Float {
+	return getCurrencyToUsdRate("bitcoin-cash")
 }

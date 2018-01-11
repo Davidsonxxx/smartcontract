@@ -8,7 +8,6 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -115,7 +114,7 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
 	currencyDigits := currencies.GetCurrencyDigits(walletAddress.Currency)
 
-	balanceText := staticFunctions.FormatCurrencyAmount(balance, currencyDigits)
+	balanceText := cryptoFunctions.FormatCurrencyAmount(balance, currencyDigits)
 
 	return fmt.Sprintf("<b>%s</b>\n%s %s", database.GetWalletName(staticData.Db, walletId), balanceText, currencyCode)
 }
