@@ -33,5 +33,8 @@
 	"accept_del_watch_only": { "other": "Yes" },
 	"accept_del_full": { "other": "Yes. I know what I'm doing" },
 	"reject_del": { "other": "No" },
-	"deleted_success": { "other": "Wallet had been successfully deleted" }
+	"deleted_success": { "other": "Wallet had been successfully deleted" },
+	"balance_header": { "other": "Balance:\n" },
+	"sum": { "other": "Sum: " },
+	"usd": { "other": "USD\n" }
 }

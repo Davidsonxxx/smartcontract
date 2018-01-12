@@ -243,8 +243,8 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		}
 	}
 
-	text := "Balance:\n"
-	
+	text := trans("balance_header")
+
 	usdSum := new(big.Float)
 
 	for currency, wallets := range groupedWallets {
@@ -258,20 +258,20 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		if processor != nil {
 			balance = (*processor).GetSumBalance(wallets)
 		}
-		
+
 		if balance == nil {
 			return "Error"
 		}
-		
+
 		currencyCode := currencies.GetCurrencyCode(currency)
 		currencyDigits := currencies.GetCurrencyDigits(currency)
-		
+
 		floatBalance := cryptoFunctions.GetFloatBalance(balance, currencyDigits)
-		
+
 		if floatBalance == nil {
 			return "Error"
 		}
-		
+
 		if processor != nil {
 			toUsdRate := (*processor).GetToUsdRate()
 
@@ -282,9 +282,9 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 
 		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"
 	}
-	
+
 	if usdSum != nil {
-		text = text + "Sum: " + usdSum.Text('f', 2) + " USD\n"
+		text = text + trans("sum") + usdSum.Text('f', 2) + trans("usd")
 	}
 
 	return text
