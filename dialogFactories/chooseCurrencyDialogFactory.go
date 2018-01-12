@@ -47,7 +47,10 @@ func MakeChooseCurrencyDialogFactory() dialogFactory.DialogFactory {
 
 func processWalletType(data *processing.ProcessData, variantPrototype *chooseCurrencyItemVariantPrototype) bool {
 	data.Static.SetUserStateValue(data.UserId, "walletCurrency", variantPrototype.currencyId)
-	data.SubstitudeDialog(data.Static.MakeDialogFn("cw", data.UserId, data.Trans, data.Static))
+	data.SubstitudeMessage(data.Trans("send_wallet_name"))
+	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
+		ProcessorId: "newWatchOnlyWalletName",
+	})
 	return true
 }
 

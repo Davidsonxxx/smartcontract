@@ -7,29 +7,24 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 )
 
-type createWalletItemVariantPrototype struct {
+type walletTypeItemVariantPrototype struct {
 	id string
 	textId string
 	process func(*processing.ProcessData) bool
 }
 
-type createWalletDialogFactory struct {
-	variants []createWalletItemVariantPrototype
+type walletTypeDialogFactory struct {
+	variants []walletTypeItemVariantPrototype
 }
 
-func MakeCreateWalletDialogFactory() dialogFactory.DialogFactory {
-	return &(createWalletDialogFactory{
-		variants: []createWalletItemVariantPrototype{
-			createWalletItemVariantPrototype{
+func MakeWalletTypeDialogFactory() dialogFactory.DialogFactory {
+	return &(walletTypeDialogFactory{
+		variants: []walletTypeItemVariantPrototype{
+			walletTypeItemVariantPrototype{
 				id: "wo",
 				textId: "watch_only",
 				process: createWatchOnlyWallet,
 			},
-			// createWalletItemVariantPrototype{
-			// 	id: "fl",
-			// 	textId: "full_wallet",
-			// 	process: createFullWallet,
-			// },
 		},
 	})
 }
@@ -42,13 +37,7 @@ func createWatchOnlyWallet(data *processing.ProcessData) bool {
 	return true
 }
 
-func createFullWallet(data *processing.ProcessData) bool {
-	data.SubstitudeMessage(data.Trans("not_supported"))
-	data.SendDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
-	return true
-}
-
-func (factory *createWalletDialogFactory) createVariants(staticData *processing.StaticProccessStructs, trans i18n.TranslateFunc) (variants []dialog.Variant) {
+func (factory *walletTypeDialogFactory) createVariants(staticData *processing.StaticProccessStructs, trans i18n.TranslateFunc) (variants []dialog.Variant) {
 	variants = make([]dialog.Variant, 0)
 
 	for _, variant := range factory.variants {
@@ -60,14 +49,14 @@ func (factory *createWalletDialogFactory) createVariants(staticData *processing.
 	return
 }
 
-func (factory *createWalletDialogFactory) MakeDialog(userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
+func (factory *walletTypeDialogFactory) MakeDialog(userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
 	return &dialog.Dialog{
 		Text:     trans("choose_wallet_type"),
 		Variants: factory.createVariants(staticData, trans),
 	}
 }
 
-func (factory *createWalletDialogFactory) ProcessVariant(variantId string, additionalId string, data *processing.ProcessData) bool {
+func (factory *walletTypeDialogFactory) ProcessVariant(variantId string, additionalId string, data *processing.ProcessData) bool {
 	for _, variant := range factory.variants {
 		if variant.id == variantId {
 			return variant.process(data)

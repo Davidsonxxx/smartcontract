@@ -25,17 +25,9 @@ func MakeDeleteConfirmationDialogFactory() dialogFactory.DialogFactory {
 	return &(deleteConfirmationDialogFactory{
 		variants: []deleteConfirmationVariantPrototype{
 			deleteConfirmationVariantPrototype{
-				id: "del1",
+				id: "del",
 				textId: "accept_del_watch_only",
 				process: deleteWalletFinally,
-				isActiveFn: isWatchOnlyWallet,
-				rowId:1,
-			},
-			deleteConfirmationVariantPrototype{
-				id: "del2",
-				textId: "accept_del_full",
-				process: deleteWalletFinally,
-				isActiveFn: isFullWallet, // declared in walletDialogFactory.go
 				rowId:1,
 			},
 			deleteConfirmationVariantPrototype{
@@ -46,10 +38,6 @@ func MakeDeleteConfirmationDialogFactory() dialogFactory.DialogFactory {
 			},
 		},
 	})
-}
-
-func isWatchOnlyWallet(walletId int64, staticData *processing.StaticProccessStructs) bool {
-	return true
 }
 
 func deleteWalletFinally(walletId int64, data *processing.ProcessData) bool {
@@ -78,11 +66,7 @@ func (factory *deleteConfirmationDialogFactory) createVariants(walletId int64, t
 func (factory *deleteConfirmationDialogFactory) MakeDialog(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
 	var text string
 
-	if isWatchOnlyWallet(walletId, staticData) {
-		text = trans("title_watch_only_deleting")
-	} else {
-		text = trans("title_full_deleting")
-	}
+	text = trans("title_watch_only_deleting")
 
 	return &dialog.Dialog{
 		Text:     text,

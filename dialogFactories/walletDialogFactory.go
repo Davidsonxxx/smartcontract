@@ -29,13 +29,12 @@ type walletDialogFactory struct {
 func MakeWalletDialogFactory() dialogFactory.DialogFactory {
 	return &(walletDialogFactory{
 		variants: []walletVariantPrototype{
-			walletVariantPrototype{
-				id: "send",
-				textId: "send",
-				process: sendFromWallet,
-				isActiveFn: isFullWallet,
-				rowId:1,
-			},
+			// walletVariantPrototype{
+			// 	id: "send",
+			// 	textId: "send",
+			// 	process: sendFromWallet,
+			// 	rowId:1,
+			// },
 			walletVariantPrototype{
 				id: "get",
 				textId: "receive",
@@ -62,10 +61,6 @@ func MakeWalletDialogFactory() dialogFactory.DialogFactory {
 			},
 		},
 	})
-}
-
-func isFullWallet(walletId int64, staticData *processing.StaticProccessStructs) bool {
-	return false
 }
 
 func sendFromWallet(walletId int64, data *processing.ProcessData) bool {

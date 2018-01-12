@@ -48,8 +48,6 @@ func Init(path string) (db *database.Database, err error) {
 		",currency INTEGER NOT NULL" +
 		",address TEXT NOT NULL" +
 		",type INTEGER NOT NULL" +
-		",balance INTEGER" + // only for virtual wallets
-		",private_key_storage TEXT" + // NULL for watch-only wallets
 		",FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL" +
 		")")
 
@@ -224,48 +222,6 @@ func CreateWatchOnlyWallet(db *database.Database, userId int64, name string, cur
 		currency,
 		database.SanitizeString(address),
 		wallettypes.WatchOnly,
-	))
-
-	return GetLastInsertedItemId(db)
-}
-
-func CreateFullWallet(db *database.Database, userId int64, name string, currency currencies.Currency, address string, privateKey string) (newWalletId int64) {
-	db.Exec(fmt.Sprintf(
-		"INSERT INTO wallets(" +
-		"user_id" +
-		",name" +
-		",currency" +
-		",address" +
-		",type" +
-		",private_key_storage" +
-		")VALUES(%d,'%s',%d,'%s',%d,'%s')",
-		userId,
-		database.SanitizeString(name),
-		currency,
-		database.SanitizeString(address),
-		wallettypes.Full,
-		database.SanitizeString(privateKey),
-	))
-
-	return GetLastInsertedItemId(db)
-}
-
-func CreateVirtualWallet(db *database.Database, userId int64, name string, currency currencies.Currency, address string) (newWalletId int64) {
-	db.Exec(fmt.Sprintf(
-		"INSERT INTO wallets(" +
-		"user_id" +
-		",name" +
-		",currency" +
-		",address" +
-		",type" +
-		",balance" +
-		")VALUES(%d,'%s',%s,'%s',%d,%d)",
-		userId,
-		database.SanitizeString(name),
-		currency,
-		database.SanitizeString(address),
-		wallettypes.Virtual,
-		0, // init with zero balance
 	))
 
 	return GetLastInsertedItemId(db)

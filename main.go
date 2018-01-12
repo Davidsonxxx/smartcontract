@@ -92,7 +92,7 @@ func main() {
 	dialogManager := &(dialogManager.DialogManager{})
 	dialogManager.RegisterDialogFactory("lc", dialogFactories.MakeLanguageSelectDialogFactory())
 	dialogManager.RegisterDialogFactory("mn", dialogFactories.MakeMainMenuDialogFactory())
-	dialogManager.RegisterDialogFactory("cw", dialogFactories.MakeCreateWalletDialogFactory())
+	dialogManager.RegisterDialogFactory("wt", dialogFactories.MakeWalletTypeDialogFactory())
 	dialogManager.RegisterDialogFactory("wl", dialogFactories.MakeWalletsListDialogFactory())
 	dialogManager.RegisterDialogFactory("wa", dialogFactories.MakeWalletDialogFactory())
 	dialogManager.RegisterDialogFactory("ws", dialogFactories.MakeWalletSettingsDialogFactory())
