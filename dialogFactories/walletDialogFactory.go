@@ -8,8 +8,8 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"fmt"
-	"math/big"
 	"strconv"
 )
 
@@ -91,16 +91,10 @@ func backToList(walletId int64, data *processing.ProcessData) bool {
 
 func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
 	walletAddress := database.GetWalletAddress(staticData.Db, walletId)
-	processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
 
-	if processor == nil {
-		return "Error"
-	}
+	serverDataManager := serverData.GetServerDataManager(staticData)
 
-	var balance *big.Int
-	if processor != nil {
-		balance = (*processor).GetBalance(walletAddress.Address)
-	}
+	balance := serverDataManager.GetBalance(walletAddress)
 
 	if balance == nil {
 		return "Error"

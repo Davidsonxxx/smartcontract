@@ -33,5 +33,5 @@
 	"deleted_success": { "other": "Wallet had been successfully deleted" },
 	"balance_header": { "other": "Balance:\n" },
 	"sum": { "other": "Sum: " },
-	"usd": { "other": "USD\n" }
+	"usd": { "other": " USD\n" }
 }

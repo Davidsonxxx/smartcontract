@@ -33,5 +33,5 @@
 	"deleted_success": { "other": "Кошелек был успешно удален" },
 	"balance_header": { "other": "Баланс:\n" },
 	"sum": { "other": "Сумма: " },
-	"usd": { "other": "$\n" }
+	"usd": { "other": " $\n" }
 }

@@ -7,6 +7,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
 	"math/big"
@@ -232,14 +233,16 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		return ""
 	}
 
-	groupedWallets := make(map[currencies.Currency] []string)
+	serverDataManager := serverData.GetServerDataManager(staticData)
+
+	groupedWallets := make(map[currencies.Currency] []currencies.AddressData)
 
 	for _, walletAddress := range walletAddresses {
 		walletsSlice, ok := groupedWallets[walletAddress.Currency]
 		if ok {
-			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress.Address)
+			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
 		} else {
-			groupedWallets[walletAddress.Currency] = []string{ walletAddress.Address }
+			groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
 		}
 	}
 
@@ -247,37 +250,30 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 
 	usdSum := new(big.Float)
 
-	for currency, wallets := range groupedWallets {
-		processor := cryptoFunctions.GetProcessor(currency)
+	for currency, addresses := range groupedWallets {
+		sumBalance := big.NewInt(0)
 
-		if processor == nil {
-			continue
-		}
-
-		var balance *big.Int
-		if processor != nil {
-			balance = (*processor).GetSumBalance(wallets)
-		}
-
-		if balance == nil {
-			return "Error"
+		for _, address := range addresses {
+			balance := serverDataManager.GetBalance(address)
+			if balance != nil {
+				sumBalance.Add(sumBalance, balance)
+			}
 		}
 
 		currencyCode := currencies.GetCurrencyCode(currency)
 		currencyDigits := currencies.GetCurrencyDigits(currency)
 
-		floatBalance := cryptoFunctions.GetFloatBalance(balance, currencyDigits)
+		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDigits)
 
 		if floatBalance == nil {
-			return "Error"
+			log.Print("Error float balance")
+			continue
 		}
 
-		if processor != nil {
-			toUsdRate := (*processor).GetToUsdRate()
+		toUsdRate := serverDataManager.GetRateToUsd(currency)
 
-			if toUsdRate != nil {
-				usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
-			}
+		if toUsdRate != nil {
+			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
 		}
 
 		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"
