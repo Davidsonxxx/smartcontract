@@ -343,3 +343,31 @@ func GetUserWalletAddresses(db *database.Database, userId int64) (addresses []cu
 
 	return
 }
+
+func GetAllWalletAddresses(db *database.Database) (addresses []currencies.AddressData) {
+	rows, err := db.Query("SELECT currency, address FROM wallets WHERE is_removed IS NULL")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var currency int64
+		var address string
+
+		err := rows.Scan(&currency, &address)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		addresses = append(
+			addresses,
+			currencies.AddressData{
+				Currency: currencies.Currency(currency),
+				Address: address,
+			},
+		)
+	}
+
+	return
+}

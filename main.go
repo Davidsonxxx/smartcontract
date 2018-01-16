@@ -10,6 +10,7 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactories"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -113,6 +114,12 @@ func main() {
 	}
 
 	staticData.Init()
+
+	serverDataManager := serverData.ServerDataManager{}
+
+	serverDataManager.RegisterServerDataCache(staticData)
+
+	serverDataManager.InitialUpdate(db)
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60

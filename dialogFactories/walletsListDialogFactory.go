@@ -233,7 +233,11 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		return ""
 	}
 
-	serverDataManager := serverData.GetServerDataManager(staticData)
+	serverDataCache := serverData.GetServerDataCache(staticData)
+
+	if serverDataCache == nil {
+		return ""
+	}
 
 	groupedWallets := make(map[currencies.Currency] []currencies.AddressData)
 
@@ -254,7 +258,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		sumBalance := big.NewInt(0)
 
 		for _, address := range addresses {
-			balance := serverDataManager.GetBalance(address)
+			balance := serverDataCache.GetBalance(address)
 			if balance != nil {
 				sumBalance.Add(sumBalance, balance)
 			}
@@ -270,7 +274,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			continue
 		}
 
-		toUsdRate := serverDataManager.GetRateToUsd(currency)
+		toUsdRate := serverDataCache.GetRateToUsd(currency)
 
 		if toUsdRate != nil {
 			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))

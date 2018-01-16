@@ -1,8 +1,8 @@
 package serverData
 
 import (
+	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"math/big"
 	"log"
 )
@@ -11,67 +11,46 @@ type ratesStruct struct {
 	toUsd map[currencies.Currency]*big.Float
 }
 
-type dataCache struct {
+type DataCache struct {
 	rates ratesStruct
 	balances map[currencies.AddressData]*big.Int
 }
 
-func (cache *dataCache) updateBalance(walletAddresses []currencies.AddressData) {
-	if len(walletAddresses) == 0 {
-		return
+func GetServerDataCache(staticData *processing.StaticProccessStructs) *DataCache {
+	if staticData == nil {
+		log.Print("staticData is nil")
+		return nil
 	}
 
-	groupedWallets := make(map[currencies.Currency] []string)
-
-	for _, walletAddress := range walletAddresses {
-		walletsSlice, ok := groupedWallets[walletAddress.Currency]
-		if ok {
-			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress.Address)
-		} else {
-			groupedWallets[walletAddress.Currency] = []string{ walletAddress.Address }
-		}
-	}
-
-	for currency, addresses := range groupedWallets {
-		processor := cryptoFunctions.GetProcessor(currency)
-
-		if processor == nil {
-			log.Print("No processor found")
-			continue
-		}
-
-		balances := []*big.Int{}
-
-		if processor != nil {
-			balances = (*processor).GetBalanceBunch(addresses)
-		}
-
-		if len(addresses) != len(balances) {
-			log.Printf("return count doesn't match input count: %d != %d", len(addresses), len(balances))
-			continue
-		}
-
-		for i, address := range addresses {
-			balance := balances[i]
-			if balance != nil {
-				addressData := currencies.AddressData{
-					Currency: currency,
-					Address: address,
-				}
-				cache.balances[addressData] = balance
-			}
-		}
+	dataCache, ok := staticData.GetCustomValue("serverDataCache").(*DataCache)
+	if ok {
+		return dataCache
+	} else {
+		log.Fatal("")
+		return nil
 	}
 }
 
-func (cache *dataCache) updateRates() {
-	processors := cryptoFunctions.GetAllProcessors()
+func (cache *DataCache) Init() {
+	cache.rates.toUsd = map[currencies.Currency]*big.Float{}
+	cache.balances = map[currencies.AddressData]*big.Int{}
+}
 
-	for currency, processor := range processors {
-		toUsdRate := processor.GetToUsdRate()
+func (cache *DataCache) GetBalance(address currencies.AddressData) *big.Int {
+	balance, ok := cache.balances[address]
+	if ok {
+		return balance
+	} else {
+		return nil
+	}
+}
 
-		if toUsdRate != nil {
-			cache.rates.toUsd[currency] = toUsdRate
-		}
+func (cache *DataCache) GetRateToUsd(currency currencies.Currency) *big.Float {
+	rateToUsd, ok := cache.rates.toUsd[currency]
+
+	if ok {
+		return rateToUsd
+	} else {
+		return nil
 	}
 }

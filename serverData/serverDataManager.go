@@ -2,54 +2,46 @@ package serverData
 
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"math/big"
+	"github.com/gameraccoon/telegram-bot-skeleton/database"
+	ourDb "gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"log"
 )
 
 type ServerDataManager struct {
-	cache dataCache
+	dataUpdater serverDataUpdater
 }
 
-func GetServerDataManager(staticData *processing.StaticProccessStructs) ServerDataManager {
+func (serverDataManager *ServerDataManager) RegisterServerDataCache(staticData *processing.StaticProccessStructs) {
 	if staticData == nil {
 		log.Fatal("staticData is nil")
 	}
 
-	serverDataManager, ok := staticData.GetCustomValue("serverDataManager").(ServerDataManager)
-	if ok {
-		return serverDataManager
-	} else {
-		serverDataManager := ServerDataManager{}
-		staticData.SetCustomValue("serverDataManager", serverDataManager)
-		return serverDataManager
-	}
+	serverDataManager.dataUpdater.cache.Init()
+
+	staticData.SetCustomValue("serverDataCache", &serverDataManager.dataUpdater.cache)
 }
 
-func (serverDataManager *ServerDataManager) GetBalance(address currencies.AddressData) *big.Int {
-	balance, ok := serverDataManager.cache.balances[address]
-	if ok {
-		return balance
-	} else {
-		return nil
-	}
+func (serverDataManager *ServerDataManager) updateAll(db *database.Database) {
+	walletAddresses := ourDb.GetAllWalletAddresses(db)
+
+	serverDataManager.dataUpdater.updateBalance(walletAddresses)
+	serverDataManager.dataUpdater.updateRates()
 }
 
-func (serverDataManager *ServerDataManager) GetRateToUsd(currency currencies.Currency) *big.Float {
-	rateToUsd, ok := serverDataManager.cache.rates.toUsd[currency]
-
-	if ok {
-		return rateToUsd
-	} else {
-		return nil
+func (serverDataManager *ServerDataManager) InitialUpdate(db *database.Database) {
+	if db == nil {
+		log.Fatal("database is nil")
+		return
 	}
+
+	serverDataManager.updateAll(db)
 }
 
-func (serverDataManager *ServerDataManager) CalcUsdBalance(address currencies.AddressData) *big.Int {
-	balance, ok := serverDataManager.cache.balances[address]
-	if ok {
-		return balance
-	} else {
-		return nil
+func (serverDataManager *ServerDataManager) TimerTick(db *database.Database) {
+	if db == nil {
+		log.Print("database is nil, skip update")
+		return
 	}
+
+	serverDataManager.updateAll(db)
 }
