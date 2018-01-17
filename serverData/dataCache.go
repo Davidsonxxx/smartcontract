@@ -5,6 +5,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"math/big"
 	"log"
+	"sync"
 )
 
 type ratesStruct struct {
@@ -13,7 +14,9 @@ type ratesStruct struct {
 
 type DataCache struct {
 	rates ratesStruct
+	ratesMutex sync.Mutex
 	balances map[currencies.AddressData]*big.Int
+	balancesMutex sync.Mutex
 }
 
 func GetServerDataCache(staticData *processing.StaticProccessStructs) *DataCache {
@@ -37,6 +40,9 @@ func (cache *DataCache) Init() {
 }
 
 func (cache *DataCache) GetBalance(address currencies.AddressData) *big.Int {
+	cache.balancesMutex.Lock()
+	defer cache.balancesMutex.Unlock()
+	
 	balance, ok := cache.balances[address]
 	if ok {
 		return balance
@@ -46,6 +52,9 @@ func (cache *DataCache) GetBalance(address currencies.AddressData) *big.Int {
 }
 
 func (cache *DataCache) GetRateToUsd(currency currencies.Currency) *big.Float {
+	cache.ratesMutex.Lock()
+	defer cache.ratesMutex.Unlock()
+	
 	rateToUsd, ok := cache.rates.toUsd[currency]
 
 	if ok {

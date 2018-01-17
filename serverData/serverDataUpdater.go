@@ -46,6 +46,9 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 			continue
 		}
 
+		dataUpdater.cache.balancesMutex.Lock()
+		defer dataUpdater.cache.balancesMutex.Unlock()
+		
 		for i, address := range addresses {
 			balance := balances[i]
 			if balance != nil {
@@ -61,12 +64,19 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 
 func (dataUpdater *serverDataUpdater) updateRates() {
 	processors := cryptoFunctions.GetAllProcessors()
-
+	
+	toUsdRates := map[currencies.Currency]*big.Float{}
+	
 	for currency, processor := range processors {
 		toUsdRate := processor.GetToUsdRate()
 
 		if toUsdRate != nil {
-			dataUpdater.cache.rates.toUsd[currency] = toUsdRate
+			toUsdRates[currency] = toUsdRate
 		}
 	}
+	
+	dataUpdater.cache.balancesMutex.Lock()
+	defer dataUpdater.cache.balancesMutex.Unlock()
+
+	dataUpdater.cache.rates.toUsd = toUsdRates
 }

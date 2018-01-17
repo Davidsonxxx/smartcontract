@@ -11,9 +11,11 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactories"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
+	static "gitlab.com/gameraccoon/telegram-accountant-bot/staticData"
 	"io/ioutil"
 	"log"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -32,7 +34,7 @@ func getApiToken() (token string, err error) {
 	return getFileStringContent("./telegramApiToken.txt")
 }
 
-func loadConfig(path string) (config processing.StaticConfiguration, err error) {
+func loadConfig(path string) (config static.StaticConfiguration, err error) {
 	jsonString, err := getFileStringContent(path)
 	if err == nil {
 		dec := json.NewDecoder(strings.NewReader(jsonString))
@@ -106,7 +108,7 @@ func main() {
 	staticData := &processing.StaticProccessStructs{
 		Chat:   chat,
 		Db:     db,
-		Config: &config,
+		Config: config,
 		Trans:  translators,
 		MakeDialogFn: func(id string, userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
 			return dialogManager.MakeDialog(id, userId, trans, staticData)
@@ -116,11 +118,25 @@ func main() {
 	staticData.Init()
 
 	serverDataManager := serverData.ServerDataManager{}
-
 	serverDataManager.RegisterServerDataCache(staticData)
-
 	serverDataManager.InitialUpdate(db)
 
+	go updateTimer(staticData, &serverDataManager, config.UpdateIntervalSec)
+	updateBot(chat.GetBot(), chat, staticData, dialogManager)
+}
+
+func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager *serverData.ServerDataManager, updateIntervalSec int) {
+	if updateIntervalSec <= 0 {
+		log.Fatal("Wrong time interval. Add updateIntervalSec to config")
+	}
+
+	for {
+		time.Sleep(time.Duration(updateIntervalSec) * time.Second)
+		serverDataManager.TimerTick(staticData.Db)
+	}
+}
+
+func updateBot(bot *tgbotapi.BotAPI, chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager) {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
