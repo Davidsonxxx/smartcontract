@@ -35,14 +35,19 @@ func GetServerDataCache(staticData *processing.StaticProccessStructs) *DataCache
 }
 
 func (cache *DataCache) Init() {
-	cache.rates.toUsd = map[currencies.Currency]*big.Float{}
-	cache.balances = map[currencies.AddressData]*big.Int{}
+	if cache.rates.toUsd == nil {
+		cache.rates.toUsd = map[currencies.Currency]*big.Float{}
+	}
+
+	if cache.balances == nil {
+		cache.balances = map[currencies.AddressData]*big.Int{}
+	}
 }
 
 func (cache *DataCache) GetBalance(address currencies.AddressData) *big.Int {
 	cache.balancesMutex.Lock()
 	defer cache.balancesMutex.Unlock()
-	
+
 	balance, ok := cache.balances[address]
 	if ok {
 		return balance
@@ -54,7 +59,7 @@ func (cache *DataCache) GetBalance(address currencies.AddressData) *big.Int {
 func (cache *DataCache) GetRateToUsd(currency currencies.Currency) *big.Float {
 	cache.ratesMutex.Lock()
 	defer cache.ratesMutex.Unlock()
-	
+
 	rateToUsd, ok := cache.rates.toUsd[currency]
 
 	if ok {

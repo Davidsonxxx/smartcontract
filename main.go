@@ -15,6 +15,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -117,26 +118,28 @@ func main() {
 
 	staticData.Init()
 
+	dbMutex := &sync.Mutex{}
+
 	serverDataManager := serverData.ServerDataManager{}
 	serverDataManager.RegisterServerDataCache(staticData)
-	serverDataManager.InitialUpdate(db)
+	serverDataManager.InitialUpdate(db, dbMutex)
 
-	go updateTimer(staticData, &serverDataManager, config.UpdateIntervalSec)
-	updateBot(chat.GetBot(), chat, staticData, dialogManager)
+	go updateTimer(staticData, &serverDataManager, config.UpdateIntervalSec, dbMutex)
+	updateBot(chat.GetBot(), chat, staticData, dialogManager, dbMutex)
 }
 
-func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager *serverData.ServerDataManager, updateIntervalSec int) {
+func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager *serverData.ServerDataManager, updateIntervalSec int, dbMutex *sync.Mutex) {
 	if updateIntervalSec <= 0 {
 		log.Fatal("Wrong time interval. Add updateIntervalSec to config")
 	}
 
 	for {
 		time.Sleep(time.Duration(updateIntervalSec) * time.Second)
-		serverDataManager.TimerTick(staticData.Db)
+		serverDataManager.TimerTick(staticData.Db, dbMutex)
 	}
 }
 
-func updateBot(bot *tgbotapi.BotAPI, chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager) {
+func updateBot(bot *tgbotapi.BotAPI, chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, dbMutex *sync.Mutex) {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
@@ -150,10 +153,14 @@ func updateBot(bot *tgbotapi.BotAPI, chat *telegramChat.TelegramChat, staticData
 
 	for update := range updates {
 		if update.Message != nil {
+			dbMutex.Lock()
 			processMessageUpdate(&update, staticData, dialogManager, &processors)
+			dbMutex.Unlock()
 		}
 		if update.CallbackQuery != nil {
+			dbMutex.Lock()
 			processCallbackUpdate(&update, staticData, dialogManager, &processors)
+			dbMutex.Unlock()
 		}
 	}
 }
