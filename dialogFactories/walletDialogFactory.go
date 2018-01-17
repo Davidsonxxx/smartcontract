@@ -101,7 +101,7 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 	balance := serverDataCache.GetBalance(walletAddress)
 
 	if balance == nil {
-		return "Error"
+		return trans("wait_for_data")
 	}
 
 	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
