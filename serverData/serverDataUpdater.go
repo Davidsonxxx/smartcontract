@@ -47,7 +47,6 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 		}
 
 		dataUpdater.cache.balancesMutex.Lock()
-		defer dataUpdater.cache.balancesMutex.Unlock()
 
 		for i, address := range addresses {
 			balance := balances[i]
@@ -59,6 +58,8 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 				dataUpdater.cache.balances[addressData] = balance
 			}
 		}
+
+		dataUpdater.cache.balancesMutex.Unlock()
 	}
 }
 
@@ -76,7 +77,6 @@ func (dataUpdater *serverDataUpdater) updateRates() {
 	}
 
 	dataUpdater.cache.balancesMutex.Lock()
-	defer dataUpdater.cache.balancesMutex.Unlock()
-
 	dataUpdater.cache.rates.toUsd = toUsdRates
+	dataUpdater.cache.balancesMutex.Unlock()
 }
