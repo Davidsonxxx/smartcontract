@@ -20,3 +20,14 @@ func GetProcessor(currency currencies.Currency) *CurrencyProcessor {
 		return nil
 	}
 }
+
+func GetAllProcessors() map[currencies.Currency]CurrencyProcessor {
+	processors := map[currencies.Currency]CurrencyProcessor {}
+
+	// copy the map
+	for currency, processor := range processorsList {
+		processors[currency] = processor
+	}
+
+	return processors
+}
