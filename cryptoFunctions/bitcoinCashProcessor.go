@@ -68,6 +68,16 @@ func (processor *BitcoinCashProcessor) GetSumBalance(addresses []string) *big.In
 	return sumBalance
 }
 
+func (processor *BitcoinCashProcessor) GetBalanceBunch(addresses []string) []*big.Int {
+	balances := make([]*big.Int, len(addresses))
+
+	for i, walletAddress := range addresses {
+		balances[i] = processor.GetBalance(walletAddress)
+	}
+
+	return balances
+}
+
 func (processor *BitcoinCashProcessor) GetToUsdRate() *big.Float {
 	return getCurrencyToUsdRate("bitcoin-cash")
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
+	static "gitlab.com/gameraccoon/telegram-accountant-bot/staticData"
 )
 
 type languageSelectVariantPrototype struct {
@@ -34,8 +35,14 @@ func (factory *languageSelectDialogFactory) createVariants(staticData *processin
 
 	itemId := 0
 	itemsInRow := 2
+	
+	config, configCastSuccess := staticData.Config.(static.StaticConfiguration)
+	
+	if !configCastSuccess {
+		config = static.StaticConfiguration{}
+	}
 
-	for _, lang := range staticData.Config.AvailableLanguages {
+	for _, lang := range config.AvailableLanguages {
 		variants = append(variants, dialog.Variant{
 			Id:   lang.Key,
 			Text: lang.Name,

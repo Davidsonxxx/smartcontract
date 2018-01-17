@@ -15,6 +15,7 @@ type EtherProcessor struct {
 }
 
 type EtherRespData struct {
+	Account string `json:"account"`
 	Balance string `json:"balance"`
 }
 
@@ -102,6 +103,53 @@ func (processor *EtherProcessor) GetSumBalance(addresses []string) *big.Int {
 	}
 
 	return sum
+}
+
+func (processor *EtherProcessor) GetBalanceBunch(addresses []string) []*big.Int {
+	if len(addresses) == 1 {
+		return []*big.Int {
+			processor.GetBalance(addresses[0]),
+		}
+	}
+
+	balances := make([]*big.Int, len(addresses))
+
+	resp, err := http.Get("http://api.etherscan.io/api?module=account&action=balancemulti&address=" + strings.Join(addresses, ",") + "&tag=latest&apikey=" + etherscanApiKey)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Print(err)
+		return balances
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Print(err)
+		return balances
+	}
+
+	var parsedResp = new(EtherMultiResp)
+	err = json.Unmarshal(body, &parsedResp)
+	if(err != nil){
+		log.Print(string(body[:]))
+		log.Print(err)
+		return balances
+	}
+
+	// I'm not sure if it's more time efficient
+	addressesIndexes := map[string]int{}
+	for i, address := range addresses {
+		addressesIndexes[address] = i
+	}
+
+	for _, data := range parsedResp.Result {
+		if intValue, ok := new(big.Int).SetString(data.Balance, 10); ok {
+			if i, ok := addressesIndexes[data.Account]; ok {
+				balances[i] = intValue
+			}
+		}
+	}
+
+	return balances
 }
 
 func (processor *EtherProcessor) GetToUsdRate() *big.Float {

@@ -201,6 +201,9 @@ func TestWalletBelongsToUser(t *testing.T) {
 	assert.False(IsWalletBelongsToUser(db, userId2, wallet1Id))
 	// nonexistent wallet
 	assert.False(IsWalletBelongsToUser(db, userId1, -1))
+
+	walletAddresses := GetAllWalletAddresses(db)
+	assert.Equal(2, len(walletAddresses))
 }
 
 func TestUsersLanguage(t *testing.T) {

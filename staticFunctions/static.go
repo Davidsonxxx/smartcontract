@@ -3,6 +3,7 @@ package staticFunctions
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	static "gitlab.com/gameraccoon/telegram-accountant-bot/staticData"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
 )
@@ -10,11 +11,17 @@ import (
 func FindTransFunction(userId int64, staticData *processing.StaticProccessStructs) i18n.TranslateFunc {
 	// ToDo: cache user's lang
 	lang := database.GetUserLanguage(staticData.Db, userId)
+	
+	config, configCastSuccess := staticData.Config.(static.StaticConfiguration)
+	
+	if !configCastSuccess {
+		config = static.StaticConfiguration{}
+	}
 
 	// replace empty language to default one (some clients don't send user's language)
 	if len(lang) <= 0 {
 		log.Printf("User %d has empty language. Setting to default.", userId)
-		lang = staticData.Config.DefaultLanguage
+		lang = config.DefaultLanguage
 		database.SetUserLanguage(staticData.Db, userId, lang)
 	}
 
@@ -23,9 +30,9 @@ func FindTransFunction(userId int64, staticData *processing.StaticProccessStruct
 	}
 
 	// unknown language, use default instead
-	if foundTrans, ok := staticData.Trans[staticData.Config.DefaultLanguage]; ok {
+	if foundTrans, ok := staticData.Trans[config.DefaultLanguage]; ok {
 		log.Printf("User %d has unknown language (%s). Setting to default.", userId, lang)
-		lang = staticData.Config.DefaultLanguage
+		lang = config.DefaultLanguage
 		database.SetUserLanguage(staticData.Db, userId, lang)
 		return foundTrans
 	}
@@ -41,6 +48,6 @@ func FindTransFunction(userId int64, staticData *processing.StaticProccessStruct
 	// something gone completely wrong
 	log.Fatal("There are no available translators")
 	// we will probably crash but there is nothing else we can do
-	translator, _ := i18n.Tfunc(staticData.Config.DefaultLanguage)
+	translator, _ := i18n.Tfunc(config.DefaultLanguage)
 	return translator
 }
