@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	minimalVersion = "1.0"
-	latestVersion  = "1.0"
+	minimalVersion = "0.1"
+	latestVersion  = "0.1"
 )
 
 type dbUpdater struct {
