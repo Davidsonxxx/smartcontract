@@ -125,7 +125,7 @@ func main() {
 	serverDataManager.InitialUpdate(db, dbMutex)
 
 	go updateTimer(staticData, &serverDataManager, config.UpdateIntervalSec, dbMutex)
-	updateBot(chat.GetBot(), chat, staticData, dialogManager, dbMutex)
+	updateBot(chat, staticData, dialogManager, dbMutex)
 }
 
 func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager *serverData.ServerDataManager, updateIntervalSec int, dbMutex *sync.Mutex) {
@@ -139,7 +139,7 @@ func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager
 	}
 }
 
-func updateBot(bot *tgbotapi.BotAPI, chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, dbMutex *sync.Mutex) {
+func updateBot(chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, dbMutex *sync.Mutex) {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
@@ -153,14 +153,65 @@ func updateBot(bot *tgbotapi.BotAPI, chat *telegramChat.TelegramChat, staticData
 
 	for update := range updates {
 		if update.Message != nil {
-			dbMutex.Lock()
-			processMessageUpdate(&update, staticData, dialogManager, &processors)
-			dbMutex.Unlock()
+			processMessageUpdate(&update, staticData, dialogManager, &processors, dbMutex)
 		}
 		if update.CallbackQuery != nil {
-			dbMutex.Lock()
-			processCallbackUpdate(&update, staticData, dialogManager, &processors)
-			dbMutex.Unlock()
+			processCallbackUpdate(&update, staticData, dialogManager, &processors, dbMutex)
 		}
 	}
+}
+
+func processMessageUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap, dbMutex *sync.Mutex) {
+	data := processing.ProcessData{
+		Static: staticData,
+		ChatId: update.Message.Chat.ID,
+	}
+
+	userLangCode := strings.ToLower(update.Message.From.LanguageCode)
+
+	message := update.Message.Text
+
+	if strings.HasPrefix(message, "/") {
+		commandLen := strings.Index(message, " ")
+		if commandLen != -1 {
+			data.Command = message[1:commandLen]
+			data.Message = message[commandLen+1:]
+		} else {
+			data.Command = message[1:]
+		}
+
+		dbMutex.Lock()
+		processCommand(&data, dialogManager, processors, userLangCode)
+		dbMutex.Unlock()
+	} else {
+		data.Message = message
+
+		dbMutex.Lock()
+		processPlainMessage(&data, dialogManager, userLangCode)
+		dbMutex.Unlock()
+	}
+}
+
+func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap, dbMutex *sync.Mutex) {
+	data := processing.ProcessData{
+		Static:            staticData,
+		ChatId:            int64(update.CallbackQuery.From.ID),
+		AnsweredMessageId: int64(update.CallbackQuery.Message.MessageID),
+	}
+
+	userLangCode := strings.ToLower(update.CallbackQuery.From.LanguageCode)
+
+	message := update.CallbackQuery.Data
+
+	commandLen := strings.Index(message, " ")
+	if commandLen != -1 {
+		data.Command = message[1:commandLen]
+		data.Message = message[commandLen+1:]
+	} else {
+		data.Command = message[1:]
+	}
+
+	dbMutex.Lock()
+	processCommand(&data, dialogManager, processors, userLangCode)
+	dbMutex.Unlock()
 }
