@@ -55,19 +55,6 @@ func (processor *BitcoinCashProcessor) GetBalance(address string) *big.Int {
 	}
 }
 
-func (processor *BitcoinCashProcessor) GetSumBalance(addresses []string) *big.Int {
-	sumBalance := big.NewInt(0)
-
-	for _, walletAddress := range addresses {
-		balance := processor.GetBalance(walletAddress)
-		if balance != nil {
-			sumBalance.Add(sumBalance, balance)
-		}
-	}
-
-	return sumBalance
-}
-
 func (processor *BitcoinCashProcessor) GetBalanceBunch(addresses []string) []*big.Int {
 	balances := make([]*big.Int, len(addresses))
 

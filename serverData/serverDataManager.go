@@ -73,7 +73,13 @@ func (serverDataManager *ServerDataManager) TimerTick(db *database.Database, dbM
 }
 
 func (serverDataManager *ServerDataManager) GetBalance(address currencies.AddressData) *big.Int {
-	return serverDataManager.dataUpdater.cache.GetBalance(address)
+	balance := serverDataManager.dataUpdater.cache.GetBalance(address)
+
+	if balance != nil {
+		return balance
+	} else {
+		return serverDataManager.dataUpdater.updateBalanceOneWallet(address)
+	}
 }
 
 func (serverDataManager *ServerDataManager) GetRateToUsd(currency currencies.Currency) *big.Float {

@@ -35,19 +35,6 @@ func (processor *BitcoinGoldProcessor) GetBalance(address string) *big.Int {
 	}
 }
 
-func (processor *BitcoinGoldProcessor) GetSumBalance(addresses []string) *big.Int {
-	sumBalance := big.NewInt(0)
-
-	for _, walletAddress := range addresses {
-		balance := processor.GetBalance(walletAddress)
-		if balance != nil {
-			sumBalance.Add(sumBalance, balance)
-		}
-	}
-
-	return sumBalance
-}
-
 func (processor *BitcoinGoldProcessor) GetBalanceBunch(addresses []string) []*big.Int {
 	balances := make([]*big.Int, len(addresses))
 
