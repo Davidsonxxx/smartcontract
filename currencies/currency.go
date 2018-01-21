@@ -13,6 +13,7 @@ const (
 	Ether Currency = 1
 	BitcoinCash Currency = 2
 	BitcoinGold Currency = 3
+	RippleXrp Currency = 4
 )
 
 type currencyStaticData struct {
@@ -44,6 +45,11 @@ func init() {
 			FullName: "Bitcoin Gold",
 			Code: "BTG",
 			Digits: 8,
+		},
+		RippleXrp : {
+			FullName: "Ripple",
+			Code: "XRP",
+			Digits: 6,
 		},
 	}
 }

@@ -41,6 +41,11 @@ func MakeChooseCurrencyDialogFactory() dialogFactory.DialogFactory {
 				currencyId: currencies.BitcoinGold,
 				rowId: 2,
 			},
+			chooseCurrencyItemVariantPrototype{
+				id: "xrp",
+				currencyId: currencies.RippleXrp,
+				rowId: 3,
+			},
 		},
 	})
 }

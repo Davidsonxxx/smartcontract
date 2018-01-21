@@ -9,6 +9,7 @@ var processorsList map[currencies.Currency]CurrencyProcessor = map[currencies.Cu
 	currencies.BitcoinCash : &BitcoinCashProcessor{},
 	currencies.BitcoinGold : &BitcoinGoldProcessor{},
 	currencies.Ether : &EtherProcessor{},
+	currencies.RippleXrp : &RippleXrpProcessor{},
 }
 
 func GetProcessor(currency currencies.Currency) *CurrencyProcessor {
