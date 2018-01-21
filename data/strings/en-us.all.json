@@ -34,5 +34,5 @@
 	"balance_header": { "other": "Balance:\n" },
 	"sum": { "other": "Sum: " },
 	"usd": { "other": " USD\n" },
-	"wait_for_data": { "other": "Wait for data update" }
+	"no_data": { "other": "Data not available" }
 }

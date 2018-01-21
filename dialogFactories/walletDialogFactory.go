@@ -41,23 +41,23 @@ func MakeWalletDialogFactory() dialogFactory.DialogFactory {
 				process: receiveToWallet,
 				rowId:1,
 			},
-			walletVariantPrototype{
-				id: "hist",
-				textId: "history",
-				process: showHistory,
-				rowId:2,
-			},
+			// walletVariantPrototype{
+			// 	id: "hist",
+			// 	textId: "history",
+			// 	process: showHistory,
+			// 	rowId:2,
+			// },
 			walletVariantPrototype{
 				id: "set",
 				textId: "settings",
 				process: walletSettings,
-				rowId:2,
+				rowId:1,
 			},
 			walletVariantPrototype{
 				id: "back",
 				textId: "back_to_list",
 				process: backToList,
-				rowId:3,
+				rowId:2,
 			},
 		},
 	})
@@ -101,7 +101,7 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 	balance := serverData.GetBalance(walletAddress)
 
 	if balance == nil {
-		return trans("wait_for_data")
+		return trans("no_data")
 	}
 
 	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
