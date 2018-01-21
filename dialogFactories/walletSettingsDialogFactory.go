@@ -4,8 +4,8 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strconv"
 )
 
@@ -92,7 +92,7 @@ func (factory *walletSettingsDialogFactory) ProcessVariant(variantId string, add
 		return false
 	}
 
-	if !database.IsWalletBelongsToUser(data.Static.Db, data.UserId, walletId) {
+	if !staticFunctions.GetDb(data.Static).IsWalletBelongsToUser(data.UserId, walletId) {
 		return false
 	}
 

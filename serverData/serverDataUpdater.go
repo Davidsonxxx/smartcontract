@@ -8,7 +8,26 @@ import (
 )
 
 type serverDataUpdater struct {
-	cache DataCache
+	cache dataCache
+}
+
+func (dataUpdater *serverDataUpdater) updateBalanceOneWallet(walletAddress currencies.AddressData) *big.Int {
+	processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
+
+	if processor == nil {
+		log.Print("No processor found")
+		return nil
+	}
+
+	balance := (*processor).GetBalance(walletAddress.Address)
+
+	if balance != nil {
+		dataUpdater.cache.balancesMutex.Lock()
+		dataUpdater.cache.balances[walletAddress] = balance
+		dataUpdater.cache.balancesMutex.Unlock()
+	}
+
+	return balance
 }
 
 func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies.AddressData) {
@@ -35,11 +54,7 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 			continue
 		}
 
-		balances := []*big.Int{}
-
-		if processor != nil {
-			balances = (*processor).GetBalanceBunch(addresses)
-		}
+		balances := (*processor).GetBalanceBunch(addresses)
 
 		if len(addresses) != len(balances) {
 			log.Printf("return count doesn't match input count: %d != %d", len(addresses), len(balances))

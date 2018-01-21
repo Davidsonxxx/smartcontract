@@ -5,7 +5,7 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strconv"
 )
 
@@ -34,8 +34,8 @@ func MakeReceiveDialogFactory() dialogFactory.DialogFactory {
 }
 
 func (factory *receiveDialogFactory) createText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
-	walletAddress := database.GetWalletAddress(staticData.Db, walletId)
-	
+	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
+
 	return trans("receive_title") + "\n" + walletAddress.Address
 }
 
@@ -67,7 +67,7 @@ func (factory *receiveDialogFactory) ProcessVariant(variantId string, additional
 		return false
 	}
 
-	if !database.IsWalletBelongsToUser(data.Static.Db, data.UserId, walletId) {
+	if !staticFunctions.GetDb(data.Static).IsWalletBelongsToUser(data.UserId, walletId) {
 		return false
 	}
 

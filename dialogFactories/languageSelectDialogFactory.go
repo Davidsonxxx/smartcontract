@@ -5,7 +5,6 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	static "gitlab.com/gameraccoon/telegram-accountant-bot/staticData"
 )
@@ -24,7 +23,7 @@ func MakeLanguageSelectDialogFactory() dialogFactory.DialogFactory {
 }
 
 func applyNewLanguage(data *processing.ProcessData, newLang string) bool {
-	database.SetUserLanguage(data.Static.Db, data.UserId, newLang)
+	staticFunctions.GetDb(data.Static).SetUserLanguage(data.UserId, newLang)
 	data.Trans = staticFunctions.FindTransFunction(data.UserId, data.Static)
 	data.SubstitudeDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
 	return true
@@ -35,9 +34,9 @@ func (factory *languageSelectDialogFactory) createVariants(staticData *processin
 
 	itemId := 0
 	itemsInRow := 2
-	
+
 	config, configCastSuccess := staticData.Config.(static.StaticConfiguration)
-	
+
 	if !configCastSuccess {
 		config = static.StaticConfiguration{}
 	}

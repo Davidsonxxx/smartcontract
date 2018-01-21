@@ -1,7 +1,6 @@
 package database
 
 import (
-	"github.com/gameraccoon/telegram-bot-skeleton/database"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"os"
@@ -20,9 +19,9 @@ func clearDb() {
 	dropDatabase(testDbPath)
 }
 
-func connectDb(t *testing.T) *database.Database {
+func connectDb(t *testing.T) *AccountDb {
 	assert := require.New(t)
-	db, err := Init(testDbPath)
+	db, err := ConnectDb(testDbPath)
 
 	if err != nil {
 		assert.Fail("Problem with creation db connection:" + err.Error())
@@ -31,7 +30,7 @@ func connectDb(t *testing.T) *database.Database {
 	return db
 }
 
-func createDbAndConnect(t *testing.T) *database.Database {
+func createDbAndConnect(t *testing.T) *AccountDb {
 	clearDb()
 	return connectDb(t)
 }
@@ -40,7 +39,7 @@ func TestConnection(t *testing.T) {
 	assert := require.New(t)
 	dropDatabase(testDbPath)
 
-	db, err := Init(testDbPath)
+	db, err := ConnectDb(testDbPath)
 
 	defer dropDatabase(testDbPath)
 	if err != nil {
@@ -67,8 +66,8 @@ func TestSanitizeString(t *testing.T) {
 
 	testText := "text'test''test\"test\\"
 
-	SetDatabaseVersion(db, testText)
-	assert.Equal(testText, GetDatabaseVersion(db))
+	db.SetDatabaseVersion(testText)
+	assert.Equal(testText, db.GetDatabaseVersion())
 }
 
 func TestDatabaseVersion(t *testing.T) {
@@ -81,13 +80,13 @@ func TestDatabaseVersion(t *testing.T) {
 	}
 
 	{
-		version := GetDatabaseVersion(db)
+		version := db.GetDatabaseVersion()
 		assert.Equal(latestVersion, version)
 	}
 
 	{
-		SetDatabaseVersion(db, "1.0")
-		version := GetDatabaseVersion(db)
+		db.SetDatabaseVersion("1.0")
+		version := db.GetDatabaseVersion()
 		assert.Equal("1.0", version)
 	}
 
@@ -95,20 +94,20 @@ func TestDatabaseVersion(t *testing.T) {
 
 	{
 		db = connectDb(t)
-		version := GetDatabaseVersion(db)
+		version := db.GetDatabaseVersion()
 		assert.Equal("1.0", version)
 		db.Disconnect()
 	}
 
 	{
 		db = connectDb(t)
-		SetDatabaseVersion(db, "1.2")
+		db.SetDatabaseVersion("1.2")
 		db.Disconnect()
 	}
 
 	{
 		db = connectDb(t)
-		version := GetDatabaseVersion(db)
+		version := db.GetDatabaseVersion()
 		assert.Equal("1.2", version)
 		db.Disconnect()
 	}
@@ -127,15 +126,15 @@ func TestGetUserId(t *testing.T) {
 	var chatId1 int64 = 321
 	var chatId2 int64 = 123
 
-	id1 := GetUserId(db, chatId1, "")
-	id2 := GetUserId(db, chatId1, "")
-	id3 := GetUserId(db, chatId2, "")
+	id1 := db.GetUserId(chatId1, "")
+	id2 := db.GetUserId(chatId1, "")
+	id3 := db.GetUserId(chatId2, "")
 
 	assert.Equal(id1, id2)
 	assert.NotEqual(id1, id3)
 
-	assert.Equal(chatId1, GetUserChatId(db, id1))
-	assert.Equal(chatId2, GetUserChatId(db, id3))
+	assert.Equal(chatId1, db.GetUserChatId(id1))
+	assert.Equal(chatId2, db.GetUserChatId(id3))
 }
 
 func TestCreateAndRemoveWallet(t *testing.T) {
@@ -149,31 +148,31 @@ func TestCreateAndRemoveWallet(t *testing.T) {
 	defer db.Disconnect()
 
 	var chatId int64 = 123
-	userId := GetUserId(db, chatId, "")
+	userId := db.GetUserId(chatId, "")
 
 	{
-		ids, names := GetUserWallets(db, userId)
+		ids, names := db.GetUserWallets(userId)
 		assert.Equal(0, len(ids))
 		assert.Equal(0, len(names))
 	}
 
-	walletId := CreateWatchOnlyWallet(db, userId, "testwallet", currencies.Bitcoin, "key")
-	assert.True(IsWalletBelongsToUser(db, walletId, userId))
+	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", currencies.Bitcoin, "key")
+	assert.True(db.IsWalletBelongsToUser(walletId, userId))
 	{
-		ids, names := GetUserWallets(db, userId)
+		ids, names := db.GetUserWallets(userId)
 		assert.Equal(1, len(ids))
 		assert.Equal(1, len(names))
 		if len(ids) > 0 && len(names) > 0 {
 			assert.Equal(walletId, ids[0])
 			assert.Equal("testwallet", names[0])
-			assert.Equal("testwallet", GetWalletName(db, ids[0]))
+			assert.Equal("testwallet", db.GetWalletName(ids[0]))
 		}
 	}
 
-	DeleteWallet(db, walletId)
-	assert.False(IsWalletBelongsToUser(db, walletId, userId))
+	db.DeleteWallet(walletId)
+	assert.False(db.IsWalletBelongsToUser(walletId, userId))
 	{
-		ids, names := GetUserWallets(db, userId)
+		ids, names := db.GetUserWallets(userId)
 		assert.Equal(0, len(ids))
 		assert.Equal(0, len(names))
 	}
@@ -189,20 +188,20 @@ func TestWalletBelongsToUser(t *testing.T) {
 	}
 	defer db.Disconnect()
 
-	userId1 := GetUserId(db, 123, "")
-	userId2 := GetUserId(db, 321, "")
+	userId1 := db.GetUserId(123, "")
+	userId2 := db.GetUserId(321, "")
 
-	wallet1Id := CreateWatchOnlyWallet(db, userId1, "testwalt", currencies.Bitcoin, "key1")
-	wallet2Id := CreateWatchOnlyWallet(db, userId2, "123", currencies.Bitcoin, "key2")
+	wallet1Id := db.CreateWatchOnlyWallet(userId1, "testwalt", currencies.Bitcoin, "key1")
+	wallet2Id := db.CreateWatchOnlyWallet(userId2, "123", currencies.Bitcoin, "key2")
 
-	assert.True(IsWalletBelongsToUser(db, userId1, wallet1Id))
-	assert.True(IsWalletBelongsToUser(db, userId2, wallet2Id))
-	assert.False(IsWalletBelongsToUser(db, userId1, wallet2Id))
-	assert.False(IsWalletBelongsToUser(db, userId2, wallet1Id))
+	assert.True(db.IsWalletBelongsToUser(userId1, wallet1Id))
+	assert.True(db.IsWalletBelongsToUser(userId2, wallet2Id))
+	assert.False(db.IsWalletBelongsToUser(userId1, wallet2Id))
+	assert.False(db.IsWalletBelongsToUser(userId2, wallet1Id))
 	// nonexistent wallet
-	assert.False(IsWalletBelongsToUser(db, userId1, -1))
+	assert.False(db.IsWalletBelongsToUser(userId1, -1))
 
-	walletAddresses := GetAllWalletAddresses(db)
+	walletAddresses := db.GetAllWalletAddresses()
 	assert.Equal(2, len(walletAddresses))
 }
 
@@ -216,22 +215,22 @@ func TestUsersLanguage(t *testing.T) {
 	}
 	defer db.Disconnect()
 
-	userId1 := GetUserId(db, 123, "")
-	userId2 := GetUserId(db, 321, "")
+	userId1 := db.GetUserId(123, "")
+	userId2 := db.GetUserId(321, "")
 
-	SetUserLanguage(db, userId1, "en-US")
+	db.SetUserLanguage(userId1, "en-US")
 
 	{
-		lang1 := GetUserLanguage(db, userId1)
-		lang2 := GetUserLanguage(db, userId2)
+		lang1 := db.GetUserLanguage(userId1)
+		lang2 := db.GetUserLanguage(userId2)
 		assert.Equal("en-US", lang1)
 		assert.Equal("", lang2)
 	}
 
 	// in case of some side-effects
 	{
-		lang1 := GetUserLanguage(db, userId1)
-		lang2 := GetUserLanguage(db, userId2)
+		lang1 := db.GetUserLanguage(userId1)
+		lang2 := db.GetUserLanguage(userId2)
 		assert.Equal("en-US", lang1)
 		assert.Equal("", lang2)
 	}
@@ -247,22 +246,22 @@ func TestWalletRenaming(t *testing.T) {
 	}
 	defer db.Disconnect()
 
-	userId := GetUserId(db, 123, "")
+	userId := db.GetUserId(123, "")
 
-	walletId := CreateWatchOnlyWallet(db, userId, "testwallet", currencies.Bitcoin, "key1")
+	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", currencies.Bitcoin, "key1")
 
 	{
-		ids, names := GetUserWallets(db, userId)
+		ids, names := db.GetUserWallets(userId)
 		if len(ids) > 0 && len(names) > 0 {
 			assert.Equal(walletId, ids[0])
 			assert.Equal("testwallet", names[0])
 		}
 	}
 
-	RenameWallet(db, walletId, "test2")
+	db.RenameWallet(walletId, "test2")
 
 	{
-		ids, names := GetUserWallets(db, userId)
+		ids, names := db.GetUserWallets(userId)
 		if len(ids) > 0 && len(names) > 0 {
 			assert.Equal(walletId, ids[0])
 			assert.Equal("test2", names[0])
@@ -280,17 +279,17 @@ func TestGettingWalletAddresses(t *testing.T) {
 	}
 	defer db.Disconnect()
 
-	userId1 := GetUserId(db, 123, "")
-	userId2 := GetUserId(db, 321, "")
+	userId1 := db.GetUserId(123, "")
+	userId2 := db.GetUserId(321, "")
 
-	walletId1 := CreateWatchOnlyWallet(db, userId1, "testwallet1", currencies.Bitcoin, "adr1")
-	walletId2 := CreateWatchOnlyWallet(db, userId1, "testwallet2", currencies.Ether, "adr2")
-	walletId3 := CreateWatchOnlyWallet(db, userId2, "testwallet3", currencies.Bitcoin, "adr3")
+	walletId1 := db.CreateWatchOnlyWallet(userId1, "testwallet1", currencies.Bitcoin, "adr1")
+	walletId2 := db.CreateWatchOnlyWallet(userId1, "testwallet2", currencies.Ether, "adr2")
+	walletId3 := db.CreateWatchOnlyWallet(userId2, "testwallet3", currencies.Bitcoin, "adr3")
 
 	{
-		addr1 := GetWalletAddress(db, walletId1)
-		addr2 := GetWalletAddress(db, walletId2)
-		addr3 := GetWalletAddress(db, walletId3)
+		addr1 := db.GetWalletAddress(walletId1)
+		addr2 := db.GetWalletAddress(walletId2)
+		addr3 := db.GetWalletAddress(walletId3)
 
 		assert.Equal("adr1", addr1.Address)
 		assert.Equal(currencies.Bitcoin, addr1.Currency)
@@ -301,7 +300,7 @@ func TestGettingWalletAddresses(t *testing.T) {
 	}
 
 	{
-		addresses := GetUserWalletAddresses(db, userId1)
+		addresses := db.GetUserWalletAddresses(userId1)
 		assert.Equal(2, len(addresses))
 		for _, address := range addresses {
 			if address.Currency == currencies.Bitcoin {
