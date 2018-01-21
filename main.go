@@ -119,6 +119,5 @@ func main() {
 	serverDataManager.RegisterServerDataInterface(staticData)
 	serverDataManager.InitialUpdate(db)
 
-	go updateTimer(staticData, &serverDataManager, config.UpdateIntervalSec)
-	updateBot(chat, staticData, dialogManager)
+	startUpdating(chat, dialogManager, staticData, &serverDataManager, config.UpdateIntervalSec)
 }

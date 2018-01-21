@@ -12,6 +12,21 @@ import (
 	"time"
 )
 
+type userChannel chan *processing.ProcessData
+
+type userChannelData struct {
+	channel userChannel
+	// to be able to close old channels
+	lastUpdateTime time.Time
+}
+
+type userChannelsData map[int64]*userChannelData
+
+func startUpdating(chat *telegramChat.TelegramChat, dialogManager *dialogManager.DialogManager, staticData *processing.StaticProccessStructs, serverDataManager *serverData.ServerDataManager, updateIntervalSec int) {
+	go updateTimer(staticData, serverDataManager, updateIntervalSec)
+	updateBot(chat, staticData, dialogManager)
+}
+
 func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager *serverData.ServerDataManager, updateIntervalSec int) {
 	if updateIntervalSec <= 0 {
 		log.Fatal("Wrong time interval. Add updateIntervalSec to config")
@@ -35,23 +50,24 @@ func updateBot(chat *telegramChat.TelegramChat, staticData *processing.StaticPro
 
 	processors := makeUserCommandProcessors()
 
+	userChans := make(userChannelsData)
+
 	for update := range updates {
 		if update.Message != nil {
-			processMessageUpdate(&update, staticData, dialogManager, &processors)
+			processMessageUpdate(userChans, &update, staticData, dialogManager, &processors)
 		}
 		if update.CallbackQuery != nil {
-			processCallbackUpdate(&update, staticData, dialogManager, &processors)
+			processCallbackUpdate(userChans, &update, staticData, dialogManager, &processors)
 		}
 	}
 }
 
-func processMessageUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
+func processMessageUpdate(userChans userChannelsData, update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
 	data := processing.ProcessData{
-		Static: staticData,
-		ChatId: update.Message.Chat.ID,
+		Static:         staticData,
+		ChatId:         update.Message.Chat.ID,
+		UserSystemLang: strings.ToLower(update.Message.From.LanguageCode),
 	}
-
-	userLangCode := strings.ToLower(update.Message.From.LanguageCode)
 
 	message := update.Message.Text
 
@@ -63,23 +79,20 @@ func processMessageUpdate(update *tgbotapi.Update, staticData *processing.Static
 		} else {
 			data.Command = message[1:]
 		}
-
-		processCommand(&data, dialogManager, processors, userLangCode)
 	} else {
 		data.Message = message
-
-		processPlainMessage(&data, dialogManager, userLangCode)
 	}
+
+	processUpdate(userChans, &data, dialogManager, processors)
 }
 
-func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
+func processCallbackUpdate(userChans userChannelsData, update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
 	data := processing.ProcessData{
 		Static:            staticData,
 		ChatId:            int64(update.CallbackQuery.From.ID),
 		AnsweredMessageId: int64(update.CallbackQuery.Message.MessageID),
+		UserSystemLang:    strings.ToLower(update.CallbackQuery.From.LanguageCode),
 	}
-
-	userLangCode := strings.ToLower(update.CallbackQuery.From.LanguageCode)
 
 	message := update.CallbackQuery.Data
 
@@ -91,5 +104,45 @@ func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.Stati
 		data.Command = message[1:]
 	}
 
-	processCommand(&data, dialogManager, processors, userLangCode)
+	processUpdate(userChans, &data, dialogManager, processors)
+}
+
+func processUpdate(userChans userChannelsData, data *processing.ProcessData, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
+	userChanData, found := userChans[data.ChatId]
+
+	if !found || userChanData == nil {
+		userChanData = &userChannelData{
+			channel: make(userChannel),
+		}
+		userChans[data.ChatId] = userChanData
+
+		// start updates for a user
+		go processUserUpdatesParallel(userChanData.channel, dialogManager, processors)
+	}
+
+	userChanData.lastUpdateTime = time.Now()
+
+	// send parallel to not to wait
+	go sendUpdate(userChanData.channel, data)
+}
+
+func sendUpdate(userChan userChannel, data *processing.ProcessData) {
+	userChan <- data
+}
+
+func processUserUpdatesParallel(userChan userChannel, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
+	for {
+		updateData, chanIsOk := <-userChan
+
+		if !chanIsOk {
+			log.Print("Close channel")
+			return
+		}
+
+		if len(updateData.Command) > 0 {
+			processCommand(updateData, dialogManager, processors)
+		} else {
+			processPlainMessage(updateData, dialogManager)
+		}
+	}
 }

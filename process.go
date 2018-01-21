@@ -51,14 +51,14 @@ func processCommandByProcessors(data *processing.ProcessData, processors *Proces
 	return ok
 }
 
-func UpdateProcessData(data *processing.ProcessData, userLangCode string) {
-	userId := staticFunctions.GetDb(data.Static).GetUserId(data.ChatId, userLangCode)
+func UpdateProcessData(data *processing.ProcessData) {
+	userId := staticFunctions.GetDb(data.Static).GetUserId(data.ChatId, data.UserSystemLang)
 	data.UserId = userId
 	data.Trans = staticFunctions.FindTransFunction(userId, data.Static)
 }
 
-func processCommand(data *processing.ProcessData, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap, userLangCode string) (succeeded bool) {
-	UpdateProcessData(data, userLangCode)
+func processCommand(data *processing.ProcessData, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) (succeeded bool) {
+	UpdateProcessData(data)
 
 	// drop any text processors for the case we will process a command
 	data.Static.SetUserStateTextProcessor(data.UserId, nil)
@@ -90,8 +90,8 @@ func processCommand(data *processing.ProcessData, dialogManager *dialogManager.D
 	return false
 }
 
-func processPlainMessage(data *processing.ProcessData, dialogManager *dialogManager.DialogManager, userLangCode string) {
-	UpdateProcessData(data, userLangCode)
+func processPlainMessage(data *processing.ProcessData, dialogManager *dialogManager.DialogManager) {
+	UpdateProcessData(data)
 
 	success := dialogManager.ProcessText(data)
 
