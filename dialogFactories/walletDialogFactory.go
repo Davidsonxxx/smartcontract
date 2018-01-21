@@ -92,13 +92,13 @@ func backToList(walletId int64, data *processing.ProcessData) bool {
 func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
 	walletAddress := database.GetWalletAddress(staticData.Db, walletId)
 
-	serverDataCache := serverData.GetServerDataCache(staticData)
+	serverData := serverData.GetServerData(staticData)
 
-	if serverDataCache == nil {
+	if serverData == nil {
 		return "Error"
 	}
 
-	balance := serverDataCache.GetBalance(walletAddress)
+	balance := serverData.GetBalance(walletAddress)
 
 	if balance == nil {
 		return trans("wait_for_data")

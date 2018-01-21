@@ -8,7 +8,7 @@ import (
 )
 
 type serverDataUpdater struct {
-	cache DataCache
+	cache dataCache
 }
 
 func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies.AddressData) {

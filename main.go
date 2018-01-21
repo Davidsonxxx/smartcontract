@@ -121,7 +121,7 @@ func main() {
 	dbMutex := &sync.Mutex{}
 
 	serverDataManager := serverData.ServerDataManager{}
-	serverDataManager.RegisterServerDataCache(staticData)
+	serverDataManager.RegisterServerDataInterface(staticData)
 	serverDataManager.InitialUpdate(db, dbMutex)
 
 	go updateTimer(staticData, &serverDataManager, config.UpdateIntervalSec, dbMutex)

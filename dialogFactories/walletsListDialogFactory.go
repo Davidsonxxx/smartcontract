@@ -233,9 +233,9 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		return ""
 	}
 
-	serverDataCache := serverData.GetServerDataCache(staticData)
+	serverData := serverData.GetServerData(staticData)
 
-	if serverDataCache == nil {
+	if serverData == nil {
 		return ""
 	}
 
@@ -258,7 +258,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		sumBalance := big.NewInt(0)
 
 		for _, address := range addresses {
-			balance := serverDataCache.GetBalance(address)
+			balance := serverData.GetBalance(address)
 			if balance != nil {
 				sumBalance.Add(sumBalance, balance)
 			}
@@ -274,7 +274,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			continue
 		}
 
-		toUsdRate := serverDataCache.GetRateToUsd(currency)
+		toUsdRate := serverData.GetRateToUsd(currency)
 
 		if toUsdRate != nil {
 			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
