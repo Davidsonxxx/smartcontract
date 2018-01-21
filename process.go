@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strings"
 )
@@ -53,7 +52,7 @@ func processCommandByProcessors(data *processing.ProcessData, processors *Proces
 }
 
 func UpdateProcessData(data *processing.ProcessData, userLangCode string) {
-	userId := database.GetUserId(data.Static.Db, data.ChatId, userLangCode)
+	userId := staticFunctions.GetDb(data.Static).GetUserId(data.ChatId, userLangCode)
 	data.UserId = userId
 	data.Trans = staticFunctions.FindTransFunction(userId, data.Static)
 }

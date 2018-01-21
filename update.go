@@ -6,24 +6,24 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/telegramChat"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"log"
 	"strings"
-	"sync"
 	"time"
 )
 
-func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager *serverData.ServerDataManager, updateIntervalSec int, dbMutex *sync.Mutex) {
+func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager *serverData.ServerDataManager, updateIntervalSec int) {
 	if updateIntervalSec <= 0 {
 		log.Fatal("Wrong time interval. Add updateIntervalSec to config")
 	}
 
 	for {
 		time.Sleep(time.Duration(updateIntervalSec) * time.Second)
-		serverDataManager.TimerTick(staticData.Db, dbMutex)
+		serverDataManager.TimerTick(staticFunctions.GetDb(staticData))
 	}
 }
 
-func updateBot(chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, dbMutex *sync.Mutex) {
+func updateBot(chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager) {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
@@ -37,15 +37,15 @@ func updateBot(chat *telegramChat.TelegramChat, staticData *processing.StaticPro
 
 	for update := range updates {
 		if update.Message != nil {
-			processMessageUpdate(&update, staticData, dialogManager, &processors, dbMutex)
+			processMessageUpdate(&update, staticData, dialogManager, &processors)
 		}
 		if update.CallbackQuery != nil {
-			processCallbackUpdate(&update, staticData, dialogManager, &processors, dbMutex)
+			processCallbackUpdate(&update, staticData, dialogManager, &processors)
 		}
 	}
 }
 
-func processMessageUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap, dbMutex *sync.Mutex) {
+func processMessageUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
 	data := processing.ProcessData{
 		Static: staticData,
 		ChatId: update.Message.Chat.ID,
@@ -64,19 +64,15 @@ func processMessageUpdate(update *tgbotapi.Update, staticData *processing.Static
 			data.Command = message[1:]
 		}
 
-		dbMutex.Lock()
 		processCommand(&data, dialogManager, processors, userLangCode)
-		dbMutex.Unlock()
 	} else {
 		data.Message = message
 
-		dbMutex.Lock()
 		processPlainMessage(&data, dialogManager, userLangCode)
-		dbMutex.Unlock()
 	}
 }
 
-func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap, dbMutex *sync.Mutex) {
+func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
 	data := processing.ProcessData{
 		Static:            staticData,
 		ChatId:            int64(update.CallbackQuery.From.ID),
@@ -95,7 +91,5 @@ func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.Stati
 		data.Command = message[1:]
 	}
 
-	dbMutex.Lock()
 	processCommand(&data, dialogManager, processors, userLangCode)
-	dbMutex.Unlock()
 }

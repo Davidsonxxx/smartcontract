@@ -1,7 +1,6 @@
 package database
 
 import (
-	"github.com/gameraccoon/telegram-bot-skeleton/database"
 	"log"
 )
 
@@ -12,11 +11,11 @@ const (
 
 type dbUpdater struct {
 	version  string
-	updateDb func(db *database.Database)
+	updateDb func(db *AccountDb)
 }
 
-func UpdateVersion(db *database.Database) {
-	currentVersion := GetDatabaseVersion(db)
+func UpdateVersion(db *AccountDb) {
+	currentVersion := db.GetDatabaseVersion()
 
 	if currentVersion != latestVersion {
 		updaters := makeUpdaters(currentVersion, latestVersion)
@@ -27,7 +26,7 @@ func UpdateVersion(db *database.Database) {
 		log.Printf("Update DB version from %s to %s", currentVersion, latestVersion)
 	}
 
-	SetDatabaseVersion(db, latestVersion)
+	db.SetDatabaseVersion(latestVersion)
 }
 
 func makeUpdaters(versionFrom string, versionTo string) (updaters []dbUpdater) {

@@ -14,7 +14,6 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
-	"sync"
 )
 
 func init() {
@@ -73,7 +72,7 @@ func main() {
 		log.Fatal("Default language should be in the list of available languages")
 	}
 
-	db, err := database.Init("./accounts-data.db")
+	db, err := database.ConnectDb("./accounts-data.db")
 	defer db.Disconnect()
 
 	if err != nil {
@@ -116,12 +115,10 @@ func main() {
 
 	staticData.Init()
 
-	dbMutex := &sync.Mutex{}
-
 	serverDataManager := serverData.ServerDataManager{}
 	serverDataManager.RegisterServerDataInterface(staticData)
-	serverDataManager.InitialUpdate(db, dbMutex)
+	serverDataManager.InitialUpdate(db)
 
-	go updateTimer(staticData, &serverDataManager, config.UpdateIntervalSec, dbMutex)
-	updateBot(chat, staticData, dialogManager, dbMutex)
+	go updateTimer(staticData, &serverDataManager, config.UpdateIntervalSec)
+	updateBot(chat, staticData, dialogManager)
 }

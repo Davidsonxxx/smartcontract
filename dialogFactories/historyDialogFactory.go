@@ -5,7 +5,7 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strconv"
 )
 
@@ -65,7 +65,7 @@ func (factory *historyDialogFactory) ProcessVariant(variantId string, additional
 		return false
 	}
 
-	if !database.IsWalletBelongsToUser(data.Static.Db, data.UserId, walletId) {
+	if !staticFunctions.GetDb(data.Static).IsWalletBelongsToUser(data.UserId, walletId) {
 		return false
 	}
 

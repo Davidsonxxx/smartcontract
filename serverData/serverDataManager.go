@@ -2,12 +2,10 @@ package serverData
 
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"github.com/gameraccoon/telegram-bot-skeleton/database"
-	ourDb "gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"log"
 	"math/big"
-	"sync"
 )
 
 type ServerDataManager struct {
@@ -45,31 +43,29 @@ func (serverDataManager *ServerDataManager) RegisterServerDataInterface(staticDa
 	}
 }
 
-func (serverDataManager *ServerDataManager) updateAll(db *database.Database, dbMutex *sync.Mutex) {
-	dbMutex.Lock()
-	walletAddresses := ourDb.GetAllWalletAddresses(db)
-	dbMutex.Unlock()
+func (serverDataManager *ServerDataManager) updateAll(db *database.AccountDb) {
+	walletAddresses := db.GetAllWalletAddresses()
 
 	serverDataManager.dataUpdater.updateBalance(walletAddresses)
 	serverDataManager.dataUpdater.updateRates()
 }
 
-func (serverDataManager *ServerDataManager) InitialUpdate(db *database.Database, dbMutex *sync.Mutex) {
+func (serverDataManager *ServerDataManager) InitialUpdate(db *database.AccountDb) {
 	if db == nil {
 		log.Fatal("database is nil")
 		return
 	}
 
-	serverDataManager.updateAll(db, dbMutex)
+	serverDataManager.updateAll(db)
 }
 
-func (serverDataManager *ServerDataManager) TimerTick(db *database.Database, dbMutex *sync.Mutex) {
+func (serverDataManager *ServerDataManager) TimerTick(db *database.AccountDb) {
 	if db == nil {
 		log.Print("database is nil, skip update")
 		return
 	}
 
-	serverDataManager.updateAll(db, dbMutex)
+	serverDataManager.updateAll(db)
 }
 
 func (serverDataManager *ServerDataManager) GetBalance(address currencies.AddressData) *big.Int {

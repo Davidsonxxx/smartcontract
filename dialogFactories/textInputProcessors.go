@@ -3,8 +3,8 @@ package dialogFactories
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 )
 
 func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
@@ -37,7 +37,7 @@ func processNewWatchOnlyWalletKey(additionalId int64, data *processing.ProcessDa
 		return false
 	}
 
-	walletId := database.CreateWatchOnlyWallet(data.Static.Db, data.UserId, walletName, walletCurrency, data.Message)
+	walletId := staticFunctions.GetDb(data.Static).CreateWatchOnlyWallet(data.UserId, walletName, walletCurrency, data.Message)
 	data.SendMessage(data.Trans("wallet_created"))
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
@@ -48,7 +48,7 @@ func processRenamingWallet(walletId int64, data *processing.ProcessData) bool {
 		return false
 	}
 
-	database.RenameWallet(data.Static.Db, walletId, data.Message)
+	staticFunctions.GetDb(data.Static).RenameWallet(walletId, data.Message)
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
 }
