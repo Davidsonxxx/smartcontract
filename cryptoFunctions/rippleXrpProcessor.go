@@ -45,7 +45,7 @@ func (processor *RippleXrpProcessor) GetBalance(address string) *big.Int {
 		floatValue, _, err := new(big.Float).Parse(parsedResp.Balances[0].Value, 10)
 
 		if err == nil {
-		intValue, _ := new(big.Float).Mul(floatValue, new(big.Float).SetFloat64(1000000)).Int(nil)
+			intValue, _ := new(big.Float).Mul(floatValue, new(big.Float).SetFloat64(1000000)).Int(nil)
 			return intValue
 		} else {
 			return nil

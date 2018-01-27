@@ -95,3 +95,15 @@ func (dataUpdater *serverDataUpdater) updateRates() {
 	dataUpdater.cache.rates.toUsd = toUsdRates
 	dataUpdater.cache.balancesMutex.Unlock()
 }
+
+func (dataUpdater *serverDataUpdater) updateErc20TokenBalanceOneWallet(walletAddress currencies.Erc20TokenAddressData) *currencies.Erc20TokenBalanceData {
+	return nil
+}
+
+func (dataUpdater *serverDataUpdater) updateErc20TokensBalance(addresses []currencies.Erc20TokenAddressData) {
+
+}
+
+func (dataUpdater *serverDataUpdater) updateErc20TokensData(contracts []string) {
+
+}

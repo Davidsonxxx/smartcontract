@@ -12,6 +12,8 @@ var processorsList map[currencies.Currency]CurrencyProcessor = map[currencies.Cu
 	currencies.RippleXrp : &RippleXrpProcessor{},
 }
 
+var erc20Processor Erc20Processor = Erc20Processor{}
+
 func GetProcessor(currency currencies.Currency) *CurrencyProcessor {
 	processor, ok := processorsList[currency]
 
@@ -31,4 +33,8 @@ func GetAllProcessors() map[currencies.Currency]CurrencyProcessor {
 	}
 
 	return processors
+}
+
+func GetErc20Processor() *Erc20Processor {
+	return &erc20Processor
 }

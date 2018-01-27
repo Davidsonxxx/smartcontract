@@ -14,6 +14,7 @@ const (
 	BitcoinCash Currency = 2
 	BitcoinGold Currency = 3
 	RippleXrp Currency = 4
+	Erc20Token Currency = 5
 )
 
 type currencyStaticData struct {
@@ -50,6 +51,11 @@ func init() {
 			FullName: "Ripple",
 			Code: "XRP",
 			Digits: 6,
+		},
+		Erc20Token : {
+			FullName: "",
+			Code: "",
+			Digits: 18,
 		},
 	}
 }
