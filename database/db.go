@@ -53,6 +53,7 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 		",currency INTEGER NOT NULL" +
 		",address TEXT NOT NULL" +
 		",type INTEGER NOT NULL" +
+		",token_id TEXT NOT NULL" + // not empty for ERC20 token wallets (type == 5)
 		",FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL" +
 		")")
 
@@ -256,7 +257,8 @@ func (database *AccountDb) CreateWatchOnlyWallet(userId int64, name string, curr
 		",currency" +
 		",address" +
 		",type" +
-		")VALUES(%d,'%s',%d,'%s',%d)",
+		",token_id" +
+		")VALUES(%d,'%s',%d,'%s',%d, '')",
 		userId,
 		dbBase.SanitizeString(name),
 		currency,
@@ -409,7 +411,7 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.Addre
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query("SELECT currency, address FROM wallets WHERE is_removed IS NULL")
+	rows, err := database.db.Query("SELECT currency, address, token_id FROM wallets WHERE is_removed IS NULL")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -418,8 +420,9 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.Addre
 	for rows.Next() {
 		var currency int64
 		var address string
+		var tokenId string
 
-		err := rows.Scan(&currency, &address)
+		err := rows.Scan(&currency, &address, &tokenId)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -429,6 +432,7 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.Addre
 			currencies.AddressData{
 				Currency: currencies.Currency(currency),
 				Address: address,
+				ContractId: tokenId,
 			},
 		)
 	}

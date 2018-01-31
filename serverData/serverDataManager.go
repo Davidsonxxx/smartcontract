@@ -48,8 +48,6 @@ func (serverDataManager *ServerDataManager) updateAll(db *database.AccountDb) {
 
 	serverDataManager.dataUpdater.updateBalance(walletAddresses)
 
-	//serverDataManager.dataUpdater.updateErcTokenBalance()
-
 	serverDataManager.dataUpdater.updateRates()
 }
 
@@ -83,14 +81,4 @@ func (serverDataManager *ServerDataManager) GetBalance(address currencies.Addres
 
 func (serverDataManager *ServerDataManager) GetRateToUsd(currency currencies.Currency) *big.Float {
 	return serverDataManager.dataUpdater.cache.getRateToUsd(currency)
-}
-
-func (serverDataManager *ServerDataManager) GetErc20TokenBalance(address currencies.Erc20TokenAddressData) *currencies.Erc20TokenBalanceData {
-	balance := serverDataManager.dataUpdater.cache.getErc20TokenBalance(address)
-
-	if balance != nil {
-		return balance
-	} else {
-		return serverDataManager.dataUpdater.updateErc20TokenBalanceOneWallet(address)
-	}
 }

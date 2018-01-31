@@ -19,7 +19,7 @@ type Erc20Resp struct {
 	Decimals int64 `json:"decimals"`
 }
 
-func (processor *Erc20Processor) GetBalance(address currencies.Erc20TokenAddressData) *big.Int {
+func (processor *Erc20Processor) GetBalance(address currencies.AddressData) *big.Int {
 	resp, err := http.Get("https://api.tokenbalance.com/token/" + address.ContractId + "/" + address.Address)
 	defer resp.Body.Close()
 	if err != nil {
@@ -53,7 +53,7 @@ func (processor *Erc20Processor) GetBalance(address currencies.Erc20TokenAddress
 	}
 }
 
-func (processor *Erc20Processor) GetBalanceBunch(addresses []currencies.Erc20TokenAddressData) []*big.Int {
+func (processor *Erc20Processor) GetBalanceBunch(addresses []currencies.AddressData) []*big.Int {
 	balances := make([]*big.Int, len(addresses))
 
 	for i, walletAddress := range addresses {
@@ -90,4 +90,8 @@ func (processor *Erc20Processor) GetTokenData(contractId string) (name string, s
 	decimals = parsedResp.Decimals
 
 	return
+}
+
+func (processor *Erc20Processor) GetToUsdRate() *big.Float {
+	return nil
 }

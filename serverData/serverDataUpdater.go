@@ -19,7 +19,7 @@ func (dataUpdater *serverDataUpdater) updateBalanceOneWallet(walletAddress curre
 		return nil
 	}
 
-	balance := (*processor).GetBalance(walletAddress.Address)
+	balance := (*processor).GetBalance(walletAddress)
 
 	if balance != nil {
 		dataUpdater.cache.balancesMutex.Lock()
@@ -35,14 +35,14 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 		return
 	}
 
-	groupedWallets := make(map[currencies.Currency] []string)
+	groupedWallets := make(map[currencies.Currency] []currencies.AddressData)
 
 	for _, walletAddress := range walletAddresses {
 		walletsSlice, ok := groupedWallets[walletAddress.Currency]
 		if ok {
-			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress.Address)
+			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
 		} else {
-			groupedWallets[walletAddress.Currency] = []string{ walletAddress.Address }
+			groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
 		}
 	}
 
@@ -66,11 +66,7 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 		for i, address := range addresses {
 			balance := balances[i]
 			if balance != nil {
-				addressData := currencies.AddressData{
-					Currency: currency,
-					Address: address,
-				}
-				dataUpdater.cache.balances[addressData] = balance
+				dataUpdater.cache.balances[address] = balance
 			}
 		}
 
@@ -96,14 +92,8 @@ func (dataUpdater *serverDataUpdater) updateRates() {
 	dataUpdater.cache.balancesMutex.Unlock()
 }
 
-func (dataUpdater *serverDataUpdater) updateErc20TokenBalanceOneWallet(walletAddress currencies.Erc20TokenAddressData) *currencies.Erc20TokenBalanceData {
-	return nil
-}
-
-func (dataUpdater *serverDataUpdater) updateErc20TokensBalance(addresses []currencies.Erc20TokenAddressData) {
-
-}
-
 func (dataUpdater *serverDataUpdater) updateErc20TokensData(contracts []string) {
-
+	//processor := cryptoFunctions.GetErc20TokenProcessor()
+	
+	//for 
 }

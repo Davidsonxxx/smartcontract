@@ -1,6 +1,7 @@
 package cryptoFunctions
 
 import (
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -20,8 +21,8 @@ type BitcoinCashResp struct {
 	Data []BitcoinCashRespData `json:"data"`
 }
 
-func (processor *BitcoinCashProcessor) GetBalance(address string) *big.Int {
-	resp, err := http.Get("https://api.blockchair.com/bitcoin-cash/dashboards/address/" + address)
+func (processor *BitcoinCashProcessor) GetBalance(address currencies.AddressData) *big.Int {
+	resp, err := http.Get("https://api.blockchair.com/bitcoin-cash/dashboards/address/" + address.Address)
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
@@ -55,7 +56,7 @@ func (processor *BitcoinCashProcessor) GetBalance(address string) *big.Int {
 	}
 }
 
-func (processor *BitcoinCashProcessor) GetBalanceBunch(addresses []string) []*big.Int {
+func (processor *BitcoinCashProcessor) GetBalanceBunch(addresses []currencies.AddressData) []*big.Int {
 	balances := make([]*big.Int, len(addresses))
 
 	for i, walletAddress := range addresses {

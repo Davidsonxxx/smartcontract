@@ -1,7 +1,9 @@
 package cryptoFunctions
 
 import (
+	"bytes"
 	"encoding/json"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"io/ioutil"
 	"net/http"
 	"log"
@@ -51,4 +53,17 @@ func getCurrencyToUsdRate(currencyId string) *big.Float {
 		log.Print(err)
 		return nil
 	}
+}
+
+func joinAddresses(addresses []currencies.AddressData) string {
+	var b bytes.Buffer
+	
+	for i, addressData := range addresses {
+		if i > 0 {
+			b.WriteString(",")
+		}
+		b.WriteString(addressData.Address)
+	}
+	
+	return b.String()
 }

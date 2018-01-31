@@ -2,10 +2,10 @@ package cryptoFunctions
 
 import (
 	"encoding/json"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"io/ioutil"
 	"net/http"
 	"log"
-	"strings"
 	"math/big"
 )
 
@@ -27,8 +27,8 @@ type EtherMultiResp struct {
 	Result []EtherRespData `json:"result"`
 }
 
-func (processor *EtherProcessor) GetBalance(address string) *big.Int {
-	resp, err := http.Get("http://api.etherscan.io/api?module=account&action=balance&address=" + address + "&tag=latest&apikey=" + etherscanApiKey)
+func (processor *EtherProcessor) GetBalance(address currencies.AddressData) *big.Int {
+	resp, err := http.Get("http://api.etherscan.io/api?module=account&action=balance&address=" + address.Address + "&tag=latest&apikey=" + etherscanApiKey)
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
@@ -61,7 +61,7 @@ func (processor *EtherProcessor) GetBalance(address string) *big.Int {
 	}
 }
 
-func (processor *EtherProcessor) GetBalanceBunch(addresses []string) []*big.Int {
+func (processor *EtherProcessor) GetBalanceBunch(addresses []currencies.AddressData) []*big.Int {
 	if len(addresses) == 1 {
 		return []*big.Int {
 			processor.GetBalance(addresses[0]),
@@ -70,7 +70,7 @@ func (processor *EtherProcessor) GetBalanceBunch(addresses []string) []*big.Int 
 
 	balances := make([]*big.Int, len(addresses))
 
-	resp, err := http.Get("http://api.etherscan.io/api?module=account&action=balancemulti&address=" + strings.Join(addresses, ",") + "&tag=latest&apikey=" + etherscanApiKey)
+	resp, err := http.Get("http://api.etherscan.io/api?module=account&action=balancemulti&address=" + joinAddresses(addresses) + "&tag=latest&apikey=" + etherscanApiKey)
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
@@ -94,7 +94,7 @@ func (processor *EtherProcessor) GetBalanceBunch(addresses []string) []*big.Int 
 	// I'm not sure if it's more time efficient
 	addressesIndexes := map[string]int{}
 	for i, address := range addresses {
-		addressesIndexes[address] = i
+		addressesIndexes[address.Address] = i
 	}
 
 	for _, data := range parsedResp.Result {

@@ -4,15 +4,16 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 )
 
+var erc20Processor Erc20Processor = Erc20Processor{}
+
 var processorsList map[currencies.Currency]CurrencyProcessor = map[currencies.Currency]CurrencyProcessor{
 	currencies.Bitcoin : &BitcoinProcessor{},
 	currencies.BitcoinCash : &BitcoinCashProcessor{},
 	currencies.BitcoinGold : &BitcoinGoldProcessor{},
 	currencies.Ether : &EtherProcessor{},
 	currencies.RippleXrp : &RippleXrpProcessor{},
+	currencies.Erc20Token : &erc20Processor,
 }
-
-var erc20Processor Erc20Processor = Erc20Processor{}
 
 func GetProcessor(currency currencies.Currency) *CurrencyProcessor {
 	processor, ok := processorsList[currency]

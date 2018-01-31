@@ -6,7 +6,7 @@ import (
 
 const (
 	minimalVersion = "0.1"
-	latestVersion  = "0.1"
+	latestVersion  = "0.2"
 )
 
 type dbUpdater struct {
@@ -52,10 +52,10 @@ func makeUpdaters(versionFrom string, versionTo string) (updaters []dbUpdater) {
 func makeAllUpdaters() (updaters []dbUpdater) {
 	updaters = []dbUpdater{
 		dbUpdater{
-			// version: "1.1",
-			// updateDb: func(db *Database) {
-			// 	db.execQuery("ALTER TABLE prohibited_words ADD COLUMN removed INTEGER")
-			// },
+			version: "0.2",
+			updateDb: func(db *AccountDb) {
+				db.db.Exec("ALTER TABLE wallets ADD COLUMN token_id TEXT NOT NULL DEFAULT('')")
+			},
 		},
 	}
 	return

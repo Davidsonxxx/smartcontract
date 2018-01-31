@@ -11,7 +11,6 @@ type ratesStruct struct {
 }
 
 type erc20TokenData struct {
-	balances map[string]*big.Int
 	name string
 	symbol string
 	decimals int64
@@ -61,18 +60,15 @@ func (cache *dataCache) getRateToUsd(currency currencies.Currency) *big.Float {
 	}
 }
 
-func (cache *dataCache) getErc20TokenBalance(address currencies.Erc20TokenAddressData) *currencies.Erc20TokenBalanceData {
+func (cache *dataCache) getErc20TokenData(address currencies.AddressData) *currencies.Erc20TokenData {
 	cache.erc20TokensMutex.Lock()
 	defer cache.erc20TokensMutex.Unlock()
 
 	tokenData, tokenFound := cache.erc20Tokens[address.ContractId]
 	if tokenFound {
-		balance, _ := tokenData.balances[address.Address]
-
-		return &currencies.Erc20TokenBalanceData {
+		return &currencies.Erc20TokenData {
 			Name: tokenData.name,
 			Symbol: tokenData.symbol,
-			Balance: balance,
 			Decimals: tokenData.decimals,
 		}
 	} else {

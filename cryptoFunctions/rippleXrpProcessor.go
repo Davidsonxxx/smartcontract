@@ -1,6 +1,7 @@
 package cryptoFunctions
 
 import (
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -19,8 +20,8 @@ type RippleXrpResp struct {
 	Balances []RippleXrpRespData `json:"balances"`
 }
 
-func (processor *RippleXrpProcessor) GetBalance(address string) *big.Int {
-	resp, err := http.Get("https://data.ripple.com/v2/accounts/" + address + "/balances?currency=XRP&limit=1")
+func (processor *RippleXrpProcessor) GetBalance(address currencies.AddressData) *big.Int {
+	resp, err := http.Get("https://data.ripple.com/v2/accounts/" + address.Address + "/balances?currency=XRP&limit=1")
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
@@ -55,7 +56,7 @@ func (processor *RippleXrpProcessor) GetBalance(address string) *big.Int {
 	}
 }
 
-func (processor *RippleXrpProcessor) GetBalanceBunch(addresses []string) []*big.Int {
+func (processor *RippleXrpProcessor) GetBalanceBunch(addresses []currencies.AddressData) []*big.Int {
 	balances := make([]*big.Int, len(addresses))
 
 	for i, walletAddress := range addresses {
