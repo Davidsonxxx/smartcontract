@@ -246,7 +246,7 @@ func (database *AccountDb) getLastInsertedItemId() (id int64) {
 	return -1
 }
 
-func (database *AccountDb) CreateWatchOnlyWallet(userId int64, name string, currency currencies.Currency, address string) (newWalletId int64) {
+func (database *AccountDb) CreateWatchOnlyWallet(userId int64, name string, address currencies.AddressData) (newWalletId int64) {
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
@@ -258,12 +258,13 @@ func (database *AccountDb) CreateWatchOnlyWallet(userId int64, name string, curr
 		",address" +
 		",type" +
 		",token_id" +
-		")VALUES(%d,'%s',%d,'%s',%d, '')",
+		")VALUES(%d,'%s',%d,'%s',%d,'%s')",
 		userId,
 		dbBase.SanitizeString(name),
-		currency,
-		dbBase.SanitizeString(address),
+		address.Currency,
+		dbBase.SanitizeString(address.Address),
 		wallettypes.WatchOnly,
+		dbBase.SanitizeString(address.ContractId),
 	))
 
 	return database.getLastInsertedItemId()
@@ -380,7 +381,7 @@ func (database *AccountDb) GetUserWalletAddresses(userId int64) (addresses []cur
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
+	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address, token_id FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -389,8 +390,9 @@ func (database *AccountDb) GetUserWalletAddresses(userId int64) (addresses []cur
 	for rows.Next() {
 		var currency int64
 		var address string
+		var tokenId string
 
-		err := rows.Scan(&currency, &address)
+		err := rows.Scan(&currency, &address, &tokenId)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -400,6 +402,7 @@ func (database *AccountDb) GetUserWalletAddresses(userId int64) (addresses []cur
 			currencies.AddressData{
 				Currency: currencies.Currency(currency),
 				Address: address,
+				ContractId: tokenId,
 			},
 		)
 	}
@@ -435,6 +438,30 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.Addre
 				ContractId: tokenId,
 			},
 		)
+	}
+
+	return
+}
+
+func (database *AccountDb) GetAllContractIds() (tokenIds []string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query("SELECT DISTINCT token_id FROM wallets WHERE is_removed IS NULL AND token_id!=''")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var tokenId string
+
+		err := rows.Scan(&tokenId)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		tokenIds = append(tokenIds, tokenId)
 	}
 
 	return

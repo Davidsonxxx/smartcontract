@@ -37,7 +37,12 @@ func processNewWatchOnlyWalletKey(additionalId int64, data *processing.ProcessDa
 		return false
 	}
 
-	walletId := staticFunctions.GetDb(data.Static).CreateWatchOnlyWallet(data.UserId, walletName, walletCurrency, data.Message)
+	walletAddress := currencies.AddressData{
+		Currency: walletCurrency,
+		Address: data.Message,
+	}
+
+	walletId := staticFunctions.GetDb(data.Static).CreateWatchOnlyWallet(data.UserId, walletName, walletAddress)
 	data.SendMessage(data.Trans("wallet_created"))
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
