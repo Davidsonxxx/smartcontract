@@ -10,23 +10,47 @@ import (
 func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
 	return dialogManager.TextInputProcessorManager {
 		Processors : dialogManager.TextProcessorsMap {
-			"newWatchOnlyWalletName" : processNewWatchOnlyWalletName,
-			"newWatchOnlyWalletKey" : processNewWatchOnlyWalletKey,
+			"newWalletName" : processNewWalletName,
+			"newWalletKey" : processNewWalletKey,
+			"newWalletContractId" : processNewWalletContractId,
 			"renamingWallet" : processRenamingWallet,
 		},
 	}
 }
 
-func processNewWatchOnlyWalletName(additionalId int64, data *processing.ProcessData) bool {
+func processNewWalletName(additionalId int64, data *processing.ProcessData) bool {
+	walletCurrency, ok := data.Static.GetUserStateValue(data.UserId, "walletCurrency").(currencies.Currency)
+	if !ok {
+		return false
+	}
+
 	data.Static.SetUserStateValue(data.UserId, "walletName", data.Message)
+
+	if walletCurrency != currencies.Erc20Token {
+		data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
+			ProcessorId: "newWalletKey",
+		})
+		data.SendMessage(data.Trans("send_address"))
+	} else {
+		// ERC20 Token
+		data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
+			ProcessorId: "newWalletContractId",
+		})
+		data.SendMessage(data.Trans("send_contract_id"))
+	}
+	return true
+}
+
+func processNewWalletContractId(additionalId int64, data *processing.ProcessData) bool {
+	data.Static.SetUserStateValue(data.UserId, "walletContractId", data.Message)
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
-		ProcessorId: "newWatchOnlyWalletKey",
+		ProcessorId: "newWalletKey",
 	})
 	data.SendMessage(data.Trans("send_address"))
 	return true
 }
 
-func processNewWatchOnlyWalletKey(additionalId int64, data *processing.ProcessData) bool {
+func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool {
 	walletName, ok := data.Static.GetUserStateValue(data.UserId, "walletName").(string)
 	if !ok {
 		return false
@@ -37,8 +61,14 @@ func processNewWatchOnlyWalletKey(additionalId int64, data *processing.ProcessDa
 		return false
 	}
 
+	walletContractId, ok := data.Static.GetUserStateValue(data.UserId, "walletContractId").(string)
+	if !ok {
+		walletContractId = ""
+	}
+
 	walletAddress := currencies.AddressData{
 		Currency: walletCurrency,
+		ContractId: walletContractId,
 		Address: data.Message,
 	}
 

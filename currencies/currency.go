@@ -53,7 +53,7 @@ func init() {
 			Digits: 6,
 		},
 		Erc20Token : {
-			FullName: "",
+			FullName: "ERC20 Token",
 			Code: "",
 			Digits: 18,
 		},

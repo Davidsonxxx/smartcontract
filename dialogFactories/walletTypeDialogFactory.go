@@ -32,7 +32,7 @@ func MakeWalletTypeDialogFactory() dialogFactory.DialogFactory {
 func createWatchOnlyWallet(data *processing.ProcessData) bool {
 	data.SubstitudeMessage(data.Trans("send_wallet_name"))
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
-		ProcessorId: "newWatchOnlyWalletName",
+		ProcessorId: "newWalletName",
 	})
 	return true
 }

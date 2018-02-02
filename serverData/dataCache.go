@@ -21,11 +21,15 @@ type dataCache struct {
 
 func (cache *dataCache) Init() {
 	if cache.rates.toUsd == nil {
-		cache.rates.toUsd = map[currencies.Currency]*big.Float{}
+		cache.rates.toUsd = make(map[currencies.Currency]*big.Float)
 	}
 
 	if cache.balances == nil {
-		cache.balances = map[currencies.AddressData]*big.Int{}
+		cache.balances = make(map[currencies.AddressData]*big.Int)
+	}
+
+	if cache.erc20Tokens == nil {
+		cache.erc20Tokens = make(map[string]currencies.Erc20TokenData)
 	}
 }
 
