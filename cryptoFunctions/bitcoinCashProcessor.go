@@ -23,11 +23,11 @@ type BitcoinCashResp struct {
 
 func (processor *BitcoinCashProcessor) GetBalance(address currencies.AddressData) *big.Int {
 	resp, err := http.Get("https://api.blockchair.com/bitcoin-cash/dashboards/address/" + address.Address)
-	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

@@ -27,11 +27,11 @@ type BitcoinMultiResp struct {
 
 func (processor *BitcoinProcessor) GetBalance(address currencies.AddressData) *big.Int {
 	resp, err := http.Get("https://chain.api.btc.com/v3/address/" + address.Address)
-	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -60,11 +60,11 @@ func (processor *BitcoinProcessor) GetBalanceBunch(addresses []currencies.Addres
 	balances := make([]*big.Int, len(addresses))
 
 	resp, err := http.Get("https://chain.api.btc.com/v3/address/" + joinAddresses(addresses))
-	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
 		return balances
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

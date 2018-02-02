@@ -21,11 +21,11 @@ type Erc20Resp struct {
 
 func (processor *Erc20Processor) GetBalance(address currencies.AddressData) *big.Int {
 	resp, err := http.Get("https://api.tokenbalance.com/token/" + address.ContractId + "/" + address.Address)
-	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -65,11 +65,11 @@ func (processor *Erc20Processor) GetBalanceBunch(addresses []currencies.AddressD
 
 func (processor *Erc20Processor) GetTokenData(contractId string) *currencies.Erc20TokenData {
 	resp, err := http.Get("https://api.tokenbalance.com/token/" + contractId + "/0x0")
-	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
