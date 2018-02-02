@@ -85,3 +85,7 @@ func (serverDataManager *ServerDataManager) GetBalance(address currencies.Addres
 func (serverDataManager *ServerDataManager) GetRateToUsd(currency currencies.Currency) *big.Float {
 	return serverDataManager.dataUpdater.cache.getRateToUsd(currency)
 }
+
+func (serverDataManager *ServerDataManager) GetErc20TokenData(contractId string) *currencies.Erc20TokenData {
+	return serverDataManager.dataUpdater.cache.getErc20TokenData(contractId)
+}

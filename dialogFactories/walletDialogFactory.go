@@ -10,6 +10,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -104,8 +105,22 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 		return trans("no_data")
 	}
 
-	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
-	currencyDigits := currencies.GetCurrencyDigits(walletAddress.Currency)
+	var currencyCode string
+	var currencyDigits int
+
+	if walletAddress.Currency != currencies.Erc20Token {
+		currencyCode = currencies.GetCurrencyCode(walletAddress.Currency)
+		currencyDigits = currencies.GetCurrencyDigits(walletAddress.Currency)
+	} else {
+		if len(walletAddress.ContractId) <= 0 {
+			log.Print("No contractId for token")
+			return "Error"
+		}
+
+		tokenData := serverData.GetErc20TokenData(walletAddress.ContractId)
+		currencyCode = tokenData.Symbol
+		currencyDigits = tokenData.Decimals
+	}
 
 	balanceText := cryptoFunctions.FormatCurrencyAmount(balance, currencyDigits)
 

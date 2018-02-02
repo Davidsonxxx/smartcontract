@@ -240,13 +240,23 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 	}
 
 	groupedWallets := make(map[currencies.Currency] []currencies.AddressData)
+	groupedErc20TokenWallets := make(map[string] []currencies.AddressData)
 
 	for _, walletAddress := range walletAddresses {
-		walletsSlice, ok := groupedWallets[walletAddress.Currency]
-		if ok {
-			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
+		if walletAddress.Currency != currencies.Erc20Token {
+			walletsSlice, ok := groupedWallets[walletAddress.Currency]
+			if ok {
+				groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
+			} else {
+				groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
+			}
 		} else {
-			groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
+			walletsSlice, ok := groupedErc20TokenWallets[walletAddress.ContractId]
+			if ok {
+				groupedErc20TokenWallets[walletAddress.ContractId] = append(walletsSlice, walletAddress)
+			} else {
+				groupedErc20TokenWallets[walletAddress.ContractId] = []currencies.AddressData{ walletAddress }
+			}
 		}
 	}
 
@@ -278,6 +288,30 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 
 		if toUsdRate != nil {
 			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
+		}
+
+		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"
+	}
+
+	for contractId, addresses := range groupedErc20TokenWallets {
+		sumBalance := big.NewInt(0)
+
+		for _, address := range addresses {
+			balance := serverData.GetBalance(address)
+			if balance != nil {
+				sumBalance.Add(sumBalance, balance)
+			}
+		}
+
+		tokenData := serverData.GetErc20TokenData(contractId)
+		currencyCode := tokenData.Symbol
+		currencyDigits := tokenData.Decimals
+
+		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDigits)
+
+		if floatBalance == nil {
+			log.Print("Error float balance")
+			continue
 		}
 
 		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"

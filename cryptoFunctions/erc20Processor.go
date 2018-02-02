@@ -88,7 +88,7 @@ func (processor *Erc20Processor) GetTokenData(contractId string) *currencies.Erc
 	tokenData := currencies.Erc20TokenData{
 		Name: parsedResp.Name,
 		Symbol: parsedResp.Symbol,
-		Decimals: parsedResp.Decimals,
+		Decimals: int(parsedResp.Decimals),
 	}
 
 	return &tokenData
