@@ -36,6 +36,6 @@ func GetAllProcessors() map[currencies.Currency]CurrencyProcessor {
 	return processors
 }
 
-func GetErc20Processor() *Erc20Processor {
+func GetErc20TokenProcessor() *Erc20Processor {
 	return &erc20Processor
 }

@@ -63,18 +63,18 @@ func (processor *Erc20Processor) GetBalanceBunch(addresses []currencies.AddressD
 	return balances
 }
 
-func (processor *Erc20Processor) GetTokenData(contractId string) (name string, symbol string, decimals int64) {
+func (processor *Erc20Processor) GetTokenData(contractId string) *currencies.Erc20TokenData {
 	resp, err := http.Get("https://api.tokenbalance.com/token/" + contractId + "/0x0")
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
-		return
+		return nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
-		return
+		return nil
 	}
 
 	var parsedResp = new(Erc20Resp)
@@ -82,14 +82,16 @@ func (processor *Erc20Processor) GetTokenData(contractId string) (name string, s
 	if(err != nil){
 		log.Print(string(body[:]))
 		log.Print(err)
-		return
+		return nil
 	}
 
-	name = parsedResp.Balance
-	symbol = parsedResp.Symbol
-	decimals = parsedResp.Decimals
+	tokenData := currencies.Erc20TokenData{
+		Name: parsedResp.Name,
+		Symbol: parsedResp.Symbol,
+		Decimals: parsedResp.Decimals,
+	}
 
-	return
+	return &tokenData
 }
 
 func (processor *Erc20Processor) GetToUsdRate() *big.Float {

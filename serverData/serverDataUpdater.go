@@ -88,12 +88,39 @@ func (dataUpdater *serverDataUpdater) updateRates() {
 	}
 
 	dataUpdater.cache.balancesMutex.Lock()
-	dataUpdater.cache.rates.toUsd = toUsdRates
+
+	for currency, rate := range toUsdRates {
+		if rate != nil {
+			dataUpdater.cache.rates.toUsd[currency] = rate
+		}
+	}
+
 	dataUpdater.cache.balancesMutex.Unlock()
 }
 
-func (dataUpdater *serverDataUpdater) updateErc20TokensData(contracts []string) {
-	//processor := cryptoFunctions.GetErc20TokenProcessor()
-	
-	//for 
+func (dataUpdater *serverDataUpdater) updateErc20TokensData(contractIds []string) {
+	if len(contractIds) <= 0 {
+		return
+	}
+
+	processor := cryptoFunctions.GetErc20TokenProcessor()
+
+	if processor == nil {
+		log.Print("no ERC20 Token processor")
+	}
+
+	tokenDatas := make(map[string]*currencies.Erc20TokenData)
+
+	for _, contractId := range contractIds {
+		 tokenDatas[contractId] = processor.GetTokenData(contractId)
+	}
+
+	dataUpdater.cache.balancesMutex.Lock()
+	for contractId, contractData := range tokenDatas {
+		if contractData != nil {
+			dataUpdater.cache.erc20Tokens[contractId] = *contractData
+		}
+	}
+
+	dataUpdater.cache.balancesMutex.Unlock()
 }
