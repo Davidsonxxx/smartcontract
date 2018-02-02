@@ -351,7 +351,7 @@ func (database *AccountDb) GetWalletAddress(walletId int64) (addressData currenc
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address FROM wallets WHERE id=%d AND is_removed IS NULL LIMIT 1", walletId))
+	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address, token_id FROM wallets WHERE id=%d AND is_removed IS NULL LIMIT 1", walletId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -360,8 +360,9 @@ func (database *AccountDb) GetWalletAddress(walletId int64) (addressData currenc
 	if rows.Next() {
 		var currency int64
 		var address string
+		var tokenId string
 
-		err := rows.Scan(&currency, &address)
+		err := rows.Scan(&currency, &address, &tokenId)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -369,6 +370,7 @@ func (database *AccountDb) GetWalletAddress(walletId int64) (addressData currenc
 		addressData = currencies.AddressData{
 			Currency: currencies.Currency(currency),
 			Address: address,
+			ContractId: tokenId,
 		}
 	} else {
 		log.Fatalf("No wallet found with id %d", walletId)

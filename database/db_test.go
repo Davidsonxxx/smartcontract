@@ -366,7 +366,14 @@ func TestErc20TokenWallets(t *testing.T) {
 		ContractId : "cid",
 	}
 
-	db.CreateWatchOnlyWallet(userId, "testwallet1", walletAddress)
+	walletId := db.CreateWatchOnlyWallet(userId, "testwallet1", walletAddress)
+
+	{
+		address := db.GetWalletAddress(walletId)
+		assert.Equal("key", address.Address)
+		assert.Equal("cid", address.ContractId)
+		assert.Equal(currencies.Bitcoin, address.Currency)
+	}
 
 	{
 		addresses := db.GetUserWalletAddresses(userId)
