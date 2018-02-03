@@ -445,7 +445,7 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.Addre
 	return
 }
 
-func (database *AccountDb) GetAllContractAddresses() (contractAddresss []string) {
+func (database *AccountDb) GetAllContractAddresses() (contractAddresses []string) {
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
@@ -463,7 +463,7 @@ func (database *AccountDb) GetAllContractAddresses() (contractAddresss []string)
 			log.Fatal(err.Error())
 		}
 
-		contractAddresss = append(contractAddresss, contractAddress)
+		contractAddresses = append(contractAddresses, contractAddress)
 	}
 
 	return

@@ -87,5 +87,10 @@ func (serverDataManager *ServerDataManager) GetRateToUsd(currency currencies.Cur
 }
 
 func (serverDataManager *ServerDataManager) GetErc20TokenData(contractAddress string) *currencies.Erc20TokenData {
-	return serverDataManager.dataUpdater.cache.getErc20TokenData(contractAddress)
+	tokenData := serverDataManager.dataUpdater.cache.getErc20TokenData(contractAddress)
+	if tokenData == nil {
+		tokenData = serverDataManager.dataUpdater.updateOneErc20TokensData(contractAddress)
+	}
+
+	return tokenData
 }

@@ -98,8 +98,8 @@ func (dataUpdater *serverDataUpdater) updateRates() {
 	dataUpdater.cache.balancesMutex.Unlock()
 }
 
-func (dataUpdater *serverDataUpdater) updateErc20TokensData(contractAddresss []string) {
-	if len(contractAddresss) <= 0 {
+func (dataUpdater *serverDataUpdater) updateErc20TokensData(contractAddresses []string) {
+	if len(contractAddresses) <= 0 {
 		return
 	}
 
@@ -107,12 +107,13 @@ func (dataUpdater *serverDataUpdater) updateErc20TokensData(contractAddresss []s
 
 	if processor == nil {
 		log.Print("no ERC20 Token processor")
+		return
 	}
 
 	tokenDatas := make(map[string]*currencies.Erc20TokenData)
 
-	for _, contractAddress := range contractAddresss {
-		 tokenDatas[contractAddress] = processor.GetTokenData(contractAddress)
+	for _, contractAddress := range contractAddresses {
+		tokenDatas[contractAddress] = processor.GetTokenData(contractAddress)
 	}
 
 	dataUpdater.cache.balancesMutex.Lock()
@@ -123,4 +124,23 @@ func (dataUpdater *serverDataUpdater) updateErc20TokensData(contractAddresss []s
 	}
 
 	dataUpdater.cache.balancesMutex.Unlock()
+}
+
+func (dataUpdater *serverDataUpdater) updateOneErc20TokensData(contractAddress string) *currencies.Erc20TokenData {
+	processor := cryptoFunctions.GetErc20TokenProcessor()
+
+	if processor == nil {
+		log.Print("no ERC20 Token processor")
+		return nil
+	}
+
+	tokenData := processor.GetTokenData(contractAddress)
+
+	if tokenData != nil {
+		dataUpdater.cache.balancesMutex.Lock()
+		dataUpdater.cache.erc20Tokens[contractAddress] = *tokenData
+		dataUpdater.cache.balancesMutex.Unlock()
+	}
+
+	return tokenData
 }
