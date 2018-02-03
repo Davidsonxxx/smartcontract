@@ -274,10 +274,10 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			}
 		}
 
-		currencyCode := currencies.GetCurrencyCode(currency)
-		currencyDigits := currencies.GetCurrencyDigits(currency)
+		currencySymbol := currencies.GetCurrencySymbol(currency)
+		currencyDecimals := currencies.GetCurrencyDecimals(currency)
 
-		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDigits)
+		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDecimals)
 
 		if floatBalance == nil {
 			log.Print("Error float balance")
@@ -290,7 +290,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
 		}
 
-		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"
+		text = text + floatBalance.Text('f', currencyDecimals) + " " + currencySymbol + "\n"
 	}
 
 	for contractAddress, addresses := range groupedErc20TokenWallets {
@@ -308,17 +308,17 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			continue
 		}
 
-		currencyCode := tokenData.Symbol
-		currencyDigits := tokenData.Decimals
+		currencySymbol := tokenData.Symbol
+		currencyDecimals := tokenData.Decimals
 
-		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDigits)
+		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDecimals)
 
 		if floatBalance == nil {
 			log.Print("Error float balance")
 			continue
 		}
 
-		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"
+		text = text + floatBalance.Text('f', currencyDecimals) + " " + currencySymbol + "\n"
 	}
 
 	if usdSum != nil {

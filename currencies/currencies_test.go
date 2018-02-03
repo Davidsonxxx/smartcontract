@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-func TestGetCodeAndName(t *testing.T) {
+func TestGetSymbolAndName(t *testing.T) {
 	assert := require.New(t)
 
-	btcCode := GetCurrencyCode(Bitcoin)
-	assert.Equal("BTC", btcCode)
+	btcSymbol := GetCurrencySymbol(Bitcoin)
+	assert.Equal("BTC", btcSymbol)
 
-	ethCode := GetCurrencyCode(Ether)
-	assert.Equal("ETH", ethCode)
+	ethSymbol := GetCurrencySymbol(Ether)
+	assert.Equal("ETH", ethSymbol)
 
 	btcName := GetCurrencyFullName(Bitcoin)
 	assert.Equal("Bitcoin", btcName)
