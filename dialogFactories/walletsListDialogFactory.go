@@ -4,11 +4,11 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
-	"github.com/nicksnyder/go-i18n/i18n"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"log"
 	"math/big"
 	"strconv"
@@ -104,7 +104,7 @@ func addWallet(additionalId string, data *processing.ProcessData) bool {
 }
 
 func moveForward(additionalId string, data *processing.ProcessData) bool {
-	ids, _ := database.GetUserWallets(data.Static.Db, data.UserId)
+	ids, _ := staticFunctions.GetDb(data.Static).GetUserWallets(data.UserId)
 	itemsCount := len(ids)
 	var pagesCount int
 	if itemsCount > 2 {
@@ -138,7 +138,7 @@ func openWallet(additionalId string, data *processing.ProcessData) bool {
 		return false
 	}
 
-	if database.IsWalletBelongsToUser(data.Static.Db, data.UserId, id) {
+	if staticFunctions.GetDb(data.Static).IsWalletBelongsToUser(data.UserId, id) {
 		data.SubstitudeDialog(data.Static.MakeDialogFn("wa", id, data.Trans, data.Static))
 		return true
 	} else {
@@ -200,7 +200,7 @@ func getListDialogCache(userId int64, staticData *processing.StaticProccessStruc
 
 	cache.cachedItems = make([]cachedItem, 0)
 
-	ids, names := database.GetUserWallets(staticData.Db, userId)
+	ids, names := staticFunctions.GetDb(staticData).GetUserWallets(userId)
 	if len(ids) == len(names) {
 		for index, id := range ids {
 			cache.cachedItems = append(cache.cachedItems, cachedItem{
@@ -227,26 +227,36 @@ func getListDialogCache(userId int64, staticData *processing.StaticProccessStruc
 }
 
 func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
-	walletAddresses := database.GetUserWalletAddresses(staticData.Db, userId)
+	walletAddresses := staticFunctions.GetDb(staticData).GetUserWalletAddresses(userId)
 
 	if len(walletAddresses) == 0 {
 		return ""
 	}
 
-	serverDataCache := serverData.GetServerDataCache(staticData)
+	serverData := serverData.GetServerData(staticData)
 
-	if serverDataCache == nil {
+	if serverData == nil {
 		return ""
 	}
 
 	groupedWallets := make(map[currencies.Currency] []currencies.AddressData)
+	groupedErc20TokenWallets := make(map[string] []currencies.AddressData)
 
 	for _, walletAddress := range walletAddresses {
-		walletsSlice, ok := groupedWallets[walletAddress.Currency]
-		if ok {
-			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
+		if walletAddress.Currency != currencies.Erc20Token {
+			walletsSlice, ok := groupedWallets[walletAddress.Currency]
+			if ok {
+				groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
+			} else {
+				groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
+			}
 		} else {
-			groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
+			walletsSlice, ok := groupedErc20TokenWallets[walletAddress.ContractAddress]
+			if ok {
+				groupedErc20TokenWallets[walletAddress.ContractAddress] = append(walletsSlice, walletAddress)
+			} else {
+				groupedErc20TokenWallets[walletAddress.ContractAddress] = []currencies.AddressData{ walletAddress }
+			}
 		}
 	}
 
@@ -258,29 +268,57 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		sumBalance := big.NewInt(0)
 
 		for _, address := range addresses {
-			balance := serverDataCache.GetBalance(address)
+			balance := serverData.GetBalance(address)
 			if balance != nil {
 				sumBalance.Add(sumBalance, balance)
 			}
 		}
 
-		currencyCode := currencies.GetCurrencyCode(currency)
-		currencyDigits := currencies.GetCurrencyDigits(currency)
+		currencySymbol := currencies.GetCurrencySymbol(currency)
+		currencyDecimals := currencies.GetCurrencyDecimals(currency)
 
-		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDigits)
+		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDecimals)
 
 		if floatBalance == nil {
 			log.Print("Error float balance")
 			continue
 		}
 
-		toUsdRate := serverDataCache.GetRateToUsd(currency)
+		toUsdRate := serverData.GetRateToUsd(currency)
 
 		if toUsdRate != nil {
 			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
 		}
 
-		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"
+		text = text + floatBalance.Text('f', currencyDecimals) + " " + currencySymbol + "\n"
+	}
+
+	for contractAddress, addresses := range groupedErc20TokenWallets {
+		sumBalance := big.NewInt(0)
+
+		for _, address := range addresses {
+			balance := serverData.GetBalance(address)
+			if balance != nil {
+				sumBalance.Add(sumBalance, balance)
+			}
+		}
+
+		tokenData := serverData.GetErc20TokenData(contractAddress)
+		if tokenData == nil {
+			continue
+		}
+
+		currencySymbol := tokenData.Symbol
+		currencyDecimals := tokenData.Decimals
+
+		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDecimals)
+
+		if floatBalance == nil {
+			log.Print("Error float balance")
+			continue
+		}
+
+		text = text + floatBalance.Text('f', currencyDecimals) + " " + currencySymbol + "\n"
 	}
 
 	if usdSum != nil {

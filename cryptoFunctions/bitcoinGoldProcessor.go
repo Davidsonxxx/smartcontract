@@ -1,6 +1,7 @@
 package cryptoFunctions
 
 import (
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,8 +12,8 @@ import (
 type BitcoinGoldProcessor struct {
 }
 
-func (processor *BitcoinGoldProcessor) GetBalance(address string) *big.Int {
-	resp, err := http.Get("http://btgexp.com/ext/getbalance/" + address)
+func (processor *BitcoinGoldProcessor) GetBalance(address currencies.AddressData) *big.Int {
+	resp, err := http.Get("http://btgexp.com/ext/getbalance/" + address.Address)
 	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
@@ -35,20 +36,7 @@ func (processor *BitcoinGoldProcessor) GetBalance(address string) *big.Int {
 	}
 }
 
-func (processor *BitcoinGoldProcessor) GetSumBalance(addresses []string) *big.Int {
-	sumBalance := big.NewInt(0)
-
-	for _, walletAddress := range addresses {
-		balance := processor.GetBalance(walletAddress)
-		if balance != nil {
-			sumBalance.Add(sumBalance, balance)
-		}
-	}
-
-	return sumBalance
-}
-
-func (processor *BitcoinGoldProcessor) GetBalanceBunch(addresses []string) []*big.Int {
+func (processor *BitcoinGoldProcessor) GetBalanceBunch(addresses []currencies.AddressData) []*big.Int {
 	balances := make([]*big.Int, len(addresses))
 
 	for i, walletAddress := range addresses {

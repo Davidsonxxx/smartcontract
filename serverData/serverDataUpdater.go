@@ -8,7 +8,26 @@ import (
 )
 
 type serverDataUpdater struct {
-	cache DataCache
+	cache dataCache
+}
+
+func (dataUpdater *serverDataUpdater) updateBalanceOneWallet(walletAddress currencies.AddressData) *big.Int {
+	processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
+
+	if processor == nil {
+		log.Print("No processor found")
+		return nil
+	}
+
+	balance := (*processor).GetBalance(walletAddress)
+
+	if balance != nil {
+		dataUpdater.cache.balancesMutex.Lock()
+		dataUpdater.cache.balances[walletAddress] = balance
+		dataUpdater.cache.balancesMutex.Unlock()
+	}
+
+	return balance
 }
 
 func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies.AddressData) {
@@ -16,14 +35,14 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 		return
 	}
 
-	groupedWallets := make(map[currencies.Currency] []string)
+	groupedWallets := make(map[currencies.Currency] []currencies.AddressData)
 
 	for _, walletAddress := range walletAddresses {
 		walletsSlice, ok := groupedWallets[walletAddress.Currency]
 		if ok {
-			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress.Address)
+			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
 		} else {
-			groupedWallets[walletAddress.Currency] = []string{ walletAddress.Address }
+			groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
 		}
 	}
 
@@ -35,11 +54,7 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 			continue
 		}
 
-		balances := []*big.Int{}
-
-		if processor != nil {
-			balances = (*processor).GetBalanceBunch(addresses)
-		}
+		balances := (*processor).GetBalanceBunch(addresses)
 
 		if len(addresses) != len(balances) {
 			log.Printf("return count doesn't match input count: %d != %d", len(addresses), len(balances))
@@ -51,11 +66,7 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 		for i, address := range addresses {
 			balance := balances[i]
 			if balance != nil {
-				addressData := currencies.AddressData{
-					Currency: currency,
-					Address: address,
-				}
-				dataUpdater.cache.balances[addressData] = balance
+				dataUpdater.cache.balances[address] = balance
 			}
 		}
 
@@ -77,6 +88,59 @@ func (dataUpdater *serverDataUpdater) updateRates() {
 	}
 
 	dataUpdater.cache.balancesMutex.Lock()
-	dataUpdater.cache.rates.toUsd = toUsdRates
+
+	for currency, rate := range toUsdRates {
+		if rate != nil {
+			dataUpdater.cache.rates.toUsd[currency] = rate
+		}
+	}
+
 	dataUpdater.cache.balancesMutex.Unlock()
+}
+
+func (dataUpdater *serverDataUpdater) updateErc20TokensData(contractAddresses []string) {
+	if len(contractAddresses) <= 0 {
+		return
+	}
+
+	processor := cryptoFunctions.GetErc20TokenProcessor()
+
+	if processor == nil {
+		log.Print("no ERC20 Token processor")
+		return
+	}
+
+	tokenDatas := make(map[string]*currencies.Erc20TokenData)
+
+	for _, contractAddress := range contractAddresses {
+		tokenDatas[contractAddress] = processor.GetTokenData(contractAddress)
+	}
+
+	dataUpdater.cache.balancesMutex.Lock()
+	for contractAddress, contractData := range tokenDatas {
+		if contractData != nil {
+			dataUpdater.cache.erc20Tokens[contractAddress] = *contractData
+		}
+	}
+
+	dataUpdater.cache.balancesMutex.Unlock()
+}
+
+func (dataUpdater *serverDataUpdater) updateOneErc20TokensData(contractAddress string) *currencies.Erc20TokenData {
+	processor := cryptoFunctions.GetErc20TokenProcessor()
+
+	if processor == nil {
+		log.Print("no ERC20 Token processor")
+		return nil
+	}
+
+	tokenData := processor.GetTokenData(contractAddress)
+
+	if tokenData != nil {
+		dataUpdater.cache.balancesMutex.Lock()
+		dataUpdater.cache.erc20Tokens[contractAddress] = *tokenData
+		dataUpdater.cache.balancesMutex.Unlock()
+	}
+
+	return tokenData
 }

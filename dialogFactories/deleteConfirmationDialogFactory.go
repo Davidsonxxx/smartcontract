@@ -5,7 +5,7 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strconv"
 )
 
@@ -41,7 +41,7 @@ func MakeDeleteConfirmationDialogFactory() dialogFactory.DialogFactory {
 }
 
 func deleteWalletFinally(walletId int64, data *processing.ProcessData) bool {
-	database.DeleteWallet(data.Static.Db, walletId)
+	staticFunctions.GetDb(data.Static).DeleteWallet(walletId)
 	data.SubstitudeMessage(data.Trans("deleted_success"))
 	data.SendDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
 	return true
@@ -81,7 +81,7 @@ func (factory *deleteConfirmationDialogFactory) ProcessVariant(variantId string,
 		return false
 	}
 
-	if !database.IsWalletBelongsToUser(data.Static.Db, data.UserId, walletId) {
+	if !staticFunctions.GetDb(data.Static).IsWalletBelongsToUser(data.UserId, walletId) {
 		return false
 	}
 

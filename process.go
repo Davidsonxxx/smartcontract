@@ -3,8 +3,6 @@ package main
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"github.com/go-telegram-bot-api/telegram-bot-api"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strings"
 )
@@ -53,8 +51,16 @@ func processCommandByProcessors(data *processing.ProcessData, processors *Proces
 	return ok
 }
 
+func UpdateProcessData(data *processing.ProcessData) {
+	userId := staticFunctions.GetDb(data.Static).GetUserId(data.ChatId, data.UserSystemLang)
+	data.UserId = userId
+	data.Trans = staticFunctions.FindTransFunction(userId, data.Static)
+}
+
 func processCommand(data *processing.ProcessData, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) (succeeded bool) {
-	// drop any text processors for the case wi will process a command
+	UpdateProcessData(data)
+
+	// drop any text processors for the case we will process a command
 	data.Static.SetUserStateTextProcessor(data.UserId, nil)
 	// process dialogs
 	ids := strings.Split(data.Command, "_")
@@ -85,58 +91,11 @@ func processCommand(data *processing.ProcessData, dialogManager *dialogManager.D
 }
 
 func processPlainMessage(data *processing.ProcessData, dialogManager *dialogManager.DialogManager) {
+	UpdateProcessData(data)
+
 	success := dialogManager.ProcessText(data)
 
 	if !success {
 		data.SendMessage(data.Trans("help_info"))
 	}
-}
-
-func processMessageUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
-	userId := database.GetUserId(staticData.Db, update.Message.Chat.ID, strings.ToLower(update.Message.From.LanguageCode))
-	data := processing.ProcessData{
-		Static: staticData,
-		ChatId: update.Message.Chat.ID,
-		UserId: userId,
-		Trans:  staticFunctions.FindTransFunction(userId, staticData),
-	}
-
-	message := update.Message.Text
-
-	if strings.HasPrefix(message, "/") {
-		commandLen := strings.Index(message, " ")
-		if commandLen != -1 {
-			data.Command = message[1:commandLen]
-			data.Message = message[commandLen+1:]
-		} else {
-			data.Command = message[1:]
-		}
-
-		processCommand(&data, dialogManager, processors)
-	} else {
-		data.Message = message
-		processPlainMessage(&data, dialogManager)
-	}
-}
-
-func processCallbackUpdate(update *tgbotapi.Update, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, processors *ProcessorFuncMap) {
-	userId := database.GetUserId(staticData.Db, int64(update.CallbackQuery.From.ID), strings.ToLower(update.CallbackQuery.From.LanguageCode))
-	data := processing.ProcessData{
-		Static:            staticData,
-		ChatId:            int64(update.CallbackQuery.From.ID),
-		UserId:            userId,
-		Trans:             staticFunctions.FindTransFunction(userId, staticData),
-		AnsweredMessageId: int64(update.CallbackQuery.Message.MessageID),
-	}
-
-	message := update.CallbackQuery.Data
-	commandLen := strings.Index(message, " ")
-	if commandLen != -1 {
-		data.Command = message[1:commandLen]
-		data.Message = message[commandLen+1:]
-	} else {
-		data.Command = message[1:]
-	}
-
-	processCommand(&data, dialogManager, processors)
 }

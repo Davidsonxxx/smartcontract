@@ -8,12 +8,27 @@ import (
 	"log"
 )
 
+func GetDb(staticData *processing.StaticProccessStructs) *database.AccountDb {
+	if staticData == nil {
+		log.Fatal("staticData is nil")
+		return nil
+	}
+
+	db, ok := staticData.Db.(*database.AccountDb)
+	if ok && db != nil {
+		return db
+	} else {
+		log.Fatal("database is not set properly")
+		return nil
+	}
+}
+
 func FindTransFunction(userId int64, staticData *processing.StaticProccessStructs) i18n.TranslateFunc {
 	// ToDo: cache user's lang
-	lang := database.GetUserLanguage(staticData.Db, userId)
-	
+	lang := GetDb(staticData).GetUserLanguage(userId)
+
 	config, configCastSuccess := staticData.Config.(static.StaticConfiguration)
-	
+
 	if !configCastSuccess {
 		config = static.StaticConfiguration{}
 	}
@@ -22,7 +37,7 @@ func FindTransFunction(userId int64, staticData *processing.StaticProccessStruct
 	if len(lang) <= 0 {
 		log.Printf("User %d has empty language. Setting to default.", userId)
 		lang = config.DefaultLanguage
-		database.SetUserLanguage(staticData.Db, userId, lang)
+		GetDb(staticData).SetUserLanguage(userId, lang)
 	}
 
 	if foundTrans, ok := staticData.Trans[lang]; ok {
@@ -33,7 +48,7 @@ func FindTransFunction(userId int64, staticData *processing.StaticProccessStruct
 	if foundTrans, ok := staticData.Trans[config.DefaultLanguage]; ok {
 		log.Printf("User %d has unknown language (%s). Setting to default.", userId, lang)
 		lang = config.DefaultLanguage
-		database.SetUserLanguage(staticData.Db, userId, lang)
+		GetDb(staticData).SetUserLanguage(userId, lang)
 		return foundTrans
 	}
 

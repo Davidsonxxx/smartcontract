@@ -5,11 +5,12 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -41,23 +42,23 @@ func MakeWalletDialogFactory() dialogFactory.DialogFactory {
 				process: receiveToWallet,
 				rowId:1,
 			},
-			walletVariantPrototype{
-				id: "hist",
-				textId: "history",
-				process: showHistory,
-				rowId:2,
-			},
+			// walletVariantPrototype{
+			// 	id: "hist",
+			// 	textId: "history",
+			// 	process: showHistory,
+			// 	rowId:2,
+			// },
 			walletVariantPrototype{
 				id: "set",
 				textId: "settings",
 				process: walletSettings,
-				rowId:2,
+				rowId:1,
 			},
 			walletVariantPrototype{
 				id: "back",
 				textId: "back_to_list",
 				process: backToList,
-				rowId:3,
+				rowId:2,
 			},
 		},
 	})
@@ -90,26 +91,44 @@ func backToList(walletId int64, data *processing.ProcessData) bool {
 }
 
 func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
-	walletAddress := database.GetWalletAddress(staticData.Db, walletId)
+	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
 
-	serverDataCache := serverData.GetServerDataCache(staticData)
+	serverData := serverData.GetServerData(staticData)
 
-	if serverDataCache == nil {
+	if serverData == nil {
 		return "Error"
 	}
 
-	balance := serverDataCache.GetBalance(walletAddress)
+	balance := serverData.GetBalance(walletAddress)
 
 	if balance == nil {
-		return trans("wait_for_data")
+		return trans("no_data")
 	}
 
-	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
-	currencyDigits := currencies.GetCurrencyDigits(walletAddress.Currency)
+	var currencySymbol string
+	var currencyDecimals int
 
-	balanceText := cryptoFunctions.FormatCurrencyAmount(balance, currencyDigits)
+	if walletAddress.Currency != currencies.Erc20Token {
+		currencySymbol = currencies.GetCurrencySymbol(walletAddress.Currency)
+		currencyDecimals = currencies.GetCurrencyDecimals(walletAddress.Currency)
+	} else {
+		if len(walletAddress.ContractAddress) <= 0 {
+			log.Print("No contractAddress for token")
+			return "Error"
+		}
 
-	return fmt.Sprintf("<b>%s</b>\n%s %s", database.GetWalletName(staticData.Db, walletId), balanceText, currencyCode)
+		tokenData := serverData.GetErc20TokenData(walletAddress.ContractAddress)
+		if tokenData == nil {
+			return trans("no_data")
+		}
+
+		currencySymbol = tokenData.Symbol
+		currencyDecimals = tokenData.Decimals
+	}
+
+	balanceText := cryptoFunctions.FormatCurrencyAmount(balance, currencyDecimals)
+
+	return fmt.Sprintf("<b>%s</b>\n%s %s", staticFunctions.GetDb(staticData).GetWalletName(walletId), balanceText, currencySymbol)
 }
 
 func (factory *walletDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {
@@ -142,7 +161,7 @@ func (factory *walletDialogFactory) ProcessVariant(variantId string, additionalI
 		return false
 	}
 
-	if !database.IsWalletBelongsToUser(data.Static.Db, data.UserId, walletId) {
+	if !staticFunctions.GetDb(data.Static).IsWalletBelongsToUser(data.UserId, walletId) {
 		return false
 	}
 

@@ -1,7 +1,9 @@
 package cryptoFunctions
 
 import (
+	"bytes"
 	"encoding/json"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"io/ioutil"
 	"net/http"
 	"log"
@@ -16,20 +18,20 @@ type RateData struct {
 // currencyId see here https://coinmarketcap.com/api/
 func getCurrencyToUsdRate(currencyId string) *big.Float {
 	resp, err := http.Get("https://api.coinmarketcap.com/v1/ticker/" + currencyId + "/")
-	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
-	
+
 	jsonStr := string(body[:])
-	
+
 	// remove trailing brackets
 	jsonStr = strings.Replace(jsonStr, "[", "", -1)
 	jsonStr = strings.Replace(jsonStr, "]", "", -1)
@@ -41,9 +43,9 @@ func getCurrencyToUsdRate(currencyId string) *big.Float {
 		log.Print(err)
 		return nil
 	}
-	
+
 	rate, _, err := new(big.Float).Parse(parsedResp.PriceUsd, 10)
-	
+
 	if err == nil {
 		return rate
 	} else {
@@ -51,4 +53,17 @@ func getCurrencyToUsdRate(currencyId string) *big.Float {
 		log.Print(err)
 		return nil
 	}
+}
+
+func joinAddresses(addresses []currencies.AddressData) string {
+	var b bytes.Buffer
+
+	for i, addressData := range addresses {
+		if i > 0 {
+			b.WriteString(",")
+		}
+		b.WriteString(addressData.Address)
+	}
+
+	return b.String()
 }

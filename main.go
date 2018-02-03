@@ -6,7 +6,6 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/gameraccoon/telegram-bot-skeleton/telegramChat"
-	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/dialogFactories"
@@ -15,8 +14,6 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
-	"sync"
-	"time"
 )
 
 func init() {
@@ -75,7 +72,7 @@ func main() {
 		log.Fatal("Default language should be in the list of available languages")
 	}
 
-	db, err := database.Init("./accounts-data.db")
+	db, err := database.ConnectDb("./accounts-data.db")
 	defer db.Disconnect()
 
 	if err != nil {
@@ -118,49 +115,9 @@ func main() {
 
 	staticData.Init()
 
-	dbMutex := &sync.Mutex{}
-
 	serverDataManager := serverData.ServerDataManager{}
-	serverDataManager.RegisterServerDataCache(staticData)
-	serverDataManager.InitialUpdate(db, dbMutex)
+	serverDataManager.RegisterServerDataInterface(staticData)
+	serverDataManager.InitialUpdate(db)
 
-	go updateTimer(staticData, &serverDataManager, config.UpdateIntervalSec, dbMutex)
-	updateBot(chat.GetBot(), chat, staticData, dialogManager, dbMutex)
-}
-
-func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager *serverData.ServerDataManager, updateIntervalSec int, dbMutex *sync.Mutex) {
-	if updateIntervalSec <= 0 {
-		log.Fatal("Wrong time interval. Add updateIntervalSec to config")
-	}
-
-	for {
-		time.Sleep(time.Duration(updateIntervalSec) * time.Second)
-		serverDataManager.TimerTick(staticData.Db, dbMutex)
-	}
-}
-
-func updateBot(bot *tgbotapi.BotAPI, chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager, dbMutex *sync.Mutex) {
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
-
-	updates, err := chat.GetBot().GetUpdatesChan(u)
-
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	processors := makeUserCommandProcessors()
-
-	for update := range updates {
-		if update.Message != nil {
-			dbMutex.Lock()
-			processMessageUpdate(&update, staticData, dialogManager, &processors)
-			dbMutex.Unlock()
-		}
-		if update.CallbackQuery != nil {
-			dbMutex.Lock()
-			processCallbackUpdate(&update, staticData, dialogManager, &processors)
-			dbMutex.Unlock()
-		}
-	}
+	startUpdating(chat, dialogManager, staticData, &serverDataManager, config.UpdateIntervalSec)
 }

@@ -1,16 +1,15 @@
 package cryptoFunctions
 
 import (
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"math/big"
 )
 
 type CurrencyProcessor interface {
 	// get account balance
-	GetBalance(address string) *big.Int
+	GetBalance(address currencies.AddressData) *big.Int
 	// get multiple accounts balance
-	GetBalanceBunch(addresses []string) []*big.Int
-	// Deprecated. Use GetBunchBalance instead
-	GetSumBalance(addresses []string) *big.Int
+	GetBalanceBunch(addresses []currencies.AddressData) []*big.Int
 	// get this currency to USD rate
 	GetToUsdRate() *big.Float
 }

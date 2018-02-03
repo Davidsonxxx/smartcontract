@@ -41,6 +41,16 @@ func MakeChooseCurrencyDialogFactory() dialogFactory.DialogFactory {
 				currencyId: currencies.BitcoinGold,
 				rowId: 2,
 			},
+			chooseCurrencyItemVariantPrototype{
+				id: "xrp",
+				currencyId: currencies.RippleXrp,
+				rowId: 3,
+			},
+			chooseCurrencyItemVariantPrototype{
+				id: "erc20",
+				currencyId: currencies.Erc20Token,
+				rowId: 4,
+			},
 		},
 	})
 }
@@ -49,7 +59,7 @@ func processWalletType(data *processing.ProcessData, variantPrototype *chooseCur
 	data.Static.SetUserStateValue(data.UserId, "walletCurrency", variantPrototype.currencyId)
 	data.SubstitudeMessage(data.Trans("send_wallet_name"))
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
-		ProcessorId: "newWatchOnlyWalletName",
+		ProcessorId: "newWalletName",
 	})
 	return true
 }

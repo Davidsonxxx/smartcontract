@@ -1,11 +1,11 @@
 package cryptoFunctions
 
 import (
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"log"
-	"strings"
 	"math/big"
 )
 
@@ -25,13 +25,13 @@ type BitcoinMultiResp struct {
 	Data []BitcoinRespData `json:"data"`
 }
 
-func (processor *BitcoinProcessor) GetBalance(address string) *big.Int {
-	resp, err := http.Get("https://chain.api.btc.com/v3/address/" + address)
-	defer resp.Body.Close()
+func (processor *BitcoinProcessor) GetBalance(address currencies.AddressData) *big.Int {
+	resp, err := http.Get("https://chain.api.btc.com/v3/address/" + address.Address)
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -50,43 +50,7 @@ func (processor *BitcoinProcessor) GetBalance(address string) *big.Int {
 	return big.NewInt(parsedResp.Data.Balance)
 }
 
-func (processor *BitcoinProcessor) GetSumBalance(addresses []string) *big.Int {
-
-	if len(addresses) == 1 {
-		return processor.GetBalance(addresses[0])
-	}
-
-	resp, err := http.Get("https://chain.api.btc.com/v3/address/" + strings.Join(addresses, ","))
-	defer resp.Body.Close()
-	if err != nil {
-		log.Print(err)
-		return nil
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Print(err)
-		return nil
-	}
-
-	var parsedResp = new(BitcoinMultiResp)
-	err = json.Unmarshal(body, &parsedResp)
-	if(err != nil){
-		log.Print(string(body[:]))
-		log.Print(err)
-		return nil
-	}
-
-	sum := big.NewInt(0)
-
-	for _, data := range parsedResp.Data {
-		sum.Add(sum, big.NewInt(data.Balance))
-	}
-
-	return sum
-}
-
-func (processor *BitcoinProcessor) GetBalanceBunch(addresses []string) []*big.Int {
+func (processor *BitcoinProcessor) GetBalanceBunch(addresses []currencies.AddressData) []*big.Int {
 	if len(addresses) == 1 {
 		return []*big.Int {
 			processor.GetBalance(addresses[0]),
@@ -95,12 +59,12 @@ func (processor *BitcoinProcessor) GetBalanceBunch(addresses []string) []*big.In
 
 	balances := make([]*big.Int, len(addresses))
 
-	resp, err := http.Get("https://chain.api.btc.com/v3/address/" + strings.Join(addresses, ","))
-	defer resp.Body.Close()
+	resp, err := http.Get("https://chain.api.btc.com/v3/address/" + joinAddresses(addresses))
 	if err != nil {
 		log.Print(err)
 		return balances
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -119,7 +83,7 @@ func (processor *BitcoinProcessor) GetBalanceBunch(addresses []string) []*big.In
 	// I'm not sure if it's more time efficient
 	addressesIndexes := map[string]int{}
 	for i, address := range addresses {
-		addressesIndexes[address] = i
+		addressesIndexes[address.Address] = i
 	}
 
 	for _, data := range parsedResp.Data {

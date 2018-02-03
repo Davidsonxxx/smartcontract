@@ -3,44 +3,49 @@ package database
 import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/gameraccoon/telegram-bot-skeleton/database"
+	dbBase "github.com/gameraccoon/telegram-bot-skeleton/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/wallettypes"
 	"log"
+	"sync"
 )
 
+type AccountDb struct {
+	db dbBase.Database
+	mutex sync.Mutex
+}
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
-func Init(path string) (db *database.Database, err error) {
-	db = &database.Database{}
+func ConnectDb(path string) (database *AccountDb, err error) {
+	database = &AccountDb{}
 
-	err = db.Connect(path)
+	err = database.db.Connect(path)
 
 	if err != nil {
 		return
 	}
 
-	db.Exec("PRAGMA foreign_keys = ON")
+	database.db.Exec("PRAGMA foreign_keys = ON")
 
-	db.Exec("CREATE TABLE IF NOT EXISTS" +
+	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
 		" global_vars(name TEXT PRIMARY KEY" +
 		",integer_value INTEGER" +
 		",string_value TEXT" +
 		")")
 
-	db.Exec("CREATE TABLE IF NOT EXISTS" +
+	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
 		" users(id INTEGER NOT NULL PRIMARY KEY" +
 		",chat_id INTEGER UNIQUE NOT NULL" +
 		",language TEXT NOT NULL" +
 		")")
 
-	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS" +
+	database.db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS" +
 		" chat_id_index ON users(chat_id)")
 
-	db.Exec("CREATE TABLE IF NOT EXISTS" +
+	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
 		" wallets(id INTEGER NOT NULL PRIMARY KEY" +
 		",is_removed INTEGER" + // NULL for alive wallets
 		",user_id INTEGER NOT NULL" +
@@ -48,10 +53,11 @@ func Init(path string) (db *database.Database, err error) {
 		",currency INTEGER NOT NULL" +
 		",address TEXT NOT NULL" +
 		",type INTEGER NOT NULL" +
+		",contract_address TEXT NOT NULL" + // not empty for ERC20 token wallets (type == 5)
 		",FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL" +
 		")")
 
-	db.Exec("CREATE TABLE IF NOT EXISTS" +
+	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
 		" rates(id INTEGER NOT NULL PRIMARY KEY" +
 		",rate_to_usd REAL NOT NULL" +
 		",time TIME NOT NULL" +
@@ -60,8 +66,25 @@ func Init(path string) (db *database.Database, err error) {
 	return
 }
 
-func GetDatabaseVersion(db *database.Database) (version string) {
-	rows, err := db.Query("SELECT string_value FROM global_vars WHERE name='version'")
+func (database *AccountDb) IsConnectionOpened() bool {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	return database.db.IsConnectionOpened()
+}
+
+func (database *AccountDb) Disconnect() {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Disconnect()
+}
+
+func (database *AccountDb) GetDatabaseVersion() (version string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query("SELECT string_value FROM global_vars WHERE name='version'")
 
 	if err != nil {
 		log.Fatal(err.Error())
@@ -81,18 +104,24 @@ func GetDatabaseVersion(db *database.Database) (version string) {
 	return
 }
 
-func SetDatabaseVersion(db *database.Database, version string) {
-	db.Exec("DELETE FROM global_vars WHERE name='version'")
+func (database *AccountDb) SetDatabaseVersion(version string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
 
-	safeVersion := database.SanitizeString(version)
-	db.Exec(fmt.Sprintf("INSERT INTO global_vars (name, string_value) VALUES ('version', '%s')", safeVersion))
+	database.db.Exec("DELETE FROM global_vars WHERE name='version'")
+
+	safeVersion := dbBase.SanitizeString(version)
+	database.db.Exec(fmt.Sprintf("INSERT INTO global_vars (name, string_value) VALUES ('version', '%s')", safeVersion))
 }
 
-func GetUserId(db *database.Database, chatId int64, userLangCode string) (userId int64) {
-	db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO users(chat_id, language) "+
+func (database *AccountDb) GetUserId(chatId int64, userLangCode string) (userId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO users(chat_id, language) "+
 		"VALUES (%d, '%s')", chatId, userLangCode))
 
-	rows, err := db.Query(fmt.Sprintf("SELECT id FROM users WHERE chat_id=%d", chatId))
+	rows, err := database.db.Query(fmt.Sprintf("SELECT id FROM users WHERE chat_id=%d", chatId))
 	if err != nil {
 		log.Fatal(err.Error())
 		return
@@ -115,8 +144,11 @@ func GetUserId(db *database.Database, chatId int64, userLangCode string) (userId
 	return
 }
 
-func GetUserChatId(db *database.Database, userId int64) (chatId int64) {
-	rows, err := db.Query(fmt.Sprintf("SELECT chat_id FROM users WHERE id=%d", userId))
+func (database *AccountDb) GetUserChatId(userId int64) (chatId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT chat_id FROM users WHERE id=%d", userId))
 	if err != nil {
 		log.Fatal(err.Error())
 		return
@@ -139,8 +171,11 @@ func GetUserChatId(db *database.Database, userId int64) (chatId int64) {
 	return
 }
 
-func GetUserWallets(db *database.Database, userId int64) (ids []int64, names []string) {
-	rows, err := db.Query(fmt.Sprintf("SELECT id, name FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
+func (database *AccountDb) GetUserWallets(userId int64) (ids []int64, names []string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT id, name FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -162,8 +197,11 @@ func GetUserWallets(db *database.Database, userId int64) (ids []int64, names []s
 	return
 }
 
-func GetWalletName(db *database.Database, walletId int64) (name string) {
-	rows, err := db.Query(fmt.Sprintf("SELECT name FROM wallets WHERE id=%d AND is_removed IS NULL", walletId))
+func (database *AccountDb) GetWalletName(walletId int64) (name string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT name FROM wallets WHERE id=%d AND is_removed IS NULL", walletId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -185,8 +223,8 @@ func GetWalletName(db *database.Database, walletId int64) (name string) {
 	return
 }
 
-func GetLastInsertedItemId(db *database.Database) (id int64) {
-	rows, err := db.Query("SELECT last_insert_rowid()")
+func (database *AccountDb) getLastInsertedItemId() (id int64) {
+	rows, err := database.db.Query("SELECT last_insert_rowid()")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -208,32 +246,43 @@ func GetLastInsertedItemId(db *database.Database) (id int64) {
 	return -1
 }
 
-func CreateWatchOnlyWallet(db *database.Database, userId int64, name string, currency currencies.Currency, address string) (newWalletId int64) {
-	db.Exec(fmt.Sprintf(
+func (database *AccountDb) CreateWatchOnlyWallet(userId int64, name string, address currencies.AddressData) (newWalletId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Exec(fmt.Sprintf(
 		"INSERT INTO wallets(" +
 		"user_id" +
 		",name" +
 		",currency" +
 		",address" +
 		",type" +
-		")VALUES(%d,'%s',%d,'%s',%d)",
+		",contract_address" +
+		")VALUES(%d,'%s',%d,'%s',%d,'%s')",
 		userId,
-		database.SanitizeString(name),
-		currency,
-		database.SanitizeString(address),
+		dbBase.SanitizeString(name),
+		address.Currency,
+		dbBase.SanitizeString(address.Address),
 		wallettypes.WatchOnly,
+		dbBase.SanitizeString(address.ContractAddress),
 	))
 
-	return GetLastInsertedItemId(db)
+	return database.getLastInsertedItemId()
 }
 
-func DeleteWallet(db *database.Database, walletId int64) {
+func (database *AccountDb) DeleteWallet(walletId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
 	// give a way to recover things (don't delete completely)
-	db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET is_removed=1 WHERE id=%d",  walletId))
+	database.db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET is_removed=1 WHERE id=%d",  walletId))
 }
 
-func IsWalletBelongsToUser(db *database.Database, userId int64, walletId int64) bool {
-	rows, err := db.Query(fmt.Sprintf("SELECT COUNT(*) FROM wallets WHERE id=%d AND user_id=%d AND is_removed IS NULL", walletId, userId))
+func (database *AccountDb) IsWalletBelongsToUser(userId int64, walletId int64) bool {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT COUNT(*) FROM wallets WHERE id=%d AND user_id=%d AND is_removed IS NULL", walletId, userId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -258,12 +307,18 @@ func IsWalletBelongsToUser(db *database.Database, userId int64, walletId int64) 
 	return false
 }
 
-func SetUserLanguage(db *database.Database, userId int64, language string) {
-	db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK users SET language='%s' WHERE id=%d", language, userId))
+func (database *AccountDb) SetUserLanguage(userId int64, language string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK users SET language='%s' WHERE id=%d", language, userId))
 }
 
-func GetUserLanguage(db *database.Database, userId int64) (language string) {
-	rows, err := db.Query(fmt.Sprintf("SELECT language FROM users WHERE id=%d AND language IS NOT NULL", userId))
+func (database *AccountDb) GetUserLanguage(userId int64) (language string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT language FROM users WHERE id=%d AND language IS NOT NULL", userId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -285,12 +340,18 @@ func GetUserLanguage(db *database.Database, userId int64) (language string) {
 	return
 }
 
-func RenameWallet(db *database.Database, walletId int64, newName string) {
-	db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET name='%s' WHERE id=%d AND is_removed IS NULL", newName, walletId))
+func (database *AccountDb) RenameWallet(walletId int64, newName string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET name='%s' WHERE id=%d AND is_removed IS NULL", newName, walletId))
 }
 
-func GetWalletAddress(db *database.Database, walletId int64) (addressData currencies.AddressData) {
-	rows, err := db.Query(fmt.Sprintf("SELECT currency, address FROM wallets WHERE id=%d AND is_removed IS NULL LIMIT 1", walletId))
+func (database *AccountDb) GetWalletAddress(walletId int64) (addressData currencies.AddressData) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address, contract_address FROM wallets WHERE id=%d AND is_removed IS NULL LIMIT 1", walletId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -299,8 +360,9 @@ func GetWalletAddress(db *database.Database, walletId int64) (addressData curren
 	if rows.Next() {
 		var currency int64
 		var address string
+		var contractAddress string
 
-		err := rows.Scan(&currency, &address)
+		err := rows.Scan(&currency, &address, &contractAddress)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -308,6 +370,7 @@ func GetWalletAddress(db *database.Database, walletId int64) (addressData curren
 		addressData = currencies.AddressData{
 			Currency: currencies.Currency(currency),
 			Address: address,
+			ContractAddress: contractAddress,
 		}
 	} else {
 		log.Fatalf("No wallet found with id %d", walletId)
@@ -316,8 +379,11 @@ func GetWalletAddress(db *database.Database, walletId int64) (addressData curren
 	return
 }
 
-func GetUserWalletAddresses(db *database.Database, userId int64) (addresses []currencies.AddressData) {
-	rows, err := db.Query(fmt.Sprintf("SELECT currency, address FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
+func (database *AccountDb) GetUserWalletAddresses(userId int64) (addresses []currencies.AddressData) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address, contract_address FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -326,8 +392,9 @@ func GetUserWalletAddresses(db *database.Database, userId int64) (addresses []cu
 	for rows.Next() {
 		var currency int64
 		var address string
+		var contractAddress string
 
-		err := rows.Scan(&currency, &address)
+		err := rows.Scan(&currency, &address, &contractAddress)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -337,6 +404,7 @@ func GetUserWalletAddresses(db *database.Database, userId int64) (addresses []cu
 			currencies.AddressData{
 				Currency: currencies.Currency(currency),
 				Address: address,
+				ContractAddress: contractAddress,
 			},
 		)
 	}
@@ -344,8 +412,11 @@ func GetUserWalletAddresses(db *database.Database, userId int64) (addresses []cu
 	return
 }
 
-func GetAllWalletAddresses(db *database.Database) (addresses []currencies.AddressData) {
-	rows, err := db.Query("SELECT currency, address FROM wallets WHERE is_removed IS NULL")
+func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.AddressData) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query("SELECT currency, address, contract_address FROM wallets WHERE is_removed IS NULL")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -354,8 +425,9 @@ func GetAllWalletAddresses(db *database.Database) (addresses []currencies.Addres
 	for rows.Next() {
 		var currency int64
 		var address string
+		var contractAddress string
 
-		err := rows.Scan(&currency, &address)
+		err := rows.Scan(&currency, &address, &contractAddress)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -365,8 +437,33 @@ func GetAllWalletAddresses(db *database.Database) (addresses []currencies.Addres
 			currencies.AddressData{
 				Currency: currencies.Currency(currency),
 				Address: address,
+				ContractAddress: contractAddress,
 			},
 		)
+	}
+
+	return
+}
+
+func (database *AccountDb) GetAllContractAddresses() (contractAddresses []string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query("SELECT DISTINCT contract_address FROM wallets WHERE is_removed IS NULL AND contract_address!=''")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var contractAddress string
+
+		err := rows.Scan(&contractAddress)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		contractAddresses = append(contractAddresses, contractAddress)
 	}
 
 	return

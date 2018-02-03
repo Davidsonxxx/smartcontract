@@ -13,12 +13,14 @@ const (
 	Ether Currency = 1
 	BitcoinCash Currency = 2
 	BitcoinGold Currency = 3
+	RippleXrp Currency = 4
+	Erc20Token Currency = 5
 )
 
 type currencyStaticData struct {
 	FullName string
-	Code string
-	Digits int // how mady decimal digits after zero can it have
+	Symbol string
+	Decimals int // how mady decimal digits after zero can it have
 }
 
 var currencyStaticDataMap map[Currency]currencyStaticData
@@ -27,28 +29,38 @@ func init() {
 	currencyStaticDataMap = map[Currency]currencyStaticData {
 		Bitcoin : {
 			FullName: "Bitcoin",
-			Code: "BTC",
-			Digits: 8,
+			Symbol: "BTC",
+			Decimals: 8,
 		},
 		Ether : {
 			FullName: "Ethereum",
-			Code: "ETH",
-			Digits: 18,
+			Symbol: "ETH",
+			Decimals: 18,
 		},
 		BitcoinCash : {
 			FullName: "Bitcoin Cash",
-			Code: "BCH",
-			Digits: 8,
+			Symbol: "BCH",
+			Decimals: 8,
 		},
 		BitcoinGold : {
 			FullName: "Bitcoin Gold",
-			Code: "BTG",
-			Digits: 8,
+			Symbol: "BTG",
+			Decimals: 8,
+		},
+		RippleXrp : {
+			FullName: "Ripple",
+			Symbol: "XRP",
+			Decimals: 6,
+		},
+		Erc20Token : {
+			FullName: "ERC20 Token",
+			Symbol: "",
+			Decimals: 18,
 		},
 	}
 }
 
-func GetCurrencyCode(currency Currency) string {
+func GetCurrencySymbol(currency Currency) string {
 	currencyData, ok := currencyStaticDataMap[currency]
 
 	if !ok {
@@ -56,7 +68,7 @@ func GetCurrencyCode(currency Currency) string {
 		return "unknown"
 	}
 
-	return currencyData.Code
+	return currencyData.Symbol
 }
 
 func GetCurrencyFullName(currency Currency) string {
@@ -70,7 +82,7 @@ func GetCurrencyFullName(currency Currency) string {
 	return currencyData.FullName
 }
 
-func GetCurrencyDigits(currency Currency) int {
+func GetCurrencyDecimals(currency Currency) int {
 	currencyData, ok := currencyStaticDataMap[currency]
 
 	if !ok {
@@ -78,5 +90,5 @@ func GetCurrencyDigits(currency Currency) int {
 		return 0
 	}
 
-	return currencyData.Digits
+	return currencyData.Decimals
 }

@@ -1,22 +1,21 @@
 package database
 
 import (
-	"github.com/gameraccoon/telegram-bot-skeleton/database"
 	"log"
 )
 
 const (
 	minimalVersion = "0.1"
-	latestVersion  = "0.1"
+	latestVersion  = "0.2"
 )
 
 type dbUpdater struct {
 	version  string
-	updateDb func(db *database.Database)
+	updateDb func(db *AccountDb)
 }
 
-func UpdateVersion(db *database.Database) {
-	currentVersion := GetDatabaseVersion(db)
+func UpdateVersion(db *AccountDb) {
+	currentVersion := db.GetDatabaseVersion()
 
 	if currentVersion != latestVersion {
 		updaters := makeUpdaters(currentVersion, latestVersion)
@@ -27,7 +26,7 @@ func UpdateVersion(db *database.Database) {
 		log.Printf("Update DB version from %s to %s", currentVersion, latestVersion)
 	}
 
-	SetDatabaseVersion(db, latestVersion)
+	db.SetDatabaseVersion(latestVersion)
 }
 
 func makeUpdaters(versionFrom string, versionTo string) (updaters []dbUpdater) {
@@ -53,10 +52,10 @@ func makeUpdaters(versionFrom string, versionTo string) (updaters []dbUpdater) {
 func makeAllUpdaters() (updaters []dbUpdater) {
 	updaters = []dbUpdater{
 		dbUpdater{
-			// version: "1.1",
-			// updateDb: func(db *Database) {
-			// 	db.execQuery("ALTER TABLE prohibited_words ADD COLUMN removed INTEGER")
-			// },
+			version: "0.2",
+			updateDb: func(db *AccountDb) {
+				db.db.Exec("ALTER TABLE wallets ADD COLUMN contract_address TEXT NOT NULL DEFAULT('')")
+			},
 		},
 	}
 	return

@@ -1,6 +1,7 @@
 package cryptoFunctions
 
 import (
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -20,13 +21,13 @@ type BitcoinCashResp struct {
 	Data []BitcoinCashRespData `json:"data"`
 }
 
-func (processor *BitcoinCashProcessor) GetBalance(address string) *big.Int {
-	resp, err := http.Get("https://api.blockchair.com/bitcoin-cash/dashboards/address/" + address)
-	defer resp.Body.Close()
+func (processor *BitcoinCashProcessor) GetBalance(address currencies.AddressData) *big.Int {
+	resp, err := http.Get("https://api.blockchair.com/bitcoin-cash/dashboards/address/" + address.Address)
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -55,20 +56,7 @@ func (processor *BitcoinCashProcessor) GetBalance(address string) *big.Int {
 	}
 }
 
-func (processor *BitcoinCashProcessor) GetSumBalance(addresses []string) *big.Int {
-	sumBalance := big.NewInt(0)
-
-	for _, walletAddress := range addresses {
-		balance := processor.GetBalance(walletAddress)
-		if balance != nil {
-			sumBalance.Add(sumBalance, balance)
-		}
-	}
-
-	return sumBalance
-}
-
-func (processor *BitcoinCashProcessor) GetBalanceBunch(addresses []string) []*big.Int {
+func (processor *BitcoinCashProcessor) GetBalanceBunch(addresses []currencies.AddressData) []*big.Int {
 	balances := make([]*big.Int, len(addresses))
 
 	for i, walletAddress := range addresses {
