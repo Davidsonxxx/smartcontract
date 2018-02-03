@@ -304,6 +304,10 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		}
 
 		tokenData := serverData.GetErc20TokenData(contractAddress)
+		if tokenData == nil {
+			continue
+		}
+
 		currencyCode := tokenData.Symbol
 		currencyDigits := tokenData.Decimals
 

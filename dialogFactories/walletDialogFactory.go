@@ -118,6 +118,10 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 		}
 
 		tokenData := serverData.GetErc20TokenData(walletAddress.ContractAddress)
+		if tokenData == nil {
+			return trans("no_data")
+		}
+
 		currencyCode = tokenData.Symbol
 		currencyDigits = tokenData.Decimals
 	}
