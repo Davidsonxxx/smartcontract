@@ -156,7 +156,11 @@ func TestCreateAndRemoveWallet(t *testing.T) {
 		assert.Equal(0, len(names))
 	}
 
-	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", currencies.Bitcoin, "key")
+	walletAddress := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "key",
+	}
+	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", walletAddress)
 	assert.True(db.IsWalletBelongsToUser(walletId, userId))
 	{
 		ids, names := db.GetUserWallets(userId)
@@ -191,8 +195,18 @@ func TestWalletBelongsToUser(t *testing.T) {
 	userId1 := db.GetUserId(123, "")
 	userId2 := db.GetUserId(321, "")
 
-	wallet1Id := db.CreateWatchOnlyWallet(userId1, "testwalt", currencies.Bitcoin, "key1")
-	wallet2Id := db.CreateWatchOnlyWallet(userId2, "123", currencies.Bitcoin, "key2")
+	walletAddress1 := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "key1",
+	}
+
+	walletAddress2 := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "key2",
+	}
+
+	wallet1Id := db.CreateWatchOnlyWallet(userId1, "testwalt", walletAddress1)
+	wallet2Id := db.CreateWatchOnlyWallet(userId2, "123", walletAddress2)
 
 	assert.True(db.IsWalletBelongsToUser(userId1, wallet1Id))
 	assert.True(db.IsWalletBelongsToUser(userId2, wallet2Id))
@@ -248,7 +262,12 @@ func TestWalletRenaming(t *testing.T) {
 
 	userId := db.GetUserId(123, "")
 
-	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", currencies.Bitcoin, "key1")
+	walletAddress := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "key",
+	}
+
+	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", walletAddress)
 
 	{
 		ids, names := db.GetUserWallets(userId)
@@ -282,9 +301,24 @@ func TestGettingWalletAddresses(t *testing.T) {
 	userId1 := db.GetUserId(123, "")
 	userId2 := db.GetUserId(321, "")
 
-	walletId1 := db.CreateWatchOnlyWallet(userId1, "testwallet1", currencies.Bitcoin, "adr1")
-	walletId2 := db.CreateWatchOnlyWallet(userId1, "testwallet2", currencies.Ether, "adr2")
-	walletId3 := db.CreateWatchOnlyWallet(userId2, "testwallet3", currencies.Bitcoin, "adr3")
+	walletAddress1 := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "adr1",
+	}
+
+	walletAddress2 := currencies.AddressData{
+		Currency: currencies.Ether,
+		Address: "adr2",
+	}
+
+	walletAddress3 := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "adr3",
+	}
+
+	walletId1 := db.CreateWatchOnlyWallet(userId1, "testwallet1", walletAddress1)
+	walletId2 := db.CreateWatchOnlyWallet(userId1, "testwallet2", walletAddress2)
+	walletId3 := db.CreateWatchOnlyWallet(userId2, "testwallet3", walletAddress3)
 
 	{
 		addr1 := db.GetWalletAddress(walletId1)
@@ -310,6 +344,64 @@ func TestGettingWalletAddresses(t *testing.T) {
 			} else {
 				assert.Fail("Unexpected currency type")
 			}
+		}
+	}
+}
+
+func TestErc20TokenWallets(t *testing.T) {
+	assert := require.New(t)
+	db := createDbAndConnect(t)
+	defer clearDb()
+	if db == nil {
+		t.Fail()
+		return
+	}
+	defer db.Disconnect()
+
+	userId := db.GetUserId(123, "")
+
+	walletAddress := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "key",
+		ContractAddress : "cid",
+	}
+
+	walletId := db.CreateWatchOnlyWallet(userId, "testwallet1", walletAddress)
+
+	{
+		address := db.GetWalletAddress(walletId)
+		assert.Equal("key", address.Address)
+		assert.Equal("cid", address.ContractAddress)
+		assert.Equal(currencies.Bitcoin, address.Currency)
+	}
+
+	{
+		addresses := db.GetUserWalletAddresses(userId)
+
+		assert.Equal(1, len(addresses))
+		if len(addresses) > 0 {
+			assert.Equal("key", addresses[0].Address)
+			assert.Equal("cid", addresses[0].ContractAddress)
+			assert.Equal(currencies.Bitcoin, addresses[0].Currency)
+		}
+	}
+
+	{
+		addresses := db.GetAllWalletAddresses()
+
+		assert.Equal(1, len(addresses))
+		if len(addresses) > 0 {
+			assert.Equal("key", addresses[0].Address)
+			assert.Equal("cid", addresses[0].ContractAddress)
+			assert.Equal(currencies.Bitcoin, addresses[0].Currency)
+		}
+	}
+
+	{
+		contracts := db.GetAllContractAddresses()
+		assert.Equal(1, len(contracts))
+		if len(contracts) > 0 {
+			assert.Equal("cid", contracts[0])
 		}
 	}
 }

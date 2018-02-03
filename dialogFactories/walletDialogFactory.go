@@ -10,6 +10,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -104,12 +105,30 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 		return trans("no_data")
 	}
 
-	currencyCode := currencies.GetCurrencyCode(walletAddress.Currency)
-	currencyDigits := currencies.GetCurrencyDigits(walletAddress.Currency)
+	var currencySymbol string
+	var currencyDecimals int
 
-	balanceText := cryptoFunctions.FormatCurrencyAmount(balance, currencyDigits)
+	if walletAddress.Currency != currencies.Erc20Token {
+		currencySymbol = currencies.GetCurrencySymbol(walletAddress.Currency)
+		currencyDecimals = currencies.GetCurrencyDecimals(walletAddress.Currency)
+	} else {
+		if len(walletAddress.ContractAddress) <= 0 {
+			log.Print("No contractAddress for token")
+			return "Error"
+		}
 
-	return fmt.Sprintf("<b>%s</b>\n%s %s", staticFunctions.GetDb(staticData).GetWalletName(walletId), balanceText, currencyCode)
+		tokenData := serverData.GetErc20TokenData(walletAddress.ContractAddress)
+		if tokenData == nil {
+			return trans("no_data")
+		}
+
+		currencySymbol = tokenData.Symbol
+		currencyDecimals = tokenData.Decimals
+	}
+
+	balanceText := cryptoFunctions.FormatCurrencyAmount(balance, currencyDecimals)
+
+	return fmt.Sprintf("<b>%s</b>\n%s %s", staticFunctions.GetDb(staticData).GetWalletName(walletId), balanceText, currencySymbol)
 }
 
 func (factory *walletDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {

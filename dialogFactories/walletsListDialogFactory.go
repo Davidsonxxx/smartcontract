@@ -240,13 +240,23 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 	}
 
 	groupedWallets := make(map[currencies.Currency] []currencies.AddressData)
+	groupedErc20TokenWallets := make(map[string] []currencies.AddressData)
 
 	for _, walletAddress := range walletAddresses {
-		walletsSlice, ok := groupedWallets[walletAddress.Currency]
-		if ok {
-			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
+		if walletAddress.Currency != currencies.Erc20Token {
+			walletsSlice, ok := groupedWallets[walletAddress.Currency]
+			if ok {
+				groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
+			} else {
+				groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
+			}
 		} else {
-			groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
+			walletsSlice, ok := groupedErc20TokenWallets[walletAddress.ContractAddress]
+			if ok {
+				groupedErc20TokenWallets[walletAddress.ContractAddress] = append(walletsSlice, walletAddress)
+			} else {
+				groupedErc20TokenWallets[walletAddress.ContractAddress] = []currencies.AddressData{ walletAddress }
+			}
 		}
 	}
 
@@ -264,10 +274,10 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			}
 		}
 
-		currencyCode := currencies.GetCurrencyCode(currency)
-		currencyDigits := currencies.GetCurrencyDigits(currency)
+		currencySymbol := currencies.GetCurrencySymbol(currency)
+		currencyDecimals := currencies.GetCurrencyDecimals(currency)
 
-		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDigits)
+		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDecimals)
 
 		if floatBalance == nil {
 			log.Print("Error float balance")
@@ -280,7 +290,35 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
 		}
 
-		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"
+		text = text + floatBalance.Text('f', currencyDecimals) + " " + currencySymbol + "\n"
+	}
+
+	for contractAddress, addresses := range groupedErc20TokenWallets {
+		sumBalance := big.NewInt(0)
+
+		for _, address := range addresses {
+			balance := serverData.GetBalance(address)
+			if balance != nil {
+				sumBalance.Add(sumBalance, balance)
+			}
+		}
+
+		tokenData := serverData.GetErc20TokenData(contractAddress)
+		if tokenData == nil {
+			continue
+		}
+
+		currencySymbol := tokenData.Symbol
+		currencyDecimals := tokenData.Decimals
+
+		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDecimals)
+
+		if floatBalance == nil {
+			log.Print("Error float balance")
+			continue
+		}
+
+		text = text + floatBalance.Text('f', currencyDecimals) + " " + currencySymbol + "\n"
 	}
 
 	if usdSum != nil {

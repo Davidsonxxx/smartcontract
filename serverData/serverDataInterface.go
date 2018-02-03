@@ -8,4 +8,5 @@ import (
 type ServerDataInterface interface {
 	GetBalance(address currencies.AddressData) *big.Int
 	GetRateToUsd(currency currencies.Currency) *big.Float
+	GetErc20TokenData(contractAddress string) *currencies.Erc20TokenData
 }

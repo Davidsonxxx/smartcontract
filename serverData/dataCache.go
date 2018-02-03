@@ -15,19 +15,25 @@ type dataCache struct {
 	ratesMutex sync.Mutex
 	balances map[currencies.AddressData]*big.Int
 	balancesMutex sync.Mutex
+	erc20Tokens map[string]currencies.Erc20TokenData
+	erc20TokensMutex sync.Mutex
 }
 
 func (cache *dataCache) Init() {
 	if cache.rates.toUsd == nil {
-		cache.rates.toUsd = map[currencies.Currency]*big.Float{}
+		cache.rates.toUsd = make(map[currencies.Currency]*big.Float)
 	}
 
 	if cache.balances == nil {
-		cache.balances = map[currencies.AddressData]*big.Int{}
+		cache.balances = make(map[currencies.AddressData]*big.Int)
+	}
+
+	if cache.erc20Tokens == nil {
+		cache.erc20Tokens = make(map[string]currencies.Erc20TokenData)
 	}
 }
 
-func (cache *dataCache) GetBalance(address currencies.AddressData) *big.Int {
+func (cache *dataCache) getBalance(address currencies.AddressData) *big.Int {
 	cache.balancesMutex.Lock()
 	defer cache.balancesMutex.Unlock()
 
@@ -39,7 +45,7 @@ func (cache *dataCache) GetBalance(address currencies.AddressData) *big.Int {
 	}
 }
 
-func (cache *dataCache) GetRateToUsd(currency currencies.Currency) *big.Float {
+func (cache *dataCache) getRateToUsd(currency currencies.Currency) *big.Float {
 	cache.ratesMutex.Lock()
 	defer cache.ratesMutex.Unlock()
 
@@ -47,6 +53,22 @@ func (cache *dataCache) GetRateToUsd(currency currencies.Currency) *big.Float {
 
 	if ok {
 		return rateToUsd
+	} else {
+		return nil
+	}
+}
+
+func (cache *dataCache) getErc20TokenData(contractAddress string) *currencies.Erc20TokenData {
+	cache.erc20TokensMutex.Lock()
+	defer cache.erc20TokensMutex.Unlock()
+
+	tokenData, tokenFound := cache.erc20Tokens[contractAddress]
+	if tokenFound {
+		return &currencies.Erc20TokenData {
+			Name: tokenData.Name,
+			Symbol: tokenData.Symbol,
+			Decimals: tokenData.Decimals,
+		}
 	} else {
 		return nil
 	}
