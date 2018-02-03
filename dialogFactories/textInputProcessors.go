@@ -12,7 +12,7 @@ func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
 		Processors : dialogManager.TextProcessorsMap {
 			"newWalletName" : processNewWalletName,
 			"newWalletKey" : processNewWalletKey,
-			"newWalletContractId" : processNewWalletContractId,
+			"newWalletContractAddress" : processNewWalletContractAddress,
 			"renamingWallet" : processRenamingWallet,
 		},
 	}
@@ -34,15 +34,15 @@ func processNewWalletName(additionalId int64, data *processing.ProcessData) bool
 	} else {
 		// ERC20 Token
 		data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
-			ProcessorId: "newWalletContractId",
+			ProcessorId: "newWalletContractAddress",
 		})
 		data.SendMessage(data.Trans("send_contract_id"))
 	}
 	return true
 }
 
-func processNewWalletContractId(additionalId int64, data *processing.ProcessData) bool {
-	data.Static.SetUserStateValue(data.UserId, "walletContractId", data.Message)
+func processNewWalletContractAddress(additionalId int64, data *processing.ProcessData) bool {
+	data.Static.SetUserStateValue(data.UserId, "walletContractAddress", data.Message)
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
 		ProcessorId: "newWalletKey",
 	})
@@ -61,14 +61,14 @@ func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool 
 		return false
 	}
 
-	walletContractId, ok := data.Static.GetUserStateValue(data.UserId, "walletContractId").(string)
+	walletContractAddress, ok := data.Static.GetUserStateValue(data.UserId, "walletContractAddress").(string)
 	if !ok {
-		walletContractId = ""
+		walletContractAddress = ""
 	}
 
 	walletAddress := currencies.AddressData{
 		Currency: walletCurrency,
-		ContractId: walletContractId,
+		ContractAddress: walletContractAddress,
 		Address: data.Message,
 	}
 

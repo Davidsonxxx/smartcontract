@@ -363,7 +363,7 @@ func TestErc20TokenWallets(t *testing.T) {
 	walletAddress := currencies.AddressData{
 		Currency: currencies.Bitcoin,
 		Address: "key",
-		ContractId : "cid",
+		ContractAddress : "cid",
 	}
 
 	walletId := db.CreateWatchOnlyWallet(userId, "testwallet1", walletAddress)
@@ -371,7 +371,7 @@ func TestErc20TokenWallets(t *testing.T) {
 	{
 		address := db.GetWalletAddress(walletId)
 		assert.Equal("key", address.Address)
-		assert.Equal("cid", address.ContractId)
+		assert.Equal("cid", address.ContractAddress)
 		assert.Equal(currencies.Bitcoin, address.Currency)
 	}
 
@@ -381,7 +381,7 @@ func TestErc20TokenWallets(t *testing.T) {
 		assert.Equal(1, len(addresses))
 		if len(addresses) > 0 {
 			assert.Equal("key", addresses[0].Address)
-			assert.Equal("cid", addresses[0].ContractId)
+			assert.Equal("cid", addresses[0].ContractAddress)
 			assert.Equal(currencies.Bitcoin, addresses[0].Currency)
 		}
 	}
@@ -392,13 +392,13 @@ func TestErc20TokenWallets(t *testing.T) {
 		assert.Equal(1, len(addresses))
 		if len(addresses) > 0 {
 			assert.Equal("key", addresses[0].Address)
-			assert.Equal("cid", addresses[0].ContractId)
+			assert.Equal("cid", addresses[0].ContractAddress)
 			assert.Equal(currencies.Bitcoin, addresses[0].Currency)
 		}
 	}
 
 	{
-		contracts := db.GetAllContractIds()
+		contracts := db.GetAllContractAddresses()
 		assert.Equal(1, len(contracts))
 		if len(contracts) > 0 {
 			assert.Equal("cid", contracts[0])

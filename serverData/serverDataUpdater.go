@@ -98,8 +98,8 @@ func (dataUpdater *serverDataUpdater) updateRates() {
 	dataUpdater.cache.balancesMutex.Unlock()
 }
 
-func (dataUpdater *serverDataUpdater) updateErc20TokensData(contractIds []string) {
-	if len(contractIds) <= 0 {
+func (dataUpdater *serverDataUpdater) updateErc20TokensData(contractAddresss []string) {
+	if len(contractAddresss) <= 0 {
 		return
 	}
 
@@ -111,14 +111,14 @@ func (dataUpdater *serverDataUpdater) updateErc20TokensData(contractIds []string
 
 	tokenDatas := make(map[string]*currencies.Erc20TokenData)
 
-	for _, contractId := range contractIds {
-		 tokenDatas[contractId] = processor.GetTokenData(contractId)
+	for _, contractAddress := range contractAddresss {
+		 tokenDatas[contractAddress] = processor.GetTokenData(contractAddress)
 	}
 
 	dataUpdater.cache.balancesMutex.Lock()
-	for contractId, contractData := range tokenDatas {
+	for contractAddress, contractData := range tokenDatas {
 		if contractData != nil {
-			dataUpdater.cache.erc20Tokens[contractId] = *contractData
+			dataUpdater.cache.erc20Tokens[contractAddress] = *contractData
 		}
 	}
 

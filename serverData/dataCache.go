@@ -58,11 +58,11 @@ func (cache *dataCache) getRateToUsd(currency currencies.Currency) *big.Float {
 	}
 }
 
-func (cache *dataCache) getErc20TokenData(contractId string) *currencies.Erc20TokenData {
+func (cache *dataCache) getErc20TokenData(contractAddress string) *currencies.Erc20TokenData {
 	cache.erc20TokensMutex.Lock()
 	defer cache.erc20TokensMutex.Unlock()
 
-	tokenData, tokenFound := cache.erc20Tokens[contractId]
+	tokenData, tokenFound := cache.erc20Tokens[contractAddress]
 	if tokenFound {
 		return &currencies.Erc20TokenData {
 			Name: tokenData.Name,

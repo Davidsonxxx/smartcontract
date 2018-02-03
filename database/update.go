@@ -54,7 +54,7 @@ func makeAllUpdaters() (updaters []dbUpdater) {
 		dbUpdater{
 			version: "0.2",
 			updateDb: func(db *AccountDb) {
-				db.db.Exec("ALTER TABLE wallets ADD COLUMN token_id TEXT NOT NULL DEFAULT('')")
+				db.db.Exec("ALTER TABLE wallets ADD COLUMN contract_address TEXT NOT NULL DEFAULT('')")
 			},
 		},
 	}

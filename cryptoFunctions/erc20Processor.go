@@ -20,7 +20,7 @@ type Erc20Resp struct {
 }
 
 func (processor *Erc20Processor) GetBalance(address currencies.AddressData) *big.Int {
-	resp, err := http.Get("https://api.tokenbalance.com/token/" + address.ContractId + "/" + address.Address)
+	resp, err := http.Get("https://api.tokenbalance.com/token/" + address.ContractAddress + "/" + address.Address)
 	if err != nil {
 		log.Print(err)
 		return nil
@@ -63,8 +63,8 @@ func (processor *Erc20Processor) GetBalanceBunch(addresses []currencies.AddressD
 	return balances
 }
 
-func (processor *Erc20Processor) GetTokenData(contractId string) *currencies.Erc20TokenData {
-	resp, err := http.Get("https://api.tokenbalance.com/token/" + contractId + "/0x0")
+func (processor *Erc20Processor) GetTokenData(contractAddress string) *currencies.Erc20TokenData {
+	resp, err := http.Get("https://api.tokenbalance.com/token/" + contractAddress + "/0x0")
 	if err != nil {
 		log.Print(err)
 		return nil

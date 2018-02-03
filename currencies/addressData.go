@@ -2,6 +2,6 @@ package currencies
 
 type AddressData struct {
 	Currency Currency
-	ContractId string // optional
+	ContractAddress string // optional
 	Address string
 }

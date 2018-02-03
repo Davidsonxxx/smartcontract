@@ -112,12 +112,12 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 		currencyCode = currencies.GetCurrencyCode(walletAddress.Currency)
 		currencyDigits = currencies.GetCurrencyDigits(walletAddress.Currency)
 	} else {
-		if len(walletAddress.ContractId) <= 0 {
-			log.Print("No contractId for token")
+		if len(walletAddress.ContractAddress) <= 0 {
+			log.Print("No contractAddress for token")
 			return "Error"
 		}
 
-		tokenData := serverData.GetErc20TokenData(walletAddress.ContractId)
+		tokenData := serverData.GetErc20TokenData(walletAddress.ContractAddress)
 		currencyCode = tokenData.Symbol
 		currencyDigits = tokenData.Decimals
 	}

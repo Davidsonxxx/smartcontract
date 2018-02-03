@@ -53,7 +53,7 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 		",currency INTEGER NOT NULL" +
 		",address TEXT NOT NULL" +
 		",type INTEGER NOT NULL" +
-		",token_id TEXT NOT NULL" + // not empty for ERC20 token wallets (type == 5)
+		",contract_address TEXT NOT NULL" + // not empty for ERC20 token wallets (type == 5)
 		",FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL" +
 		")")
 
@@ -257,14 +257,14 @@ func (database *AccountDb) CreateWatchOnlyWallet(userId int64, name string, addr
 		",currency" +
 		",address" +
 		",type" +
-		",token_id" +
+		",contract_address" +
 		")VALUES(%d,'%s',%d,'%s',%d,'%s')",
 		userId,
 		dbBase.SanitizeString(name),
 		address.Currency,
 		dbBase.SanitizeString(address.Address),
 		wallettypes.WatchOnly,
-		dbBase.SanitizeString(address.ContractId),
+		dbBase.SanitizeString(address.ContractAddress),
 	))
 
 	return database.getLastInsertedItemId()
@@ -351,7 +351,7 @@ func (database *AccountDb) GetWalletAddress(walletId int64) (addressData currenc
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address, token_id FROM wallets WHERE id=%d AND is_removed IS NULL LIMIT 1", walletId))
+	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address, contract_address FROM wallets WHERE id=%d AND is_removed IS NULL LIMIT 1", walletId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -360,9 +360,9 @@ func (database *AccountDb) GetWalletAddress(walletId int64) (addressData currenc
 	if rows.Next() {
 		var currency int64
 		var address string
-		var tokenId string
+		var contractAddress string
 
-		err := rows.Scan(&currency, &address, &tokenId)
+		err := rows.Scan(&currency, &address, &contractAddress)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -370,7 +370,7 @@ func (database *AccountDb) GetWalletAddress(walletId int64) (addressData currenc
 		addressData = currencies.AddressData{
 			Currency: currencies.Currency(currency),
 			Address: address,
-			ContractId: tokenId,
+			ContractAddress: contractAddress,
 		}
 	} else {
 		log.Fatalf("No wallet found with id %d", walletId)
@@ -383,7 +383,7 @@ func (database *AccountDb) GetUserWalletAddresses(userId int64) (addresses []cur
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address, token_id FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
+	rows, err := database.db.Query(fmt.Sprintf("SELECT currency, address, contract_address FROM wallets WHERE user_id=%d AND is_removed IS NULL", userId))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -392,9 +392,9 @@ func (database *AccountDb) GetUserWalletAddresses(userId int64) (addresses []cur
 	for rows.Next() {
 		var currency int64
 		var address string
-		var tokenId string
+		var contractAddress string
 
-		err := rows.Scan(&currency, &address, &tokenId)
+		err := rows.Scan(&currency, &address, &contractAddress)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -404,7 +404,7 @@ func (database *AccountDb) GetUserWalletAddresses(userId int64) (addresses []cur
 			currencies.AddressData{
 				Currency: currencies.Currency(currency),
 				Address: address,
-				ContractId: tokenId,
+				ContractAddress: contractAddress,
 			},
 		)
 	}
@@ -416,7 +416,7 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.Addre
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query("SELECT currency, address, token_id FROM wallets WHERE is_removed IS NULL")
+	rows, err := database.db.Query("SELECT currency, address, contract_address FROM wallets WHERE is_removed IS NULL")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -425,9 +425,9 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.Addre
 	for rows.Next() {
 		var currency int64
 		var address string
-		var tokenId string
+		var contractAddress string
 
-		err := rows.Scan(&currency, &address, &tokenId)
+		err := rows.Scan(&currency, &address, &contractAddress)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -437,7 +437,7 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.Addre
 			currencies.AddressData{
 				Currency: currencies.Currency(currency),
 				Address: address,
-				ContractId: tokenId,
+				ContractAddress: contractAddress,
 			},
 		)
 	}
@@ -445,25 +445,25 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.Addre
 	return
 }
 
-func (database *AccountDb) GetAllContractIds() (tokenIds []string) {
+func (database *AccountDb) GetAllContractAddresses() (contractAddresss []string) {
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query("SELECT DISTINCT token_id FROM wallets WHERE is_removed IS NULL AND token_id!=''")
+	rows, err := database.db.Query("SELECT DISTINCT contract_address FROM wallets WHERE is_removed IS NULL AND contract_address!=''")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var tokenId string
+		var contractAddress string
 
-		err := rows.Scan(&tokenId)
+		err := rows.Scan(&contractAddress)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		tokenIds = append(tokenIds, tokenId)
+		contractAddresss = append(contractAddresss, contractAddress)
 	}
 
 	return

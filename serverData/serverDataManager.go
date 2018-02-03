@@ -45,7 +45,7 @@ func (serverDataManager *ServerDataManager) RegisterServerDataInterface(staticDa
 
 func (serverDataManager *ServerDataManager) updateAll(db *database.AccountDb) {
 	walletAddresses := db.GetAllWalletAddresses()
-	contractsIds := db.GetAllContractIds()
+	contractsIds := db.GetAllContractAddresses()
 
 	serverDataManager.dataUpdater.updateBalance(walletAddresses)
 
@@ -86,6 +86,6 @@ func (serverDataManager *ServerDataManager) GetRateToUsd(currency currencies.Cur
 	return serverDataManager.dataUpdater.cache.getRateToUsd(currency)
 }
 
-func (serverDataManager *ServerDataManager) GetErc20TokenData(contractId string) *currencies.Erc20TokenData {
-	return serverDataManager.dataUpdater.cache.getErc20TokenData(contractId)
+func (serverDataManager *ServerDataManager) GetErc20TokenData(contractAddress string) *currencies.Erc20TokenData {
+	return serverDataManager.dataUpdater.cache.getErc20TokenData(contractAddress)
 }

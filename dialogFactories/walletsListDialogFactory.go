@@ -251,11 +251,11 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 				groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
 			}
 		} else {
-			walletsSlice, ok := groupedErc20TokenWallets[walletAddress.ContractId]
+			walletsSlice, ok := groupedErc20TokenWallets[walletAddress.ContractAddress]
 			if ok {
-				groupedErc20TokenWallets[walletAddress.ContractId] = append(walletsSlice, walletAddress)
+				groupedErc20TokenWallets[walletAddress.ContractAddress] = append(walletsSlice, walletAddress)
 			} else {
-				groupedErc20TokenWallets[walletAddress.ContractId] = []currencies.AddressData{ walletAddress }
+				groupedErc20TokenWallets[walletAddress.ContractAddress] = []currencies.AddressData{ walletAddress }
 			}
 		}
 	}
@@ -293,7 +293,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		text = text + floatBalance.Text('f', currencyDigits) + " " + currencyCode + "\n"
 	}
 
-	for contractId, addresses := range groupedErc20TokenWallets {
+	for contractAddress, addresses := range groupedErc20TokenWallets {
 		sumBalance := big.NewInt(0)
 
 		for _, address := range addresses {
@@ -303,7 +303,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			}
 		}
 
-		tokenData := serverData.GetErc20TokenData(contractId)
+		tokenData := serverData.GetErc20TokenData(contractAddress)
 		currencyCode := tokenData.Symbol
 		currencyDigits := tokenData.Decimals
 
