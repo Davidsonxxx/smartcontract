@@ -45,13 +45,10 @@ func (serverDataManager *ServerDataManager) RegisterServerDataInterface(staticDa
 
 func (serverDataManager *ServerDataManager) updateAll(db *database.AccountDb) {
 	walletAddresses := db.GetAllWalletAddresses()
-	contractsIds := db.GetAllContractAddresses()
 
 	serverDataManager.dataUpdater.updateBalance(walletAddresses)
 
 	serverDataManager.dataUpdater.updateRates()
-
-	serverDataManager.dataUpdater.updateErc20TokensData(contractsIds)
 }
 
 func (serverDataManager *ServerDataManager) InitialUpdate(db *database.AccountDb) {
@@ -61,6 +58,9 @@ func (serverDataManager *ServerDataManager) InitialUpdate(db *database.AccountDb
 	}
 
 	serverDataManager.updateAll(db)
+
+	contractsIds := db.GetAllContractAddresses()
+	serverDataManager.dataUpdater.updateErc20TokensData(contractsIds)
 }
 
 func (serverDataManager *ServerDataManager) TimerTick(db *database.AccountDb) {
