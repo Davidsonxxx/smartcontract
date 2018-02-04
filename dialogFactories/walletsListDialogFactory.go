@@ -290,7 +290,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
 		}
 
-		text = text + floatBalance.Text('f', currencyDecimals) + " " + currencySymbol + "\n"
+		text = text + cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals) + " " + currencySymbol + "\n"
 	}
 
 	for contractAddress, addresses := range groupedErc20TokenWallets {
@@ -318,7 +318,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			continue
 		}
 
-		text = text + floatBalance.Text('f', currencyDecimals) + " " + currencySymbol + "\n"
+		text = text + cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals) + " " + currencySymbol + "\n"
 	}
 
 	if usdSum != nil {
