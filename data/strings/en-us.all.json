@@ -17,7 +17,7 @@
 	"wallet_created": { "other": "Wallet was successfully created" },
 	"main_menu_title": { "other": "Main menu" },
 	"receive_title": { "other": "Receive instructions not available" },
-	"history_title": { "other": "History not available" },
+	"history_title": { "other": "Transaction history" },
 	"settings_title": { "other": "Settings" },
 	"send": { "other": "Send" },
 	"receive": { "other": "Receive" },
@@ -35,5 +35,9 @@
 	"balance_header": { "other": "Balance:\n" },
 	"sum": { "other": "Sum: " },
 	"usd": { "other": " USD\n" },
-	"no_data": { "other": "Data not available" }
+	"no_data": { "other": "Data not available" },
+	"from_addr": { "other": "\nFrom: " },
+	"to_addr": { "other": "\nTo: " },
+	"me": { "other": "<b>Me</b>" },
+	"amount": { "other": "\nAmount: " }
 }

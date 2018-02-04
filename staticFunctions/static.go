@@ -3,6 +3,8 @@ package staticFunctions
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	static "gitlab.com/gameraccoon/telegram-accountant-bot/staticData"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
@@ -65,4 +67,23 @@ func FindTransFunction(userId int64, staticData *processing.StaticProccessStruct
 	// we will probably crash but there is nothing else we can do
 	translator, _ := i18n.Tfunc(config.DefaultLanguage)
 	return translator
+}
+
+func GetCurrencySymbolAndDecimals(serverData serverData.ServerDataInterface, currency currencies.Currency, contractAddress string) (currencySymbol string, currencyDecimals int) {
+	if currency != currencies.Erc20Token {
+		currencySymbol = currencies.GetCurrencySymbol(currency)
+		currencyDecimals = currencies.GetCurrencyDecimals(currency)
+	} else {
+		if contractAddress == "" {
+			log.Print("No contractAddress for token")
+			return
+		}
+
+		tokenData := serverData.GetErc20TokenData(contractAddress)
+		if tokenData != nil {
+			currencySymbol = tokenData.Symbol
+			currencyDecimals = tokenData.Decimals
+		}
+	}
+	return
 }
