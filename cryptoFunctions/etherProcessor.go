@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"log"
 	"math/big"
+	"strconv"
+	"time"
 )
 
 const etherscanApiKey string = "KBT56RI9SUTF2GR1TNN41W48FUQ4YAK3GK"
@@ -33,6 +35,7 @@ type EtherHistoryRespItem struct {
 	To string `json:"to"`
 	Value string `json:"value"`
 	ContractAddress string `json:"contractAddress"`
+	TimeStamp string `json:"timeStamp"`
 }
 
 type EtherHistoryResp struct {
@@ -179,10 +182,17 @@ func (processor *EtherProcessor) GetTransactionsHistory(address currencies.Addre
 			to = historyItem.ContractAddress
 		}
 
+		intTime, err := strconv.ParseInt(historyItem.TimeStamp, 10, 64)
+		if err != nil {
+			log.Print(err.Error())
+			intTime = int64(0)
+		}
+
 		history = append(history, currencies.TransactionsHistoryItem {
 				From: historyItem.From,
 				To: to,
 				Amount: amount,
+				Time: time.Unix(intTime, int64(0)),
 			})
 	}
 

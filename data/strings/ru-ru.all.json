@@ -39,5 +39,6 @@
 	"from_addr": { "other": "\nОт: " },
 	"to_addr": { "other": "\nК: " },
 	"me": { "other": "Кошелек" },
-	"amount": { "other": "\nКоличество: " }
+	"amount": { "other": "\nКоличество: " },
+	"transaction_time": { "other": "\nВремя: " }
 }

@@ -10,6 +10,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strconv"
+	"time"
 )
 
 type historyVariantPrototype struct {
@@ -55,6 +56,9 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 
 		for _, item := range history {
 			textBuffer.WriteString("\n")
+
+			textBuffer.WriteString(trans("transaction_time"))
+			textBuffer.WriteString(item.Time.Format(time.UnixDate))
 
 			if item.From != "" {
 				textBuffer.WriteString(trans("from_addr"))

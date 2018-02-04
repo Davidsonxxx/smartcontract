@@ -39,5 +39,6 @@
 	"from_addr": { "other": "\nFrom: " },
 	"to_addr": { "other": "\nTo: " },
 	"me": { "other": "<b>Me</b>" },
-	"amount": { "other": "\nAmount: " }
+	"amount": { "other": "\nAmount: " },
+	"transaction_time": { "other": "\nTime: " }
 }
