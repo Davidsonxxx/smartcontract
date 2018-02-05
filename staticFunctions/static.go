@@ -8,6 +8,7 @@ import (
 	static "gitlab.com/gameraccoon/telegram-accountant-bot/staticData"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
+	"time"
 )
 
 func GetDb(staticData *processing.StaticProccessStructs) *database.AccountDb {
@@ -86,4 +87,13 @@ func GetCurrencySymbolAndDecimals(serverData serverData.ServerDataInterface, cur
 		}
 	}
 	return
+}
+
+func FormatTimestamp(timestamp time.Time) string {
+	loc, err := time.LoadLocation("EST")
+	if err == nil {
+		return timestamp.In(loc).Format(time.UnixDate)
+	} else {
+		return timestamp.Format(time.UnixDate)
+	}
 }
