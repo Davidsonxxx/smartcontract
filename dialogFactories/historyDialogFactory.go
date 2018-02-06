@@ -1,10 +1,14 @@
 package dialogFactories
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strconv"
 )
@@ -34,7 +38,39 @@ func MakeHistoryDialogFactory() dialogFactory.DialogFactory {
 }
 
 func (factory *historyDialogFactory) createText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
-	return trans("history_title")
+	serverData := serverData.GetServerData(staticData)
+
+	if serverData == nil {
+		return "Error"
+	}
+
+	var textBuffer bytes.Buffer
+	textBuffer.WriteString(trans("history_title"))
+
+	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
+
+	processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
+
+	if processor != nil {
+		history := (*processor).GetTransactionsHistory(walletAddress, 0)
+
+		for _, item := range history {
+			textBuffer.WriteString("\n\n")
+			
+			textBuffer.WriteString(staticFunctions.FormatTimestamp(item.Time))
+			
+			currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
+			amountText := cryptoFunctions.FormatCurrencyAmount(item.Amount, currencyDecimals)
+			
+			if item.From == walletAddress.Address {
+				textBuffer.WriteString(fmt.Sprintf(trans("sent_format"), amountText, currencySymbol, item.To))
+			} else if item.To == walletAddress.Address {
+				textBuffer.WriteString(fmt.Sprintf(trans("recieved_format"), amountText, currencySymbol, item.From))
+			}
+		}
+	}
+
+	return textBuffer.String()
 }
 
 func (factory *historyDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {

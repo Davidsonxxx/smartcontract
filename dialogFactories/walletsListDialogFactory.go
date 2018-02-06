@@ -1,6 +1,7 @@
 package dialogFactories
 
 import (
+	"bytes"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
@@ -260,7 +261,8 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		}
 	}
 
-	text := trans("balance_header")
+	var textBuffer bytes.Buffer
+	textBuffer.WriteString(trans("balance_header"))
 
 	usdSum := new(big.Float)
 
@@ -290,7 +292,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
 		}
 
-		text = text + cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals) + " " + currencySymbol + "\n"
+		textBuffer.WriteString(cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals) + " " + currencySymbol + "\n")
 	}
 
 	for contractAddress, addresses := range groupedErc20TokenWallets {
@@ -318,14 +320,14 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			continue
 		}
 
-		text = text + cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals) + " " + currencySymbol + "\n"
+		textBuffer.WriteString(cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals) + " " + currencySymbol + "\n")
 	}
 
 	if usdSum != nil {
-		text = text + trans("sum") + usdSum.Text('f', 2) + trans("usd")
+		textBuffer.WriteString(trans("sum") + usdSum.Text('f', 2) + trans("usd"))
 	}
 
-	return text
+	return textBuffer.String()
 }
 
 func (factory *walletsListDialogFactory) MakeDialog(userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {

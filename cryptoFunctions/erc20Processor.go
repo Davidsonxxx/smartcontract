@@ -97,3 +97,7 @@ func (processor *Erc20Processor) GetTokenData(contractAddress string) *currencie
 func (processor *Erc20Processor) GetToUsdRate() *big.Float {
 	return nil
 }
+
+func (processor *Erc20Processor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
+	return make([]currencies.TransactionsHistoryItem, 0)
+}

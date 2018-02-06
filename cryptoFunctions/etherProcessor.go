@@ -2,11 +2,14 @@ package cryptoFunctions
 
 import (
 	"encoding/json"
+	"fmt"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"io/ioutil"
 	"net/http"
 	"log"
 	"math/big"
+	"strconv"
+	"time"
 )
 
 const etherscanApiKey string = "KBT56RI9SUTF2GR1TNN41W48FUQ4YAK3GK"
@@ -25,6 +28,18 @@ type EtherResp struct {
 
 type EtherMultiResp struct {
 	Result []EtherRespData `json:"result"`
+}
+
+type EtherHistoryRespItem struct {
+	From string `json:"from"`
+	To string `json:"to"`
+	Value string `json:"value"`
+	ContractAddress string `json:"contractAddress"`
+	TimeStamp string `json:"timeStamp"`
+}
+
+type EtherHistoryResp struct {
+	Result []EtherHistoryRespItem `json:"result"`
 }
 
 func (processor *EtherProcessor) GetBalance(address currencies.AddressData) *big.Int {
@@ -110,4 +125,76 @@ func (processor *EtherProcessor) GetBalanceBunch(addresses []currencies.AddressD
 
 func (processor *EtherProcessor) GetToUsdRate() *big.Float {
 	return getCurrencyToUsdRate("ethereum")
+}
+
+func (processor *EtherProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
+	var requestText string
+	if limit > 0 {
+		requestText = fmt.Sprintf(
+			"http://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
+			address.Address,
+			limit,
+			etherscanApiKey,
+		)
+	} else {
+		requestText = fmt.Sprintf(
+			"https://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&page=1&offset=%d&sort=asc&apikey=%s",
+			address.Address,
+			etherscanApiKey,
+		)
+	}
+
+	resp, err := http.Get(requestText)
+	if err != nil {
+		log.Print(err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Print(err)
+		return nil
+	}
+
+	var parsedResp = new(EtherHistoryResp)
+	err = json.Unmarshal(body, &parsedResp)
+	if(err != nil){
+		log.Print(string(body[:]))
+		log.Print(err)
+		return nil
+	}
+
+	history := make([]currencies.TransactionsHistoryItem, 0, len(parsedResp.Result))
+
+	for _, historyItem := range parsedResp.Result {
+		amount, ok := new(big.Int).SetString(historyItem.Value, 10)
+
+		if !ok {
+			amount = big.NewInt(0)
+			log.Printf("Wrong amount value: %s", historyItem.Value)
+		}
+
+		var to string
+		if historyItem.To != "" {
+			to = historyItem.To
+		} else {
+			to = historyItem.ContractAddress
+		}
+
+		intTime, err := strconv.ParseInt(historyItem.TimeStamp, 10, 64)
+		if err != nil {
+			log.Print(err.Error())
+			intTime = int64(0)
+		}
+
+		history = append(history, currencies.TransactionsHistoryItem {
+				From: historyItem.From,
+				To: to,
+				Amount: amount,
+				Time: time.Unix(intTime, int64(0)),
+			})
+	}
+
+	return history
 }
