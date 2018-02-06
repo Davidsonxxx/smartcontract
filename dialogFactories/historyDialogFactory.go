@@ -2,6 +2,7 @@ package dialogFactories
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
@@ -54,35 +55,18 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 		history := (*processor).GetTransactionsHistory(walletAddress, 0)
 
 		for _, item := range history {
-			textBuffer.WriteString("\n")
-
-			textBuffer.WriteString(trans("transaction_time"))
+			textBuffer.WriteString("\n\n")
 			
 			textBuffer.WriteString(staticFunctions.FormatTimestamp(item.Time))
-
-			if item.From != "" {
-				textBuffer.WriteString(trans("from_addr"))
-				if item.From == walletAddress.Address {
-					textBuffer.WriteString(trans("me"))
-				} else {
-					textBuffer.WriteString(item.From)
-				}
-			}
-
-			if item.To != "" {
-				textBuffer.WriteString(trans("to_addr"))
-				if item.To == walletAddress.Address {
-					textBuffer.WriteString(trans("me"))
-				} else {
-					textBuffer.WriteString(item.To)
-				}
-			}
-
-			textBuffer.WriteString(trans("amount"))
-
+			
 			currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
 			amountText := cryptoFunctions.FormatCurrencyAmount(item.Amount, currencyDecimals)
-			textBuffer.WriteString(amountText + " " + currencySymbol)
+			
+			if item.From == walletAddress.Address {
+				textBuffer.WriteString(fmt.Sprintf(trans("sent_format"), amountText, currencySymbol, item.To))
+			} else if item.To == walletAddress.Address {
+				textBuffer.WriteString(fmt.Sprintf(trans("recieved_format"), amountText, currencySymbol, item.From))
+			}
 		}
 	}
 

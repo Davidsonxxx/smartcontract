@@ -36,9 +36,6 @@
 	"sum": { "other": "Sum: " },
 	"usd": { "other": " USD\n" },
 	"no_data": { "other": "Data not available" },
-	"from_addr": { "other": "\nFrom: " },
-	"to_addr": { "other": "\nTo: " },
-	"me": { "other": "<b>Me</b>" },
-	"amount": { "other": "\nAmount: " },
-	"transaction_time": { "other": "\nTime: " }
+	"sent_format": { "other": "\nSent: %s %s\nTo: \n%s" },
+	"recieved_format": { "other": "\nRecieved: %s %s\nFrom: \n%s" }
 }

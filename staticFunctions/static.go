@@ -90,6 +90,7 @@ func GetCurrencySymbolAndDecimals(serverData serverData.ServerDataInterface, cur
 }
 
 func FormatTimestamp(timestamp time.Time) string {
+	// the list of timezones https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 	loc, err := time.LoadLocation("EST")
 	if err == nil {
 		return timestamp.In(loc).Format(time.UnixDate)
