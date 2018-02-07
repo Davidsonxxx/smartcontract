@@ -95,10 +95,6 @@ func (processor *BitcoinProcessor) GetBalanceBunch(addresses []currencies.Addres
 	return balances
 }
 
-func (processor *BitcoinProcessor) GetToUsdRate() *big.Float {
-	return getCurrencyToUsdRate("bitcoin")
-}
-
 func (processor *BitcoinProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
 	return make([]currencies.TransactionsHistoryItem, 0)
 }

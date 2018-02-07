@@ -7,7 +7,7 @@ import (
 )
 
 type ratesStruct struct {
-	toUsd map[currencies.Currency]*big.Float
+	toUsd map[string]*big.Float
 }
 
 type dataCache struct {
@@ -21,7 +21,7 @@ type dataCache struct {
 
 func (cache *dataCache) Init() {
 	if cache.rates.toUsd == nil {
-		cache.rates.toUsd = make(map[currencies.Currency]*big.Float)
+		cache.rates.toUsd = make(map[string]*big.Float)
 	}
 
 	if cache.balances == nil {
@@ -45,11 +45,11 @@ func (cache *dataCache) getBalance(address currencies.AddressData) *big.Int {
 	}
 }
 
-func (cache *dataCache) getRateToUsd(currency currencies.Currency) *big.Float {
+func (cache *dataCache) getRateToUsd(priceId string) *big.Float {
 	cache.ratesMutex.Lock()
 	defer cache.ratesMutex.Unlock()
 
-	rateToUsd, ok := cache.rates.toUsd[currency]
+	rateToUsd, ok := cache.rates.toUsd[priceId]
 
 	if ok {
 		return rateToUsd

@@ -227,6 +227,12 @@ func getListDialogCache(userId int64, staticData *processing.StaticProccessStruc
 	return
 }
 
+type balanceLineKey struct {
+	currency currencies.Currency
+	contractAddress string
+	priceId string
+}
+
 func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
 	walletAddresses := staticFunctions.GetDb(staticData).GetUserWalletAddresses(userId)
 
@@ -240,24 +246,20 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 		return ""
 	}
 
-	groupedWallets := make(map[currencies.Currency] []currencies.AddressData)
-	groupedErc20TokenWallets := make(map[string] []currencies.AddressData)
+	groupedWallets := make(map[balanceLineKey] []currencies.AddressData)
 
 	for _, walletAddress := range walletAddresses {
-		if walletAddress.Currency != currencies.Erc20Token {
-			walletsSlice, ok := groupedWallets[walletAddress.Currency]
-			if ok {
-				groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
-			} else {
-				groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
-			}
+		key := balanceLineKey {
+			currency: walletAddress.Currency,
+			contractAddress: walletAddress.ContractAddress,
+			priceId: walletAddress.PriceId,
+		}
+
+		walletsSlice, ok := groupedWallets[key]
+		if ok {
+			groupedWallets[key] = append(walletsSlice, walletAddress)
 		} else {
-			walletsSlice, ok := groupedErc20TokenWallets[walletAddress.ContractAddress]
-			if ok {
-				groupedErc20TokenWallets[walletAddress.ContractAddress] = append(walletsSlice, walletAddress)
-			} else {
-				groupedErc20TokenWallets[walletAddress.ContractAddress] = []currencies.AddressData{ walletAddress }
-			}
+			groupedWallets[key] = []currencies.AddressData{ walletAddress }
 		}
 	}
 
@@ -266,7 +268,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 
 	usdSum := new(big.Float)
 
-	for currency, addresses := range groupedWallets {
+	for key, addresses := range groupedWallets {
 		sumBalance := big.NewInt(0)
 
 		for _, address := range addresses {
@@ -276,8 +278,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			}
 		}
 
-		currencySymbol := currencies.GetCurrencySymbol(currency)
-		currencyDecimals := currencies.GetCurrencyDecimals(currency)
+		currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, key.currency, key.contractAddress)
 
 		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDecimals)
 
@@ -286,38 +287,10 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 			continue
 		}
 
-		toUsdRate := serverData.GetRateToUsd(currency)
+		toUsdRate := serverData.GetRateToUsd(key.priceId)
 
 		if toUsdRate != nil {
 			usdSum.Add(usdSum, new(big.Float).Mul(floatBalance, toUsdRate))
-		}
-
-		textBuffer.WriteString(cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals) + " " + currencySymbol + "\n")
-	}
-
-	for contractAddress, addresses := range groupedErc20TokenWallets {
-		sumBalance := big.NewInt(0)
-
-		for _, address := range addresses {
-			balance := serverData.GetBalance(address)
-			if balance != nil {
-				sumBalance.Add(sumBalance, balance)
-			}
-		}
-
-		tokenData := serverData.GetErc20TokenData(contractAddress)
-		if tokenData == nil {
-			continue
-		}
-
-		currencySymbol := tokenData.Symbol
-		currencyDecimals := tokenData.Decimals
-
-		floatBalance := cryptoFunctions.GetFloatBalance(sumBalance, currencyDecimals)
-
-		if floatBalance == nil {
-			log.Print("Error float balance")
-			continue
 		}
 
 		textBuffer.WriteString(cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals) + " " + currencySymbol + "\n")

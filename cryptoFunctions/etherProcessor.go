@@ -123,10 +123,6 @@ func (processor *EtherProcessor) GetBalanceBunch(addresses []currencies.AddressD
 	return balances
 }
 
-func (processor *EtherProcessor) GetToUsdRate() *big.Float {
-	return getCurrencyToUsdRate("ethereum")
-}
-
 func (processor *EtherProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
 	var requestText string
 	if limit > 0 {

@@ -66,10 +66,6 @@ func (processor *RippleXrpProcessor) GetBalanceBunch(addresses []currencies.Addr
 	return balances
 }
 
-func (processor *RippleXrpProcessor) GetToUsdRate() *big.Float {
-	return getCurrencyToUsdRate("ripple")
-}
-
 func (processor *RippleXrpProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
 	return make([]currencies.TransactionsHistoryItem, 0)
 }
