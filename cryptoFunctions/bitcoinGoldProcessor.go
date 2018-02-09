@@ -14,11 +14,11 @@ type BitcoinGoldProcessor struct {
 
 func (processor *BitcoinGoldProcessor) GetBalance(address currencies.AddressData) *big.Int {
 	resp, err := http.Get("http://btgexp.com/ext/getbalance/" + address.Address)
-	defer resp.Body.Close()
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
