@@ -417,3 +417,42 @@ func TestErc20TokenWallets(t *testing.T) {
 		}
 	}
 }
+
+func TestSetWalletPriceId(t *testing.T) {
+	assert := require.New(t)
+	db := createDbAndConnect(t)
+	defer clearDb()
+	if db == nil {
+		t.Fail()
+		return
+	}
+	defer db.Disconnect()
+
+	userId := db.GetUserId(123, "")
+
+	walletAddress := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "key",
+	}
+
+	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", walletAddress)
+
+	{
+		localWalletAddress := db.GetWalletAddress(walletId)
+		assert.Equal("", localWalletAddress.PriceId)
+	}
+
+	db.SetWalletPriceId(walletId, "priceId1")
+
+	{
+		localWalletAddress := db.GetWalletAddress(walletId)
+		assert.Equal("priceId1", localWalletAddress.PriceId)
+	}
+
+	db.SetWalletPriceId(walletId, "priceId2")
+
+	{
+		localWalletAddress := db.GetWalletAddress(walletId)
+		assert.Equal("priceId2", localWalletAddress.PriceId)
+	}
+}

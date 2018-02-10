@@ -501,3 +501,10 @@ func (database *AccountDb) GetAllPriceIds() (priceIds []string) {
 
 	return
 }
+
+func (database *AccountDb) SetWalletPriceId(walletId int64, priceId string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET price_id='%s' WHERE id=%d AND is_removed IS NULL", priceId, walletId))
+}

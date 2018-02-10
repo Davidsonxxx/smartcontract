@@ -12,9 +12,9 @@ func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
 		Processors : dialogManager.TextProcessorsMap {
 			"newWalletName" : processNewWalletName,
 			"newWalletKey" : processNewWalletKey,
-			"newWalletPriceId" : processNewWalletPriceId,
 			"newWalletContractAddress" : processNewWalletContractAddress,
 			"renamingWallet" : processRenamingWallet,
+			"setWalletPriceId" : processSetWalletPriceId,
 		},
 	}
 }
@@ -45,15 +45,6 @@ func processNewWalletName(additionalId int64, data *processing.ProcessData) bool
 func processNewWalletContractAddress(additionalId int64, data *processing.ProcessData) bool {
 	data.Static.SetUserStateValue(data.UserId, "walletContractAddress", data.Message)
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
-		ProcessorId: "newWalletPriceId",
-	})
-	data.SendMessage(data.Trans("send_price_id"))
-	return true
-}
-
-func processNewWalletPriceId(additionalId int64, data *processing.ProcessData) bool {
-	data.Static.SetUserStateValue(data.UserId, "walletPriceId", data.Message)
-	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
 		ProcessorId: "newWalletKey",
 	})
 	data.SendMessage(data.Trans("send_address"))
@@ -76,16 +67,11 @@ func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool 
 		walletContractAddress = ""
 	}
 
-	walletPriceId, ok := data.Static.GetUserStateValue(data.UserId, "walletPriceId").(string)
-	if !ok {
-		walletPriceId = currencies.GetCurrencyPriceId(walletCurrency)
-	}
-
 	walletAddress := currencies.AddressData{
 		Currency: walletCurrency,
 		ContractAddress: walletContractAddress,
 		Address: data.Message,
-		PriceId: walletPriceId,
+		PriceId: currencies.GetCurrencyPriceId(walletCurrency),
 	}
 
 	walletId := staticFunctions.GetDb(data.Static).CreateWatchOnlyWallet(data.UserId, walletName, walletAddress)
@@ -100,6 +86,16 @@ func processRenamingWallet(walletId int64, data *processing.ProcessData) bool {
 	}
 
 	staticFunctions.GetDb(data.Static).RenameWallet(walletId, data.Message)
+	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
+	return true
+}
+
+func processSetWalletPriceId(walletId int64, data *processing.ProcessData) bool {
+	if walletId == 0 {
+		return false
+	}
+
+	staticFunctions.GetDb(data.Static).SetWalletPriceId(walletId, data.Message)
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
 }
