@@ -69,3 +69,7 @@ func (processor *RippleXrpProcessor) GetBalanceBunch(addresses []currencies.Addr
 func (processor *RippleXrpProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
 	return make([]currencies.TransactionsHistoryItem, 0)
 }
+
+func (processor *RippleXrpProcessor) IsAddressValid(address string) bool {
+	return true
+}

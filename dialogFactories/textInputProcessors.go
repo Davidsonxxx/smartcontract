@@ -5,6 +5,7 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 )
 
 func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
@@ -43,6 +44,16 @@ func processNewWalletName(additionalId int64, data *processing.ProcessData) bool
 }
 
 func processNewWalletContractAddress(additionalId int64, data *processing.ProcessData) bool {
+	erc20TokenProcessor := cryptoFunctions.GetErc20TokenProcessor()
+	if erc20TokenProcessor == nil {
+		return false
+	}
+
+	if !(*erc20TokenProcessor).IsContractAddressValid(data.Message) {
+		data.SendMessage(data.Trans("wrong_contract_address"))
+		return false
+	}
+
 	data.Static.SetUserStateValue(data.UserId, "walletContractAddress", data.Message)
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
 		ProcessorId: "newWalletKey",
@@ -59,6 +70,16 @@ func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool 
 
 	walletCurrency, ok := data.Static.GetUserStateValue(data.UserId, "walletCurrency").(currencies.Currency)
 	if !ok {
+		return false
+	}
+
+	currencyProcessor := cryptoFunctions.GetProcessor(walletCurrency)
+	if currencyProcessor == nil {
+		return false
+	}
+
+	if !(*currencyProcessor).IsAddressValid(data.Message) {
+		data.SendMessage(data.Trans("wrong_wallet_address"))
 		return false
 	}
 

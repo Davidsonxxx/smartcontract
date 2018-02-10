@@ -194,3 +194,7 @@ func (processor *EtherProcessor) GetTransactionsHistory(address currencies.Addre
 
 	return history
 }
+
+func (processor *EtherProcessor) IsAddressValid(address string) bool {
+	return true
+}
