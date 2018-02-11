@@ -6,6 +6,8 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
+	"log"
+	"regexp"
 )
 
 func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
@@ -116,7 +118,22 @@ func processSetWalletPriceId(walletId int64, data *processing.ProcessData) bool 
 		return false
 	}
 
-	staticFunctions.GetDb(data.Static).SetWalletPriceId(walletId, data.Message)
+	re := regexp.MustCompile("https?:\\/\\/coinmarketcap\\.com\\/currencies\\/(\\w+).*")
+	if re == nil {
+		log.Print("Wrong regexp")
+		return false
+	}
+
+	matches := re.FindStringSubmatch(data.Message)
+
+	if len(matches) <= 1 {
+		staticFunctions.GetDb(data.Static).SetWalletPriceId(walletId, "")
+		data.SendMessage(data.Trans("wrong_coinmarketcap_link"))
+		data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
+		return true
+	}
+
+	staticFunctions.GetDb(data.Static).SetWalletPriceId(walletId, matches[1])
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
 }

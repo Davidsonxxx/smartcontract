@@ -37,5 +37,10 @@
 	"usd": { "other": " USD\n" },
 	"no_data": { "other": "Data not available" },
 	"sent_format": { "other": "\nSent: %s %s\nTo: \n%s" },
-	"recieved_format": { "other": "\nRecieved: %s %s\nFrom: \n%s" }
+	"recieved_format": { "other": "\nRecieved: %s %s\nFrom: \n%s" },
+	"wrong_coinmarketcap_link": { "other": "Wrong coinmarketcap link. No link is set." },
+	"wrong_wallet_address": { "other": "Wrong wallet address. Try again" },
+	"wrong_contract_address": { "other": "Wrong contract address. Try again" },
+	"change_price_id": { "other": "Set coinmarketcap link" },
+	"send_price_id": { "other": "Send coinmarketcap.com link of the currency.\nExample:\n<code>https://coinmarketcap.com/currencies/bitcoin/</code>" }
 }
