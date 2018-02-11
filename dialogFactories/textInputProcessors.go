@@ -118,7 +118,7 @@ func processSetWalletPriceId(walletId int64, data *processing.ProcessData) bool 
 		return false
 	}
 
-	re := regexp.MustCompile("https?:\\/\\/coinmarketcap\\.com\\/currencies\\/(\\w+).*")
+	re := regexp.MustCompile("https?:\\/\\/coinmarketcap\\.com\\/currencies\\/([\\w-_]+).*")
 	if re == nil {
 		log.Print("Wrong regexp")
 		return false
