@@ -29,7 +29,6 @@ type BitcoinMultiResp struct {
 }
 
 func init() {
-	log.Print("bitcoin adress regex registered")
 	bitcoinAddressRegex = regexp.MustCompile("^[13][a-zA-Z0-9]{25,34}$")
 	if bitcoinAddressRegex == nil {
 		log.Fatal("Wrong regexp")

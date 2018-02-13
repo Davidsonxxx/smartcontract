@@ -9,6 +9,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"fmt"
+	"math/big"
 	"strconv"
 )
 
@@ -88,7 +89,7 @@ func backToList(walletId int64, data *processing.ProcessData) bool {
 	return true
 }
 
-func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
+func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (result string) {
 	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
 
 	serverData := serverData.GetServerData(staticData)
@@ -105,9 +106,38 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 
 	currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
 
-	balanceText := cryptoFunctions.FormatCurrencyAmount(balance, currencyDecimals)
+	floatBalance := cryptoFunctions.GetFloatBalance(balance, currencyDecimals)
 
-	return fmt.Sprintf("<b>%s</b>\n%s %s", staticFunctions.GetDb(staticData).GetWalletName(walletId), balanceText, currencySymbol)
+	if floatBalance == nil {
+		return trans("no_data")
+	}
+
+	balanceText := cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals)
+
+	result = fmt.Sprintf("<b>%s</b>\n%s %s",
+		staticFunctions.GetDb(staticData).GetWalletName(walletId),
+		balanceText,
+		currencySymbol,
+	)
+
+	toUsdRate := serverData.GetRateToUsd(walletAddress.PriceId)
+
+	if toUsdRate == nil {
+		return
+	}
+
+	usdCost := new(big.Float).Mul(floatBalance, toUsdRate)
+
+	if usdCost == nil {
+		return
+	}
+
+	result = result + fmt.Sprintf("\n%s %s",
+		usdCost.Text('f', 2),
+		trans("usd"),
+	)
+
+	return
 }
 
 func (factory *walletDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {

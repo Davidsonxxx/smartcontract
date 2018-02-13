@@ -297,7 +297,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 	}
 
 	if usdSum != nil {
-		textBuffer.WriteString(trans("sum") + usdSum.Text('f', 2) + trans("usd"))
+		textBuffer.WriteString(trans("sum") + usdSum.Text('f', 2) + trans("usd") + "\n")
 	}
 
 	return textBuffer.String()
