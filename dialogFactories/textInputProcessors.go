@@ -82,7 +82,7 @@ func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool 
 
 	if !(*currencyProcessor).IsAddressValid(data.Message) {
 		data.SendMessage(data.Trans("wrong_wallet_address"))
-		return false
+		return true
 	}
 
 	walletContractAddress, ok := data.Static.GetUserStateValue(data.UserId, "walletContractAddress").(string)

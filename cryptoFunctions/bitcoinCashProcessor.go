@@ -71,5 +71,5 @@ func (processor *BitcoinCashProcessor) GetTransactionsHistory(address currencies
 }
 
 func (processor *BitcoinCashProcessor) IsAddressValid(address string) bool {
-	return true
+	return isBitcoinAddressValid(address)
 }

@@ -57,8 +57,8 @@ func main() {
 	for _, lang := range config.AvailableLanguages {
 		i18n.MustLoadTranslationFile("./data/strings/" + lang.Key + ".all.json")
 
-		trans, err := i18n.Tfunc(lang.Key)
-		if err != nil {
+		trans, err1 := i18n.Tfunc(lang.Key)
+		if err1 != nil {
 			log.Fatal(err.Error())
 		}
 		translators[lang.Key] = trans
