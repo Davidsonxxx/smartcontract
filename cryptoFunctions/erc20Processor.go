@@ -99,9 +99,9 @@ func (processor *Erc20Processor) GetTransactionsHistory(address currencies.Addre
 }
 
 func (processor *Erc20Processor) IsAddressValid(address string) bool {
-	return true
+	return ethereumAddressRegex.MatchString(address)
 }
 
 func (processor *Erc20Processor) IsContractAddressValid(address string) bool {
-	return true
+	return ethereumAddressRegex.MatchString(address)
 }

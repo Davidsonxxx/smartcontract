@@ -53,7 +53,7 @@ func processNewWalletContractAddress(additionalId int64, data *processing.Proces
 
 	if !(*erc20TokenProcessor).IsContractAddressValid(data.Message) {
 		data.SendMessage(data.Trans("wrong_contract_address"))
-		return false
+		return true
 	}
 
 	data.Static.SetUserStateValue(data.UserId, "walletContractAddress", data.Message)

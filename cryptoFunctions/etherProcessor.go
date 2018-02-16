@@ -8,11 +8,14 @@ import (
 	"net/http"
 	"log"
 	"math/big"
+	"regexp"
 	"strconv"
 	"time"
 )
 
 const etherscanApiKey string = "KBT56RI9SUTF2GR1TNN41W48FUQ4YAK3GK"
+
+var ethereumAddressRegex *regexp.Regexp
 
 type EtherProcessor struct {
 }
@@ -40,6 +43,13 @@ type EtherHistoryRespItem struct {
 
 type EtherHistoryResp struct {
 	Result []EtherHistoryRespItem `json:"result"`
+}
+
+func init() {
+	ethereumAddressRegex = regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+	if ethereumAddressRegex == nil {
+		log.Fatal("Wrong regexp")
+	}
 }
 
 func (processor *EtherProcessor) GetBalance(address currencies.AddressData) *big.Int {
@@ -196,5 +206,5 @@ func (processor *EtherProcessor) GetTransactionsHistory(address currencies.Addre
 }
 
 func (processor *EtherProcessor) IsAddressValid(address string) bool {
-	return true
+	return ethereumAddressRegex.MatchString(address)
 }
