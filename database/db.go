@@ -53,7 +53,7 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 		",currency INTEGER NOT NULL" +
 		",address TEXT NOT NULL" +
 		",type INTEGER NOT NULL" +
-		",contract_address TEXT NOT NULL" + // not empty for ERC20 token wallets (type == 5)
+		",contract_address TEXT NOT NULL" + // not empty for ERC20 token wallets (currency == 5)
 		",price_id TEXT NOT NULL" +
 		",FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL" +
 		")")

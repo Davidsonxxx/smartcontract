@@ -70,7 +70,9 @@ func makeAllUpdaters() (updaters []dbUpdater) {
 		dbUpdater{
 			version: "0.3",
 			updateDb: func(db *AccountDb) {
+				// add new field 'price_id'
 				db.db.Exec("ALTER TABLE wallets ADD COLUMN price_id TEXT NOT NULL DEFAULT('')")
+				// fill 'price_id' for existent records
 				availableCurrencies := currencies.GetAllCurrencies()
 				var b bytes.Buffer
 				for _, currency := range availableCurrencies {
@@ -78,6 +80,8 @@ func makeAllUpdaters() (updaters []dbUpdater) {
 					b.WriteString(fmt.Sprintf("UPDATE wallets SET price_id='%s' WHERE currency=%d;", priceId, currency))
 				}
 				db.db.Exec(b.String())
+				// clean the contract_address field filled because of a bug
+				db.db.Exec("UPDATE OR ROLLBACK wallets SET contract_address='' WHERE currency!=5")
 			},
 		},
 	}
