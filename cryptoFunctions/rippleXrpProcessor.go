@@ -7,7 +7,10 @@ import (
 	"log"
 	"net/http"
 	"math/big"
+	"regexp"
 )
+
+var rippleXrpAddressRegex *regexp.Regexp
 
 type RippleXrpProcessor struct {
 }
@@ -18,6 +21,13 @@ type RippleXrpRespData struct {
 
 type RippleXrpResp struct {
 	Balances []RippleXrpRespData `json:"balances"`
+}
+
+func init() {
+	rippleXrpAddressRegex = regexp.MustCompile("^r[1-9a-km-zA-HJ-NP-Z]{24,34}$")
+	if rippleXrpAddressRegex == nil {
+		log.Fatal("Wrong regexp")
+	}
 }
 
 func (processor *RippleXrpProcessor) GetBalance(address currencies.AddressData) *big.Int {
@@ -66,6 +76,10 @@ func (processor *RippleXrpProcessor) GetBalanceBunch(addresses []currencies.Addr
 	return balances
 }
 
-func (processor *RippleXrpProcessor) GetToUsdRate() *big.Float {
-	return getCurrencyToUsdRate("ripple")
+func (processor *RippleXrpProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
+	return make([]currencies.TransactionsHistoryItem, 0)
+}
+
+func (processor *RippleXrpProcessor) IsAddressValid(address string) bool {
+	return rippleXrpAddressRegex.MatchString(address)
 }

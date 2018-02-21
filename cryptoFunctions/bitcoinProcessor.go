@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"log"
 	"math/big"
+	"regexp"
 )
+
+var bitcoinAddressRegex *regexp.Regexp
 
 type BitcoinProcessor struct {
 }
@@ -23,6 +26,13 @@ type BitcoinResp struct {
 
 type BitcoinMultiResp struct {
 	Data []BitcoinRespData `json:"data"`
+}
+
+func init() {
+	bitcoinAddressRegex = regexp.MustCompile("^[13][a-zA-Z0-9]{25,34}$")
+	if bitcoinAddressRegex == nil {
+		log.Fatal("Wrong regexp")
+	}
 }
 
 func (processor *BitcoinProcessor) GetBalance(address currencies.AddressData) *big.Int {
@@ -95,6 +105,14 @@ func (processor *BitcoinProcessor) GetBalanceBunch(addresses []currencies.Addres
 	return balances
 }
 
-func (processor *BitcoinProcessor) GetToUsdRate() *big.Float {
-	return getCurrencyToUsdRate("bitcoin")
+func (processor *BitcoinProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
+	return make([]currencies.TransactionsHistoryItem, 0)
+}
+
+func (processor *BitcoinProcessor) IsAddressValid(address string) bool {
+	return isBitcoinAddressValid(address)
+}
+
+func isBitcoinAddressValid(address string) bool {
+	return bitcoinAddressRegex.MatchString(address)
 }

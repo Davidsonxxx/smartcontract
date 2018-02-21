@@ -6,6 +6,7 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"strconv"
 )
 
@@ -14,6 +15,7 @@ type walletSettingsVariantPrototype struct {
 	textId string
 	process func(int64, *processing.ProcessData) bool
 	rowId int
+	isActiveFn func(int64, *processing.StaticProccessStructs) bool
 }
 
 type walletSettingsDialogFactory struct {
@@ -36,13 +38,25 @@ func MakeWalletSettingsDialogFactory() dialogFactory.DialogFactory {
 				rowId:1,
 			},
 			walletSettingsVariantPrototype{
+				id: "prc",
+				textId: "change_price_id",
+				process: changePriceId,
+				rowId:2,
+				isActiveFn: isErc20TokenWallet,
+			},
+			walletSettingsVariantPrototype{
 				id: "back",
 				textId: "back_to_wallet",
 				process: backToWallet,
-				rowId:2,
+				rowId:3,
 			},
 		},
 	})
+}
+
+func isErc20TokenWallet(walletId int64, staticData *processing.StaticProccessStructs) bool {
+	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
+	return walletAddress.Currency == currencies.Erc20Token
 }
 
 func renameWallet(walletId int64, data *processing.ProcessData) bool {
@@ -59,6 +73,15 @@ func deleteWallet(walletId int64, data *processing.ProcessData) bool {
 	return true
 }
 
+func changePriceId(walletId int64, data *processing.ProcessData) bool {
+	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
+		ProcessorId: "setWalletPriceId",
+		AdditionalId: walletId,
+	})
+	data.SubstitudeMessage(data.Trans("send_price_id"))
+	return true
+}
+
 func backToWallet(walletId int64, data *processing.ProcessData) bool {
 	data.SubstitudeDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
@@ -68,12 +91,14 @@ func (factory *walletSettingsDialogFactory) createVariants(walletId int64, trans
 	variants = make([]dialog.Variant, 0)
 
 	for _, variant := range factory.variants {
-		variants = append(variants, dialog.Variant{
-			Id:   variant.id,
-			Text: trans(variant.textId),
-			AdditionalId: strconv.FormatInt(walletId, 10),
-			RowId: variant.rowId,
-		})
+		if variant.isActiveFn == nil || variant.isActiveFn(walletId, staticData) {
+			variants = append(variants, dialog.Variant{
+				Id:   variant.id,
+				Text: trans(variant.textId),
+				AdditionalId: strconv.FormatInt(walletId, 10),
+				RowId: variant.rowId,
+			})
+		}
 	}
 	return
 }

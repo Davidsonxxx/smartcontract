@@ -6,11 +6,10 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"fmt"
-	"log"
+	"math/big"
 	"strconv"
 )
 
@@ -42,23 +41,23 @@ func MakeWalletDialogFactory() dialogFactory.DialogFactory {
 				process: receiveToWallet,
 				rowId:1,
 			},
-			// walletVariantPrototype{
-			// 	id: "hist",
-			// 	textId: "history",
-			// 	process: showHistory,
-			// 	rowId:2,
-			// },
+			walletVariantPrototype{
+				id: "hist",
+				textId: "history",
+				process: showHistory,
+				rowId:1,
+			},
 			walletVariantPrototype{
 				id: "set",
 				textId: "settings",
 				process: walletSettings,
-				rowId:1,
+				rowId:2,
 			},
 			walletVariantPrototype{
 				id: "back",
 				textId: "back_to_list",
 				process: backToList,
-				rowId:2,
+				rowId:3,
 			},
 		},
 	})
@@ -90,7 +89,7 @@ func backToList(walletId int64, data *processing.ProcessData) bool {
 	return true
 }
 
-func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
+func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (result string) {
 	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
 
 	serverData := serverData.GetServerData(staticData)
@@ -105,30 +104,40 @@ func (factory *walletDialogFactory) getDialogText(walletId int64, trans i18n.Tra
 		return trans("no_data")
 	}
 
-	var currencySymbol string
-	var currencyDecimals int
+	currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
 
-	if walletAddress.Currency != currencies.Erc20Token {
-		currencySymbol = currencies.GetCurrencySymbol(walletAddress.Currency)
-		currencyDecimals = currencies.GetCurrencyDecimals(walletAddress.Currency)
-	} else {
-		if len(walletAddress.ContractAddress) <= 0 {
-			log.Print("No contractAddress for token")
-			return "Error"
-		}
+	floatBalance := cryptoFunctions.GetFloatBalance(balance, currencyDecimals)
 
-		tokenData := serverData.GetErc20TokenData(walletAddress.ContractAddress)
-		if tokenData == nil {
-			return trans("no_data")
-		}
-
-		currencySymbol = tokenData.Symbol
-		currencyDecimals = tokenData.Decimals
+	if floatBalance == nil {
+		return trans("no_data")
 	}
 
-	balanceText := cryptoFunctions.FormatCurrencyAmount(balance, currencyDecimals)
+	balanceText := cryptoFunctions.FormatFloatCurrencyAmount(floatBalance, currencyDecimals)
 
-	return fmt.Sprintf("<b>%s</b>\n%s %s", staticFunctions.GetDb(staticData).GetWalletName(walletId), balanceText, currencySymbol)
+	result = fmt.Sprintf("<b>%s</b>\n%s %s",
+		staticFunctions.GetDb(staticData).GetWalletName(walletId),
+		balanceText,
+		currencySymbol,
+	)
+
+	toUsdRate := serverData.GetRateToUsd(walletAddress.PriceId)
+
+	if toUsdRate == nil {
+		return
+	}
+
+	usdCost := new(big.Float).Mul(floatBalance, toUsdRate)
+
+	if usdCost == nil {
+		return
+	}
+
+	result = result + fmt.Sprintf("\n%s %s",
+		usdCost.Text('f', 2),
+		trans("usd"),
+	)
+
+	return
 }
 
 func (factory *walletDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {

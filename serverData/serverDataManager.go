@@ -45,13 +45,11 @@ func (serverDataManager *ServerDataManager) RegisterServerDataInterface(staticDa
 
 func (serverDataManager *ServerDataManager) updateAll(db *database.AccountDb) {
 	walletAddresses := db.GetAllWalletAddresses()
-	contractsIds := db.GetAllContractAddresses()
+	priceIds := db.GetAllPriceIds()
 
 	serverDataManager.dataUpdater.updateBalance(walletAddresses)
 
-	serverDataManager.dataUpdater.updateRates()
-
-	serverDataManager.dataUpdater.updateErc20TokensData(contractsIds)
+	serverDataManager.dataUpdater.updateRates(priceIds)
 }
 
 func (serverDataManager *ServerDataManager) InitialUpdate(db *database.AccountDb) {
@@ -61,6 +59,9 @@ func (serverDataManager *ServerDataManager) InitialUpdate(db *database.AccountDb
 	}
 
 	serverDataManager.updateAll(db)
+
+	contractsIds := db.GetAllContractAddresses()
+	serverDataManager.dataUpdater.updateErc20TokensData(contractsIds)
 }
 
 func (serverDataManager *ServerDataManager) TimerTick(db *database.AccountDb) {
@@ -82,8 +83,8 @@ func (serverDataManager *ServerDataManager) GetBalance(address currencies.Addres
 	}
 }
 
-func (serverDataManager *ServerDataManager) GetRateToUsd(currency currencies.Currency) *big.Float {
-	return serverDataManager.dataUpdater.cache.getRateToUsd(currency)
+func (serverDataManager *ServerDataManager) GetRateToUsd(priceId string) *big.Float {
+	return serverDataManager.dataUpdater.cache.getRateToUsd(priceId)
 }
 
 func (serverDataManager *ServerDataManager) GetErc20TokenData(contractAddress string) *currencies.Erc20TokenData {

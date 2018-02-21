@@ -17,7 +17,7 @@
 	"wallet_created": { "other": "Wallet was successfully created" },
 	"main_menu_title": { "other": "Main menu" },
 	"receive_title": { "other": "Receive instructions not available" },
-	"history_title": { "other": "History not available" },
+	"history_title": { "other": "Transaction history" },
 	"settings_title": { "other": "Settings" },
 	"send": { "other": "Send" },
 	"receive": { "other": "Receive" },
@@ -33,7 +33,14 @@
 	"reject_del": { "other": "No" },
 	"deleted_success": { "other": "Wallet had been successfully deleted" },
 	"balance_header": { "other": "Balance:\n" },
-	"sum": { "other": "Sum: " },
-	"usd": { "other": " USD\n" },
-	"no_data": { "other": "Data not available" }
+	"sum": { "other": "Sum:" },
+	"usd": { "other": "USD" },
+	"no_data": { "other": "Data not available" },
+	"sent_format": { "other": "\nSent: %s %s\nTo: \n%s" },
+	"recieved_format": { "other": "\nRecieved: %s %s\nFrom: \n%s" },
+	"wrong_coinmarketcap_link": { "other": "Wrong coinmarketcap link. No link is set." },
+	"wrong_wallet_address": { "other": "Wrong wallet address. Try again" },
+	"wrong_contract_address": { "other": "Wrong contract address. Try again" },
+	"change_price_id": { "other": "Set coinmarketcap link" },
+	"send_price_id": { "other": "Send coinmarketcap.com link of the currency.\nExample:\n<code>https://coinmarketcap.com/currencies/bitcoin/</code>" }
 }

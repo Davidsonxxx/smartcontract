@@ -10,6 +10,8 @@ type CurrencyProcessor interface {
 	GetBalance(address currencies.AddressData) *big.Int
 	// get multiple accounts balance
 	GetBalanceBunch(addresses []currencies.AddressData) []*big.Int
-	// get this currency to USD rate
-	GetToUsdRate() *big.Float
+	// get history of transactions sorted from new to old
+	GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem
+	// check adress for validness
+	IsAddressValid(address string) bool
 }

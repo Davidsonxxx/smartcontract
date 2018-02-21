@@ -46,6 +46,10 @@ func (processor *BitcoinGoldProcessor) GetBalanceBunch(addresses []currencies.Ad
 	return balances
 }
 
-func (processor *BitcoinGoldProcessor) GetToUsdRate() *big.Float {
-	return getCurrencyToUsdRate("bitcoin-gold")
+func (processor *BitcoinGoldProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
+	return make([]currencies.TransactionsHistoryItem, 0)
+}
+
+func (processor *BitcoinGoldProcessor) IsAddressValid(address string) bool {
+	return isBitcoinAddressValid(address)
 }

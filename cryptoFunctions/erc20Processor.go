@@ -94,6 +94,14 @@ func (processor *Erc20Processor) GetTokenData(contractAddress string) *currencie
 	return &tokenData
 }
 
-func (processor *Erc20Processor) GetToUsdRate() *big.Float {
-	return nil
+func (processor *Erc20Processor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
+	return make([]currencies.TransactionsHistoryItem, 0)
+}
+
+func (processor *Erc20Processor) IsAddressValid(address string) bool {
+	return ethereumAddressRegex.MatchString(address)
+}
+
+func (processor *Erc20Processor) IsContractAddressValid(address string) bool {
+	return ethereumAddressRegex.MatchString(address)
 }

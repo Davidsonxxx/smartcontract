@@ -36,7 +36,7 @@ func MakeReceiveDialogFactory() dialogFactory.DialogFactory {
 func (factory *receiveDialogFactory) createText(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) string {
 	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
 
-	return trans("receive_title") + "\n" + walletAddress.Address
+	return trans("receive_title") + "\n<code>" + walletAddress.Address + "</code>"
 }
 
 func (factory *receiveDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {

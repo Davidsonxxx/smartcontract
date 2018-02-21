@@ -5,6 +5,9 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
+	"log"
+	"regexp"
 )
 
 func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
@@ -14,6 +17,7 @@ func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
 			"newWalletKey" : processNewWalletKey,
 			"newWalletContractAddress" : processNewWalletContractAddress,
 			"renamingWallet" : processRenamingWallet,
+			"setWalletPriceId" : processSetWalletPriceId,
 		},
 	}
 }
@@ -42,6 +46,16 @@ func processNewWalletName(additionalId int64, data *processing.ProcessData) bool
 }
 
 func processNewWalletContractAddress(additionalId int64, data *processing.ProcessData) bool {
+	erc20TokenProcessor := cryptoFunctions.GetErc20TokenProcessor()
+	if erc20TokenProcessor == nil {
+		return false
+	}
+
+	if !(*erc20TokenProcessor).IsContractAddressValid(data.Message) {
+		data.SendMessage(data.Trans("wrong_contract_address"))
+		return true
+	}
+
 	data.Static.SetUserStateValue(data.UserId, "walletContractAddress", data.Message)
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
 		ProcessorId: "newWalletKey",
@@ -61,6 +75,16 @@ func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool 
 		return false
 	}
 
+	currencyProcessor := cryptoFunctions.GetProcessor(walletCurrency)
+	if currencyProcessor == nil {
+		return false
+	}
+
+	if !(*currencyProcessor).IsAddressValid(data.Message) {
+		data.SendMessage(data.Trans("wrong_wallet_address"))
+		return true
+	}
+
 	walletContractAddress, ok := data.Static.GetUserStateValue(data.UserId, "walletContractAddress").(string)
 	if !ok {
 		walletContractAddress = ""
@@ -70,6 +94,7 @@ func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool 
 		Currency: walletCurrency,
 		ContractAddress: walletContractAddress,
 		Address: data.Message,
+		PriceId: currencies.GetCurrencyPriceId(walletCurrency),
 	}
 
 	walletId := staticFunctions.GetDb(data.Static).CreateWatchOnlyWallet(data.UserId, walletName, walletAddress)
@@ -84,6 +109,31 @@ func processRenamingWallet(walletId int64, data *processing.ProcessData) bool {
 	}
 
 	staticFunctions.GetDb(data.Static).RenameWallet(walletId, data.Message)
+	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
+	return true
+}
+
+func processSetWalletPriceId(walletId int64, data *processing.ProcessData) bool {
+	if walletId == 0 {
+		return false
+	}
+
+	re := regexp.MustCompile("https?:\\/\\/coinmarketcap\\.com\\/currencies\\/([\\w-_]+).*")
+	if re == nil {
+		log.Print("Wrong regexp")
+		return false
+	}
+
+	matches := re.FindStringSubmatch(data.Message)
+
+	if len(matches) <= 1 {
+		staticFunctions.GetDb(data.Static).SetWalletPriceId(walletId, "")
+		data.SendMessage(data.Trans("wrong_coinmarketcap_link"))
+		data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
+		return true
+	}
+
+	staticFunctions.GetDb(data.Static).SetWalletPriceId(walletId, matches[1])
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
 }
