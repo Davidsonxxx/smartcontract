@@ -33,8 +33,8 @@
 	"reject_del": { "other": "Нет" },
 	"deleted_success": { "other": "Кошелек был успешно удален" },
 	"balance_header": { "other": "Баланс:\n" },
-	"sum": { "other": "Сумма: " },
-	"usd": { "other": " $" },
+	"sum": { "other": "Сумма:" },
+	"usd": { "other": "$" },
 	"no_data": { "other": "Информация недоступна" },
 	"sent_format": { "other": "\nОтправлено: %s %s\nНа адрес: \n%s" },
 	"recieved_format": { "other": "\nПолучено: %s %s\nОт: \n%s" }

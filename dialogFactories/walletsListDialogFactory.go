@@ -2,6 +2,7 @@ package dialogFactories
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialog"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
@@ -297,7 +298,7 @@ func (factory *walletsListDialogFactory) GetDialogCaption(userId int64, trans i1
 	}
 
 	if usdSum != nil {
-		textBuffer.WriteString(trans("sum") + usdSum.Text('f', 2) + trans("usd") + "\n")
+		textBuffer.WriteString(fmt.Sprintf("%s %s %s\n", trans("sum"), usdSum.Text('f', 2), trans("usd")))
 	}
 
 	return textBuffer.String()
