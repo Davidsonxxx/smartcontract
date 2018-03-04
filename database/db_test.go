@@ -1,6 +1,7 @@
 package database
 
 import (
+	"math/big"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"os"
@@ -456,3 +457,69 @@ func TestSetWalletPriceId(t *testing.T) {
 		assert.Equal("priceId2", localWalletAddress.PriceId)
 	}
 }
+
+func TestNotifications(t *testing.T) {
+	assert := require.New(t)
+	db := createDbAndConnect(t)
+	defer clearDb()
+	if db == nil {
+		t.Fail()
+		return
+	}
+	defer db.Disconnect()
+
+	userId := db.GetUserId(123, "")
+
+	walletAddress := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "key",
+	}
+
+	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", walletAddress)
+
+	{
+		notifies := db.GetAllBalanceNotifies()
+		assert.Equal(0, len(notifies))
+	}
+
+	// test enabling
+	db.EnableBalanceNotifies(walletId, big.NewInt(10))
+
+	{
+		notifies := db.GetAllBalanceNotifies()
+		assert.Equal(1, len(notifies))
+		if len(notifies) > 0 {
+			assert.Equal(walletId, notifies[0].WalletId)
+			assert.Equal(big.NewInt(10), notifies[0].LastBalance)
+		}
+
+		// test updating balance
+		notifies[0].LastBalance = big.NewInt(30)
+		db.UpdateBalanceNotifies(notifies)
+
+		newNotifies := db.GetAllBalanceNotifies()
+		assert.Equal(1, len(newNotifies))
+		if len(notifies) > 0 {
+			assert.Equal(walletId, newNotifies[0].WalletId)
+			assert.Equal(big.NewInt(30), newNotifies[0].LastBalance)
+		}
+	}
+
+	// test double enabling
+	db.EnableBalanceNotifies(walletId, big.NewInt(40))
+
+	{
+		notifies := db.GetAllBalanceNotifies()
+		assert.Equal(1, len(notifies))
+		if len(notifies) > 0 {
+			assert.Equal(walletId, notifies[0].WalletId)
+			assert.Equal(big.NewInt(40), notifies[0].LastBalance)
+		}
+	}
+
+	// test disabling
+	db.DisableBalanceNotify(walletId)
+
+	assert.Equal(0, len(db.GetAllBalanceNotifies()))
+}
+

@@ -1,7 +1,9 @@
 package database
 
 import (
+	"bytes"
 	"fmt"
+	"math/big"
 	_ "github.com/mattn/go-sqlite3"
 	dbBase "github.com/gameraccoon/telegram-bot-skeleton/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
@@ -62,6 +64,13 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 		" rates(id INTEGER NOT NULL PRIMARY KEY" +
 		",rate_to_usd REAL NOT NULL" +
 		",time TIME NOT NULL" +
+		")")
+
+	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
+		" balance_notifies(id INTEGER NOT NULL PRIMARY KEY" +
+		",wallet_id INTEGER NOT NULL UNIQUE ON CONFLICT REPLACE" +
+		",last_balance TEXT NOT NULL" + // always save balances as TEXT
+		",FOREIGN KEY(wallet_id) REFERENCES wallets(id) ON DELETE CASCADE" +
 		")")
 
 	return
@@ -507,4 +516,65 @@ func (database *AccountDb) SetWalletPriceId(walletId int64, priceId string) {
 	defer database.mutex.Unlock()
 
 	database.db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET price_id='%s' WHERE id=%d AND is_removed IS NULL", priceId, walletId))
+}
+
+func (database *AccountDb) GetAllBalanceNotifies() (notifies []currencies.BalanceNotify) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query("SELECT id, wallet_id, last_balance FROM balance_notifies")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var walletId int64
+		var notifyId int64
+		var lastBalance string
+
+		err := rows.Scan(&notifyId, &walletId, &lastBalance)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		if intBalance, ok := new(big.Int).SetString(lastBalance, 10); ok {
+			notifies = append(notifies, currencies.BalanceNotify{
+				NotifyId: notifyId,
+				WalletId: walletId,
+				LastBalance: intBalance,
+			})
+		}
+	}
+
+	return
+}
+
+func (database *AccountDb) UpdateBalanceNotifies(updatedNotifies []currencies.BalanceNotify) {
+	if len(updatedNotifies) <= 0 {
+		return
+	}
+
+	var b bytes.Buffer
+
+	for _, notify := range updatedNotifies {
+		if notify.LastBalance != nil {
+			b.WriteString(fmt.Sprintf("UPDATE OR ROLLBACK balance_notifies SET last_balance='%s' WHERE id=%d;", notify.LastBalance.String(), notify.NotifyId))
+		}
+	}
+
+	database.db.Exec(b.String())
+}
+
+func (database *AccountDb) EnableBalanceNotifies(walletId int64, balance *big.Int) {
+	if balance != nil {
+		database.db.Exec(fmt.Sprintf("INSERT INTO balance_notifies(wallet_id, last_balance) VALUES(%d,'%s')",
+			walletId,
+			balance.String(),
+		))
+	}
+}
+
+func (database *AccountDb) DisableBalanceNotify(walletId int64) {
+	database.db.Exec(fmt.Sprintf("DELETE FROM balance_notifies WHERE wallet_id=%d", walletId))
 }
