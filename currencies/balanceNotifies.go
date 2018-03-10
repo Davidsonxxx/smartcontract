@@ -7,5 +7,7 @@ import (
 type BalanceNotify struct {
 	NotifyId int64
 	WalletId int64
-	LastBalance *big.Int
+	UserId int64
+	OldBalance *big.Int
+	NewBalance *big.Int
 }

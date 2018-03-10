@@ -9,6 +9,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/wallettypes"
 	"log"
+	"strings"
 	"sync"
 )
 
@@ -68,7 +69,7 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 
 	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
 		" balance_notifies(id INTEGER NOT NULL PRIMARY KEY" +
-		",wallet_id INTEGER NOT NULL UNIQUE ON CONFLICT REPLACE" +
+		",wallet_id INTEGER NOT NULL UNIQUE" +
 		",last_balance TEXT NOT NULL" + // always save balances as TEXT
 		",FOREIGN KEY(wallet_id) REFERENCES wallets(id) ON DELETE CASCADE" +
 		")")
@@ -428,34 +429,38 @@ func (database *AccountDb) GetUserWalletAddresses(userId int64) (addresses []cur
 	return
 }
 
-func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.AddressData) {
+func (database *AccountDb) GetAllWalletAddresses() (addresses []WalletAddressDbWrapper) {
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query("SELECT currency, address, contract_address, price_id FROM wallets WHERE is_removed IS NULL")
+	rows, err := database.db.Query("SELECT id, currency, address, contract_address, price_id FROM wallets WHERE is_removed IS NULL")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	defer rows.Close()
 
 	for rows.Next() {
+		var walletId int64
 		var currency int64
 		var address string
 		var contractAddress string
 		var priceId string
 
-		err := rows.Scan(&currency, &address, &contractAddress, &priceId)
+		err := rows.Scan(&walletId, &currency, &address, &contractAddress, &priceId)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
 		addresses = append(
 			addresses,
-			currencies.AddressData{
-				Currency: currencies.Currency(currency),
-				Address: address,
-				ContractAddress: contractAddress,
-				PriceId: priceId,
+			WalletAddressDbWrapper{
+				Data: currencies.AddressData{
+					Currency: currencies.Currency(currency),
+					Address: address,
+					ContractAddress: contractAddress,
+					PriceId: priceId,
+				},
+				WalletId: walletId,
 			},
 		)
 	}
@@ -518,11 +523,12 @@ func (database *AccountDb) SetWalletPriceId(walletId int64, priceId string) {
 	database.db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET price_id='%s' WHERE id=%d AND is_removed IS NULL", priceId, walletId))
 }
 
-func (database *AccountDb) GetAllBalanceNotifies() (notifies []currencies.BalanceNotify) {
+func (database *AccountDb) GetBalanceNotifies(walletIds []int64) (notifies []currencies.BalanceNotify) {
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query("SELECT id, wallet_id, last_balance FROM balance_notifies")
+	idsString := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(walletIds)), ","), "[]")
+	rows, err := database.db.Query(fmt.Sprintf("SELECT n.id, w.user_id, n.wallet_id, n.last_balance FROM balance_notifies AS n LEFT JOIN wallets AS w ON n.wallet_id=w.id WHERE n.wallet_id IN (%s)", idsString))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -532,17 +538,19 @@ func (database *AccountDb) GetAllBalanceNotifies() (notifies []currencies.Balanc
 		var walletId int64
 		var notifyId int64
 		var lastBalance string
+		var userId int64
 
-		err := rows.Scan(&notifyId, &walletId, &lastBalance)
+		err := rows.Scan(&notifyId, &userId, &walletId, &lastBalance)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
 		if intBalance, ok := new(big.Int).SetString(lastBalance, 10); ok {
 			notifies = append(notifies, currencies.BalanceNotify{
+				UserId: userId,
 				NotifyId: notifyId,
 				WalletId: walletId,
-				LastBalance: intBalance,
+				OldBalance: intBalance,
 			})
 		}
 	}
@@ -558,8 +566,8 @@ func (database *AccountDb) UpdateBalanceNotifies(updatedNotifies []currencies.Ba
 	var b bytes.Buffer
 
 	for _, notify := range updatedNotifies {
-		if notify.LastBalance != nil {
-			b.WriteString(fmt.Sprintf("UPDATE OR ROLLBACK balance_notifies SET last_balance='%s' WHERE id=%d;", notify.LastBalance.String(), notify.NotifyId))
+		if notify.NewBalance != nil {
+			b.WriteString(fmt.Sprintf("UPDATE OR ROLLBACK balance_notifies SET last_balance='%s' WHERE id=%d;", notify.NewBalance.String(), notify.NotifyId))
 		}
 	}
 
@@ -568,7 +576,7 @@ func (database *AccountDb) UpdateBalanceNotifies(updatedNotifies []currencies.Ba
 
 func (database *AccountDb) EnableBalanceNotifies(walletId int64, balance *big.Int) {
 	if balance != nil {
-		database.db.Exec(fmt.Sprintf("INSERT INTO balance_notifies(wallet_id, last_balance) VALUES(%d,'%s')",
+		database.db.Exec(fmt.Sprintf("INSERT OR REPLACE INTO balance_notifies(wallet_id, last_balance) VALUES(%d,'%s')",
 			walletId,
 			balance.String(),
 		))

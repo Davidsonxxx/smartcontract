@@ -8,6 +8,10 @@ import (
 	"math/big"
 )
 
+type TickUpdateData struct {
+	BalanceNotifies []currencies.BalanceNotify
+}
+
 type ServerDataManager struct {
 	dataUpdater serverDataUpdater
 }
@@ -43,34 +47,69 @@ func (serverDataManager *ServerDataManager) RegisterServerDataInterface(staticDa
 	}
 }
 
-func (serverDataManager *ServerDataManager) updateAll(db *database.AccountDb) {
+func (serverDataManager *ServerDataManager) updateBalanceNotifications(db *database.AccountDb, balanceChanges balanceChangesData) []currencies.BalanceNotify {
+	walletIds := []int64{}
+
+	for walletId, _ := range balanceChanges {
+		walletIds = append(walletIds, walletId)
+	}
+
+	oldNotifiesData := db.GetBalanceNotifies(walletIds)
+
+	newNotifies := []currencies.BalanceNotify{}
+
+	for _, notify := range oldNotifiesData {
+		balance := balanceChanges[notify.WalletId]
+		if balance != nil && balance.Cmp(notify.OldBalance) != 0 {
+			notify.NewBalance = balance
+
+			newNotifies = append(newNotifies, notify)
+		}
+	}
+
+	db.UpdateBalanceNotifies(newNotifies)
+
+	return newNotifies
+}
+
+func (serverDataManager *ServerDataManager) updateAll(db *database.AccountDb) []currencies.BalanceNotify {
 	walletAddresses := db.GetAllWalletAddresses()
 	priceIds := db.GetAllPriceIds()
 
-	serverDataManager.dataUpdater.updateBalance(walletAddresses)
+	changedWalletIds := serverDataManager.dataUpdater.updateBalance(walletAddresses)
 
 	serverDataManager.dataUpdater.updateRates(priceIds)
+
+	return serverDataManager.updateBalanceNotifications(db, changedWalletIds)
 }
 
-func (serverDataManager *ServerDataManager) InitialUpdate(db *database.AccountDb) {
+func (serverDataManager *ServerDataManager) InitialUpdate(db *database.AccountDb) TickUpdateData {
 	if db == nil {
 		log.Fatal("database is nil")
-		return
+		return TickUpdateData{}
 	}
 
-	serverDataManager.updateAll(db)
+	balanceNotifies := serverDataManager.updateAll(db)
 
 	contractsIds := db.GetAllContractAddresses()
 	serverDataManager.dataUpdater.updateErc20TokensData(contractsIds)
+
+	return TickUpdateData {
+		BalanceNotifies: balanceNotifies,
+	}
 }
 
-func (serverDataManager *ServerDataManager) TimerTick(db *database.AccountDb) {
+func (serverDataManager *ServerDataManager) TimerTick(db *database.AccountDb) TickUpdateData {
 	if db == nil {
 		log.Print("database is nil, skip update")
-		return
+		return TickUpdateData{}
 	}
 
-	serverDataManager.updateAll(db)
+	balanceNotifies := serverDataManager.updateAll(db)
+
+	return TickUpdateData {
+		BalanceNotifies: balanceNotifies,
+	}
 }
 
 func (serverDataManager *ServerDataManager) GetBalance(address currencies.AddressData) *big.Int {

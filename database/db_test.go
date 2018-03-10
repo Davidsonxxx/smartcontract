@@ -395,10 +395,11 @@ func TestErc20TokenWallets(t *testing.T) {
 
 		assert.Equal(1, len(addresses))
 		if len(addresses) > 0 {
-			assert.Equal("key", addresses[0].Address)
-			assert.Equal("cid", addresses[0].ContractAddress)
-			assert.Equal("price", addresses[0].PriceId)
-			assert.Equal(currencies.Bitcoin, addresses[0].Currency)
+			assert.Equal(walletId, addresses[0].WalletId)
+			assert.Equal("key", addresses[0].Data.Address)
+			assert.Equal("cid", addresses[0].Data.ContractAddress)
+			assert.Equal("price", addresses[0].Data.PriceId)
+			assert.Equal(currencies.Bitcoin, addresses[0].Data.Currency)
 		}
 	}
 
@@ -478,7 +479,7 @@ func TestNotifications(t *testing.T) {
 	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", walletAddress)
 
 	{
-		notifies := db.GetAllBalanceNotifies()
+		notifies := db.GetBalanceNotifies([]int64{walletId})
 		assert.Equal(0, len(notifies))
 	}
 
@@ -486,22 +487,22 @@ func TestNotifications(t *testing.T) {
 	db.EnableBalanceNotifies(walletId, big.NewInt(10))
 
 	{
-		notifies := db.GetAllBalanceNotifies()
+		notifies := db.GetBalanceNotifies([]int64{walletId})
 		assert.Equal(1, len(notifies))
 		if len(notifies) > 0 {
 			assert.Equal(walletId, notifies[0].WalletId)
-			assert.Equal(big.NewInt(10), notifies[0].LastBalance)
+			assert.Equal(big.NewInt(10), notifies[0].OldBalance)
 		}
 
 		// test updating balance
-		notifies[0].LastBalance = big.NewInt(30)
+		notifies[0].NewBalance = big.NewInt(30)
 		db.UpdateBalanceNotifies(notifies)
 
-		newNotifies := db.GetAllBalanceNotifies()
+		newNotifies := db.GetBalanceNotifies([]int64{walletId})
 		assert.Equal(1, len(newNotifies))
 		if len(notifies) > 0 {
 			assert.Equal(walletId, newNotifies[0].WalletId)
-			assert.Equal(big.NewInt(30), newNotifies[0].LastBalance)
+			assert.Equal(big.NewInt(30), newNotifies[0].OldBalance)
 		}
 	}
 
@@ -509,17 +510,17 @@ func TestNotifications(t *testing.T) {
 	db.EnableBalanceNotifies(walletId, big.NewInt(40))
 
 	{
-		notifies := db.GetAllBalanceNotifies()
+		notifies := db.GetBalanceNotifies([]int64{walletId})
 		assert.Equal(1, len(notifies))
 		if len(notifies) > 0 {
 			assert.Equal(walletId, notifies[0].WalletId)
-			assert.Equal(big.NewInt(40), notifies[0].LastBalance)
+			assert.Equal(big.NewInt(40), notifies[0].OldBalance)
 		}
 	}
 
 	// test disabling
 	db.DisableBalanceNotify(walletId)
 
-	assert.Equal(0, len(db.GetAllBalanceNotifies()))
+	assert.Equal(0, len(db.GetBalanceNotifies([]int64{walletId})))
 }
 
