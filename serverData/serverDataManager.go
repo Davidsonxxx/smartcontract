@@ -56,20 +56,31 @@ func (serverDataManager *ServerDataManager) updateBalanceNotifications(db *datab
 
 	oldNotifiesData := db.GetBalanceNotifies(walletIds)
 
-	newNotifies := []currencies.BalanceNotify{}
+	notifiesToProcess := []currencies.BalanceNotify{}
+	notifiesToInit := []currencies.BalanceNotify{}
 
-	for _, notify := range oldNotifiesData {
-		balance := balanceChanges[notify.WalletId]
-		if balance != nil && balance.Cmp(notify.OldBalance) != 0 {
-			notify.NewBalance = balance
+	for _, notifyData := range oldNotifiesData {
+		balance := balanceChanges[notifyData.WalletId]
+		if balance != nil && notifyData.OldBalance != nil && balance.Cmp(notifyData.OldBalance) != 0 {
+			notifyData.NewBalance = balance
+			notifiesToProcess = append(notifiesToProcess, notifyData)
+		}
 
-			newNotifies = append(newNotifies, notify)
+		if notifyData.OldBalance == nil && balance != nil {
+			notifyData.NewBalance = balance
+			notifiesToInit = append(notifiesToInit, notifyData)
 		}
 	}
 
-	db.UpdateBalanceNotifies(newNotifies)
+	if len(notifiesToProcess) > 0 {
+		db.UpdateBalanceNotifies(notifiesToProcess)
+	}
 
-	return newNotifies
+	if len(notifiesToInit) > 0 {
+		db.UpdateBalanceNotifies(notifiesToInit)
+	}
+
+	return notifiesToProcess
 }
 
 func (serverDataManager *ServerDataManager) updateAll(db *database.AccountDb) []currencies.BalanceNotify {

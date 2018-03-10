@@ -7,7 +7,6 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"strconv"
 )
 
@@ -103,17 +102,7 @@ func deleteWallet(walletId int64, data *processing.ProcessData) bool {
 }
 
 func enableBalanceNotifications(walletId int64, data *processing.ProcessData) bool {
-	walletAddress := staticFunctions.GetDb(data.Static).GetWalletAddress(walletId)
-
-	serverData := serverData.GetServerData(data.Static)
-
-	if serverData == nil {
-		return true
-	}
-
-	balance := serverData.GetBalance(walletAddress)
-
-	staticFunctions.GetDb(data.Static).EnableBalanceNotifies(walletId, balance)
+	staticFunctions.GetDb(data.Static).EnableBalanceNotifies(walletId)
 
 	data.SubstitudeDialog(data.Static.MakeDialogFn("ws", walletId, data.Trans, data.Static))
 	return true

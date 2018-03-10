@@ -545,14 +545,18 @@ func (database *AccountDb) GetBalanceNotifies(walletIds []int64) (notifies []cur
 			log.Fatal(err.Error())
 		}
 
-		if intBalance, ok := new(big.Int).SetString(lastBalance, 10); ok {
-			notifies = append(notifies, currencies.BalanceNotify{
+		intBalance, ok := new(big.Int).SetString(lastBalance, 10)
+
+		if !ok {
+			intBalance = nil
+		}
+
+		notifies = append(notifies, currencies.BalanceNotify{
 				UserId: userId,
 				NotifyId: notifyId,
 				WalletId: walletId,
 				OldBalance: intBalance,
 			})
-		}
 	}
 
 	return
@@ -576,16 +580,11 @@ func (database *AccountDb) UpdateBalanceNotifies(updatedNotifies []currencies.Ba
 	database.db.Exec(b.String())
 }
 
-func (database *AccountDb) EnableBalanceNotifies(walletId int64, balance *big.Int) {
-	if balance != nil {
-		database.mutex.Lock()
-		defer database.mutex.Unlock()
+func (database *AccountDb) EnableBalanceNotifies(walletId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
 
-		database.db.Exec(fmt.Sprintf("INSERT OR REPLACE INTO balance_notifies(wallet_id, last_balance) VALUES(%d,'%s')",
-			walletId,
-			balance.String(),
-		))
-	}
+	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO balance_notifies(wallet_id, last_balance) VALUES(%d,'')", walletId))
 }
 
 func (database *AccountDb) DisableBalanceNotifies(walletId int64) {

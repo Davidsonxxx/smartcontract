@@ -484,21 +484,32 @@ func TestNotifications(t *testing.T) {
 	}
 
 	// test enabling
-	db.EnableBalanceNotifies(walletId, big.NewInt(10))
+	db.EnableBalanceNotifies(walletId)
 
 	{
 		notifies := db.GetBalanceNotifies([]int64{walletId})
 		assert.Equal(1, len(notifies))
 		if len(notifies) > 0 {
 			assert.Equal(walletId, notifies[0].WalletId)
-			assert.Equal(big.NewInt(10), notifies[0].OldBalance)
+			assert.True(notifies[0].OldBalance == nil)
+		}
+
+		// test initing balance
+		notifies[0].NewBalance = big.NewInt(10)
+		db.UpdateBalanceNotifies(notifies)
+
+		newNotifies := db.GetBalanceNotifies([]int64{walletId})
+		assert.Equal(1, len(newNotifies))
+		if len(notifies) > 0 {
+			assert.Equal(walletId, newNotifies[0].WalletId)
+			assert.Equal(big.NewInt(10), newNotifies[0].OldBalance)
 		}
 
 		// test updating balance
 		notifies[0].NewBalance = big.NewInt(30)
 		db.UpdateBalanceNotifies(notifies)
 
-		newNotifies := db.GetBalanceNotifies([]int64{walletId})
+		newNotifies = db.GetBalanceNotifies([]int64{walletId})
 		assert.Equal(1, len(newNotifies))
 		if len(notifies) > 0 {
 			assert.Equal(walletId, newNotifies[0].WalletId)
@@ -507,14 +518,14 @@ func TestNotifications(t *testing.T) {
 	}
 
 	// test double enabling
-	db.EnableBalanceNotifies(walletId, big.NewInt(40))
+	db.EnableBalanceNotifies(walletId)
 
 	{
 		notifies := db.GetBalanceNotifies([]int64{walletId})
 		assert.Equal(1, len(notifies))
 		if len(notifies) > 0 {
 			assert.Equal(walletId, notifies[0].WalletId)
-			assert.Equal(big.NewInt(40), notifies[0].OldBalance)
+			assert.Equal(big.NewInt(30), notifies[0].OldBalance)
 		}
 	}
 
