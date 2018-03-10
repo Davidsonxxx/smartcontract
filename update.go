@@ -1,14 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/gameraccoon/telegram-bot-skeleton/telegramChat"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"log"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -40,12 +43,57 @@ func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager
 }
 
 func tickAfterupdate(staticData *processing.StaticProccessStructs, tickUpdateData serverData.TickUpdateData) {
-	for _, balanceNotify := range tickUpdateData.BalanceNotifies {
-		userChatId := staticFunctions.GetDb(staticData).GetUserChatId(balanceNotify.UserId)
+	db := staticFunctions.GetDb(staticData)
 
-		staticData.Chat.SendMessage(userChatId, "test about balance", 0)
+	serverData := serverData.GetServerData(staticData)
+
+	if serverData == nil {
+		return
 	}
 
+	for _, balanceNotify := range tickUpdateData.BalanceNotifies {
+		userChatId := db.GetUserChatId(balanceNotify.UserId)
+
+		walletName := db.GetWalletName(balanceNotify.WalletId)
+
+		walletAddress := db.GetWalletAddress(balanceNotify.WalletId)
+
+		currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
+
+		var oldBalanceStr string
+		if balanceNotify.OldBalance != nil {
+			oldBalanceStr = cryptoFunctions.FormatCurrencyAmount(balanceNotify.OldBalance, currencyDecimals)
+		} else {
+			oldBalanceStr = "0"
+		}
+
+		var newBalanceStr string
+		if balanceNotify.NewBalance != nil {
+			newBalanceStr = cryptoFunctions.FormatCurrencyAmount(balanceNotify.NewBalance, currencyDecimals)
+		} else {
+			newBalanceStr = "0"
+		}
+
+		translateMap := map[string]interface{}{
+			"Name":   walletName,
+			"Sign":   currencySymbol,
+			"OldBal": oldBalanceStr,
+			"NewBal": newBalanceStr,
+		}
+
+		translateFn := staticFunctions.FindTransFunction(balanceNotify.UserId, staticData)
+
+		translateTemplate := template.Must(template.New("").Parse(translateFn("balance_notify_template")))
+
+		translateBuffer := new(bytes.Buffer)
+
+		translateTemplate.Execute(translateBuffer, translateMap)
+
+		staticData.Chat.SendMessage(userChatId,
+			translateBuffer.String(),
+			0,
+		)
+	}
 }
 
 func updateBot(chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager) {

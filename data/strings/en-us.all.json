@@ -42,5 +42,6 @@
 	"wrong_wallet_address": { "other": "Wrong wallet address. Try again" },
 	"wrong_contract_address": { "other": "Wrong contract address. Try again" },
 	"change_price_id": { "other": "Set coinmarketcap link" },
-	"send_price_id": { "other": "Send coinmarketcap.com link of the currency.\nExample:\n<code>https://coinmarketcap.com/currencies/bitcoin/</code>" }
+	"send_price_id": { "other": "Send coinmarketcap.com link of the currency.\nExample:\n<code>https://coinmarketcap.com/currencies/bitcoin/</code>" },
+	"balance_notify_template": { "other": "Balance changed for wallet <b>{{.Name}}</b>\nFrom {{.OldBal}} {{.Sign}}\nTo {{.NewBal}} {{.Sign}}" }
 }
