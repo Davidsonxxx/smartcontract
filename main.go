@@ -117,7 +117,8 @@ func main() {
 
 	serverDataManager := serverData.ServerDataManager{}
 	serverDataManager.RegisterServerDataInterface(staticData)
-	serverDataManager.InitialUpdate(db)
+	tickUpdateData := serverDataManager.InitialUpdate(db)
+	tickAfterupdate(staticData, tickUpdateData)
 
 	startUpdating(chat, dialogManager, staticData, &serverDataManager, config.UpdateIntervalSec)
 }

@@ -3,6 +3,7 @@ package serverData
 import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
 	"math/big"
 	"log"
 )
@@ -10,6 +11,8 @@ import (
 type serverDataUpdater struct {
 	cache dataCache
 }
+
+type balanceChangesData map[int64]*big.Int
 
 func (dataUpdater *serverDataUpdater) updateBalanceOneWallet(walletAddress currencies.AddressData) *big.Int {
 	processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
@@ -30,23 +33,26 @@ func (dataUpdater *serverDataUpdater) updateBalanceOneWallet(walletAddress curre
 	return balance
 }
 
-func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies.AddressData) {
+func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []database.WalletAddressDbWrapper) (balanceChanges balanceChangesData) {
 	if len(walletAddresses) == 0 {
 		return
 	}
 
-	groupedWallets := make(map[currencies.Currency] []currencies.AddressData)
+	balanceChanges = make(balanceChangesData)
 
-	for _, walletAddress := range walletAddresses {
-		walletsSlice, ok := groupedWallets[walletAddress.Currency]
+	// group wallets to process in groups
+	groupedWallets := make(map[currencies.Currency] []database.WalletAddressDbWrapper)
+
+	for _, walletAddressWrapper := range walletAddresses {
+		walletsSlice, ok := groupedWallets[walletAddressWrapper.Data.Currency]
 		if ok {
-			groupedWallets[walletAddress.Currency] = append(walletsSlice, walletAddress)
+			groupedWallets[walletAddressWrapper.Data.Currency] = append(walletsSlice, walletAddressWrapper)
 		} else {
-			groupedWallets[walletAddress.Currency] = []currencies.AddressData{ walletAddress }
+			groupedWallets[walletAddressWrapper.Data.Currency] = []database.WalletAddressDbWrapper{ walletAddressWrapper }
 		}
 	}
 
-	for currency, addresses := range groupedWallets {
+	for currency, addressWrappers := range groupedWallets {
 		processor := cryptoFunctions.GetProcessor(currency)
 
 		if processor == nil {
@@ -54,24 +60,38 @@ func (dataUpdater *serverDataUpdater) updateBalance(walletAddresses []currencies
 			continue
 		}
 
+		addresses := []currencies.AddressData{}
+		for _, addressWrapper := range addressWrappers {
+			addresses = append(addresses, addressWrapper.Data)
+		}
+
+		// request and get balances
 		balances := (*processor).GetBalanceBunch(addresses)
 
-		if len(addresses) != len(balances) {
-			log.Printf("return count doesn't match input count: %d != %d", len(addresses), len(balances))
+		if len(addressWrappers) != len(balances) {
+			log.Printf("return count doesn't match input count: %d != %d", len(addressWrappers), len(balances))
 			continue
 		}
 
 		dataUpdater.cache.balancesMutex.Lock()
 
-		for i, address := range addresses {
+		for i, addressWrapper := range addressWrappers {
 			balance := balances[i]
 			if balance != nil {
-				dataUpdater.cache.balances[address] = balance
+				oldBalance := dataUpdater.cache.balances[addressWrapper.Data]
+				if oldBalance == nil || balance.Cmp(oldBalance) != 0 {
+					// create a record to trigger notifies
+					balanceChanges[addressWrapper.WalletId] =  new(big.Int).Set(balance)
+
+					// change cached balance value
+					dataUpdater.cache.balances[addressWrapper.Data] = balance
+				}
 			}
 		}
 
 		dataUpdater.cache.balancesMutex.Unlock()
 	}
+	return
 }
 
 func (dataUpdater *serverDataUpdater) updateRates(priceIds []string) {
