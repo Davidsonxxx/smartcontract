@@ -519,7 +519,7 @@ func TestNotifications(t *testing.T) {
 	}
 
 	// test disabling
-	db.DisableBalanceNotify(walletId)
+	db.DisableBalanceNotifies(walletId)
 
 	assert.Equal(0, len(db.GetBalanceNotifies([]int64{walletId})))
 }

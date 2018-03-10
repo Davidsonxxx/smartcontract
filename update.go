@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/gameraccoon/telegram-bot-skeleton/telegramChat"
@@ -11,7 +10,6 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"log"
 	"strings"
-	"text/template"
 	"time"
 )
 
@@ -48,6 +46,7 @@ func tickAfterupdate(staticData *processing.StaticProccessStructs, tickUpdateDat
 	serverData := serverData.GetServerData(staticData)
 
 	if serverData == nil {
+		log.Print("ServerData is nil")
 		return
 	}
 
@@ -83,14 +82,8 @@ func tickAfterupdate(staticData *processing.StaticProccessStructs, tickUpdateDat
 
 		translateFn := staticFunctions.FindTransFunction(balanceNotify.UserId, staticData)
 
-		translateTemplate := template.Must(template.New("").Parse(translateFn("balance_notify_template")))
-
-		translateBuffer := new(bytes.Buffer)
-
-		translateTemplate.Execute(translateBuffer, translateMap)
-
 		staticData.Chat.SendMessage(userChatId,
-			translateBuffer.String(),
+			translateFn("balance_notify_template", translateMap),
 			0,
 		)
 	}

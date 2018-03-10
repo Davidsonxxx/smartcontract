@@ -562,6 +562,8 @@ func (database *AccountDb) UpdateBalanceNotifies(updatedNotifies []currencies.Ba
 	if len(updatedNotifies) <= 0 {
 		return
 	}
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
 
 	var b bytes.Buffer
 
@@ -576,6 +578,9 @@ func (database *AccountDb) UpdateBalanceNotifies(updatedNotifies []currencies.Ba
 
 func (database *AccountDb) EnableBalanceNotifies(walletId int64, balance *big.Int) {
 	if balance != nil {
+		database.mutex.Lock()
+		defer database.mutex.Unlock()
+
 		database.db.Exec(fmt.Sprintf("INSERT OR REPLACE INTO balance_notifies(wallet_id, last_balance) VALUES(%d,'%s')",
 			walletId,
 			balance.String(),
@@ -583,6 +588,38 @@ func (database *AccountDb) EnableBalanceNotifies(walletId int64, balance *big.In
 	}
 }
 
-func (database *AccountDb) DisableBalanceNotify(walletId int64) {
+func (database *AccountDb) DisableBalanceNotifies(walletId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
 	database.db.Exec(fmt.Sprintf("DELETE FROM balance_notifies WHERE wallet_id=%d", walletId))
+}
+
+func (database *AccountDb) IsBalanceNotifiesEnabled(walletId int64) bool {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT COUNT(*) FROM balance_notifies WHERE wallet_id=%d", walletId))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var count int
+		err := rows.Scan(&count)
+		if err != nil {
+			log.Fatal(err.Error())
+		} else {
+			if count > 1 || count < 0 {
+				log.Fatal("unique count of some balance_notifies record is not 0 or 1")
+			}
+
+			if count >= 1 {
+				return true
+			}
+		}
+	}
+
+	return false
 }

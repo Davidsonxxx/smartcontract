@@ -38,5 +38,9 @@
 	"no_data": { "other": "Информация недоступна" },
 	"sent_format": { "other": "\nОтправлено: %s %s\nНа адрес: \n%s" },
 	"recieved_format": { "other": "\nПолучено: %s %s\nОт: \n%s" },
-	"balance_notify_template": { "other": "Баланс кошелька <b>{{.Name}}</b> изменен\nОт {{.OldBal}} {{.Sign}}\nДо {{.NewBal}} {{.Sign}}" }
+	"balance_notify_template": { "other": "Баланс кошелька <b>{{.Name}}</b> изменен\nОт {{.OldBal}} {{.Sign}}\nДо {{.NewBal}} {{.Sign}}" },
+	"balance_notify_enabled": { "other": "Нотификации: <b>Включены</b>" },
+	"balance_notify_disabled": { "other": "Нотификации: <b>Выключены</b>" },
+	"enable_notify": { "other": "Включить нотификации" },
+	"disable_notify": { "other": "Выключить нотификации" }
 }

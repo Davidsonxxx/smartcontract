@@ -7,15 +7,22 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"strconv"
 )
+
+type walletSettingsData struct {
+	walletId int64
+	staticData *processing.StaticProccessStructs
+	isNotificationsEnabled bool
+}
 
 type walletSettingsVariantPrototype struct {
 	id string
 	textId string
 	process func(int64, *processing.ProcessData) bool
 	rowId int
-	isActiveFn func(int64, *processing.StaticProccessStructs) bool
+	isActiveFn func(*walletSettingsData) bool
 }
 
 type walletSettingsDialogFactory struct {
@@ -45,18 +52,40 @@ func MakeWalletSettingsDialogFactory() dialogFactory.DialogFactory {
 				isActiveFn: isErc20TokenWallet,
 			},
 			walletSettingsVariantPrototype{
+				id: "onntfy",
+				textId: "enable_notify",
+				process: enableBalanceNotifications,
+				rowId:3,
+				isActiveFn: isNotificationsDisabled,
+			},
+			walletSettingsVariantPrototype{
+				id: "offntfy",
+				textId: "disable_notify",
+				process: disableBalanceNotifications,
+				rowId:3,
+				isActiveFn: isNotificationsEnabled,
+			},
+			walletSettingsVariantPrototype{
 				id: "back",
 				textId: "back_to_wallet",
 				process: backToWallet,
-				rowId:3,
+				rowId:4,
 			},
 		},
 	})
 }
 
-func isErc20TokenWallet(walletId int64, staticData *processing.StaticProccessStructs) bool {
-	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
+func isErc20TokenWallet(settingsData *walletSettingsData) bool {
+	walletAddress := staticFunctions.GetDb(settingsData.staticData).GetWalletAddress(settingsData.walletId)
 	return walletAddress.Currency == currencies.Erc20Token
+}
+
+func isNotificationsEnabled(settingsData *walletSettingsData) bool {
+	return settingsData.isNotificationsEnabled
+}
+
+func isNotificationsDisabled(settingsData *walletSettingsData) bool {
+	return !settingsData.isNotificationsEnabled
 }
 
 func renameWallet(walletId int64, data *processing.ProcessData) bool {
@@ -70,6 +99,30 @@ func renameWallet(walletId int64, data *processing.ProcessData) bool {
 
 func deleteWallet(walletId int64, data *processing.ProcessData) bool {
 	data.SubstitudeDialog(data.Static.MakeDialogFn("de", walletId, data.Trans, data.Static))
+	return true
+}
+
+func enableBalanceNotifications(walletId int64, data *processing.ProcessData) bool {
+	walletAddress := staticFunctions.GetDb(data.Static).GetWalletAddress(walletId)
+
+	serverData := serverData.GetServerData(data.Static)
+
+	if serverData == nil {
+		return true
+	}
+
+	balance := serverData.GetBalance(walletAddress)
+
+	staticFunctions.GetDb(data.Static).EnableBalanceNotifies(walletId, balance)
+
+	data.SubstitudeDialog(data.Static.MakeDialogFn("ws", walletId, data.Trans, data.Static))
+	return true
+}
+
+func disableBalanceNotifications(walletId int64, data *processing.ProcessData) bool {
+	staticFunctions.GetDb(data.Static).DisableBalanceNotifies(walletId)
+
+	data.SubstitudeDialog(data.Static.MakeDialogFn("ws", walletId, data.Trans, data.Static))
 	return true
 }
 
@@ -87,15 +140,15 @@ func backToWallet(walletId int64, data *processing.ProcessData) bool {
 	return true
 }
 
-func (factory *walletSettingsDialogFactory) createVariants(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) (variants []dialog.Variant) {
+func (factory *walletSettingsDialogFactory) createVariants(settingsData *walletSettingsData, trans i18n.TranslateFunc) (variants []dialog.Variant) {
 	variants = make([]dialog.Variant, 0)
 
 	for _, variant := range factory.variants {
-		if variant.isActiveFn == nil || variant.isActiveFn(walletId, staticData) {
+		if variant.isActiveFn == nil || variant.isActiveFn(settingsData) {
 			variants = append(variants, dialog.Variant{
 				Id:   variant.id,
 				Text: trans(variant.textId),
-				AdditionalId: strconv.FormatInt(walletId, 10),
+				AdditionalId: strconv.FormatInt(settingsData.walletId, 10),
 				RowId: variant.rowId,
 			})
 		}
@@ -104,9 +157,24 @@ func (factory *walletSettingsDialogFactory) createVariants(walletId int64, trans
 }
 
 func (factory *walletSettingsDialogFactory) MakeDialog(walletId int64, trans i18n.TranslateFunc, staticData *processing.StaticProccessStructs) *dialog.Dialog {
+	isNotificationsEnabled := staticFunctions.GetDb(staticData).IsBalanceNotifiesEnabled(walletId)
+
+	settingsData := walletSettingsData {
+		walletId: walletId,
+		staticData: staticData,
+		isNotificationsEnabled: isNotificationsEnabled,
+	}
+
+	var notificationsText string
+	if isNotificationsEnabled {
+		notificationsText = trans("balance_notify_enabled")
+	} else {
+		notificationsText = trans("balance_notify_disabled")
+	}
+
 	return &dialog.Dialog{
-		Text:     trans("settings_title"),
-		Variants: factory.createVariants(walletId, trans, staticData),
+		Text:     trans("settings_title") + notificationsText,
+		Variants: factory.createVariants(&settingsData, trans),
 	}
 }
 
