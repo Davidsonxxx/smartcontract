@@ -47,5 +47,7 @@
 	"balance_notify_enabled": { "other": "Balance notifies: <b>Enabled</b>" },
 	"balance_notify_disabled": { "other": "Balance notifies: <b>Disabled</b>" },
 	"enable_notify": { "other": "Enable notifies" },
-	"disable_notify": { "other": "Disable notifies" }
+	"disable_notify": { "other": "Disable notifies" },
+	"recieved_transaction_notify_template": { "other": "Recieved {{.Amount}} {{.Sign}} to <b>{{.Name}}</b>\nFrom <code>{{.From}}</code>" },
+	"sent_transaction_notify_template": { "other": "Sent {{.Amount}} {{.Sign}} from <b>{{.Name}}</b>\nTo <code>{{.To}}</code>" }
 }

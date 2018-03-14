@@ -11,6 +11,7 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"time"
 )
 
 type AccountDb struct {
@@ -64,13 +65,14 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
 		" rates(id INTEGER NOT NULL PRIMARY KEY" +
 		",rate_to_usd REAL NOT NULL" +
-		",time TIME NOT NULL" +
+		",time TIMESTAMP NOT NULL" +
 		")")
 
 	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
 		" balance_notifies(id INTEGER NOT NULL PRIMARY KEY" +
 		",wallet_id INTEGER NOT NULL UNIQUE" +
 		",last_balance TEXT NOT NULL" + // always save balances as TEXT
+		",last_timestamp TIMESTAMP NOT NULL" +
 		",FOREIGN KEY(wallet_id) REFERENCES wallets(id) ON DELETE CASCADE" +
 		")")
 
@@ -528,19 +530,20 @@ func (database *AccountDb) GetBalanceNotifies(walletIds []int64) (notifies []cur
 	defer database.mutex.Unlock()
 
 	idsString := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(walletIds)), ","), "[]")
-	rows, err := database.db.Query(fmt.Sprintf("SELECT n.id, w.user_id, n.wallet_id, n.last_balance FROM balance_notifies AS n LEFT JOIN wallets AS w ON n.wallet_id=w.id WHERE n.wallet_id IN (%s)", idsString))
+	rows, err := database.db.Query(fmt.Sprintf("SELECT n.id, w.user_id, n.wallet_id, n.last_balance, n.last_timestamp FROM balance_notifies AS n LEFT JOIN wallets AS w ON n.wallet_id=w.id WHERE n.wallet_id IN (%s)", idsString))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var walletId int64
 		var notifyId int64
-		var lastBalance string
 		var userId int64
+		var walletId int64
+		var lastBalance string
+		var lastTimestamp time.Time
 
-		err := rows.Scan(&notifyId, &userId, &walletId, &lastBalance)
+		err := rows.Scan(&notifyId, &userId, &walletId, &lastBalance, &lastTimestamp)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -556,6 +559,7 @@ func (database *AccountDb) GetBalanceNotifies(walletIds []int64) (notifies []cur
 				NotifyId: notifyId,
 				WalletId: walletId,
 				OldBalance: intBalance,
+				OldTransactionTime: lastTimestamp,
 			})
 	}
 
@@ -573,7 +577,11 @@ func (database *AccountDb) UpdateBalanceNotifies(updatedNotifies []currencies.Ba
 
 	for _, notify := range updatedNotifies {
 		if notify.NewBalance != nil {
-			b.WriteString(fmt.Sprintf("UPDATE OR ROLLBACK balance_notifies SET last_balance='%s' WHERE id=%d;", notify.NewBalance.String(), notify.NotifyId))
+			b.WriteString(fmt.Sprintf("UPDATE OR ROLLBACK balance_notifies SET last_balance='%s', last_timestamp='%s' WHERE id=%d;",
+			notify.NewBalance.String(),
+			notify.NewTransactionTime.UTC().Format("2006-01-02T15:04:05.999999999"),
+			notify.NotifyId,
+		))
 		}
 	}
 
@@ -584,7 +592,7 @@ func (database *AccountDb) EnableBalanceNotifies(walletId int64) {
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO balance_notifies(wallet_id, last_balance) VALUES(%d,'')", walletId))
+	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO balance_notifies(wallet_id, last_balance, last_timestamp) VALUES(%d,'','now')", walletId))
 }
 
 func (database *AccountDb) DisableBalanceNotifies(walletId int64) {

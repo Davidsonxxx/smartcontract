@@ -3,6 +3,7 @@ package serverData
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"log"
 	"math/big"
@@ -47,6 +48,34 @@ func (serverDataManager *ServerDataManager) RegisterServerDataInterface(staticDa
 	}
 }
 
+func fillLastTransactionsData(notify *currencies.BalanceNotify, transactions []currencies.TransactionsHistoryItem) {
+	if notify == nil {
+		return
+	}
+
+	// fill transactions only if we're going to show the notify
+	if !notify.IsInitialChange {
+		lastKnownItemIdx := -1
+
+		for i, transaction := range transactions {
+			if transaction.Time.Equal(notify.OldTransactionTime) {
+				lastKnownItemIdx = i
+				break
+			}
+		}
+
+		if lastKnownItemIdx != -1 {
+			notify.LastTransactions = transactions[:lastKnownItemIdx]
+		} else {
+			notify.LastTransactions = transactions
+		}
+	}
+
+	if len(transactions) > 0 {
+		notify.NewTransactionTime = transactions[0].Time
+	}
+}
+
 func (serverDataManager *ServerDataManager) updateBalanceNotifications(db *database.AccountDb, balanceChanges balanceChangesData) []currencies.BalanceNotify {
 	walletIds := []int64{}
 
@@ -57,27 +86,40 @@ func (serverDataManager *ServerDataManager) updateBalanceNotifications(db *datab
 	oldNotifiesData := db.GetBalanceNotifies(walletIds)
 
 	notifiesToProcess := []currencies.BalanceNotify{}
-	notifiesToInit := []currencies.BalanceNotify{}
 
+	// check all the notifies
 	for _, notifyData := range oldNotifiesData {
 		balance := balanceChanges[notifyData.WalletId]
-		if balance != nil && notifyData.OldBalance != nil && balance.Cmp(notifyData.OldBalance) != 0 {
+		// if we have new balance
+		if balance != nil {
 			notifyData.NewBalance = balance
-			notifiesToProcess = append(notifiesToProcess, notifyData)
-		}
 
-		if notifyData.OldBalance == nil && balance != nil {
-			notifyData.NewBalance = balance
-			notifiesToInit = append(notifiesToInit, notifyData)
+			// if the balance is changed from the last DB record
+			if notifyData.OldBalance == nil || balance.Cmp(notifyData.OldBalance) != 0 {
+				if notifyData.OldBalance == nil {
+					// if the record is new, mark that we don't want to show the notify
+					notifyData.IsInitialChange = true;
+				}
+
+				walletAddress := db.GetWalletAddress(notifyData.WalletId)
+				notifyData.WalletAddress = walletAddress
+
+				processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
+
+				if processor != nil {
+					lastTransactions := (*processor).GetTransactionsHistory(walletAddress, 10)
+
+					fillLastTransactionsData(&notifyData, lastTransactions)
+				}
+
+				notifiesToProcess = append(notifiesToProcess, notifyData)
+			}
 		}
 	}
 
+	// write new values to the DB
 	if len(notifiesToProcess) > 0 {
 		db.UpdateBalanceNotifies(notifiesToProcess)
-	}
-
-	if len(notifiesToInit) > 0 {
-		db.UpdateBalanceNotifies(notifiesToInit)
 	}
 
 	return notifiesToProcess
