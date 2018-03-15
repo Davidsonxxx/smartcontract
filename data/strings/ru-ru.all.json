@@ -43,6 +43,6 @@
 	"balance_notify_disabled": { "other": "Нотификации: <b>Выключены</b>" },
 	"enable_notify": { "other": "Включить нотификации" },
 	"disable_notify": { "other": "Выключить нотификации" },
-	"recieved_transaction_notify_template": { "other": "Получено {{.Amount}} {{.Sign}} на кошелек <b>{{.Name}}</b>\nс адреса <code>{{.From}}</code>" },
-	"sent_transaction_notify_template": { "other": "Отправлено {{.Amount}} {{.Sign}} с кошелька <b>{{.Name}}</b>\nна адрес <code>{{.To}}</code>" }
+	"recieved_transaction_notify_template": { "other": "Получено {{.Amount}} {{.Sign}} на кошелек <b>{{.Name}}</b>\nС адреса <code>{{.From}}</code>\nВремя: {{.Time}}" },
+	"sent_transaction_notify_template": { "other": "Отправлено {{.Amount}} {{.Sign}} с кошелька <b>{{.Name}}</b>\nНа адрес <code>{{.To}}</code>\nВремя: {{.Time}}" }
 }

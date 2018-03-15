@@ -94,6 +94,7 @@ func SendTransactionNotifications(staticData *processing.StaticProccessStructs, 
 			"To":     transaction.To,
 			"Amount": amountText,
 			"Sign":   currencySymbol,
+			"Time":   staticFunctions.FormatTimestamp(transaction.Time),
 		}
 
 		translateFn := staticFunctions.FindTransFunction(balanceNotify.UserId, staticData)
