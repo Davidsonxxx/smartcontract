@@ -44,10 +44,14 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 		return "Error"
 	}
 
+	db := staticFunctions.GetDb(staticData)
+
+	userTimezone := db.GetUserTimezone(db.GetWalletOwner(walletId))
+
 	var textBuffer bytes.Buffer
 	textBuffer.WriteString(trans("history_title"))
 
-	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
+	walletAddress := db.GetWalletAddress(walletId)
 
 	processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
 
@@ -56,12 +60,12 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 
 		for _, item := range history {
 			textBuffer.WriteString("\n\n")
-			
-			textBuffer.WriteString(staticFunctions.FormatTimestamp(item.Time))
-			
+
+			textBuffer.WriteString(staticFunctions.FormatTimestamp(item.Time, userTimezone))
+
 			currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
 			amountText := cryptoFunctions.FormatCurrencyAmount(item.Amount, currencyDecimals)
-			
+
 			if item.From == walletAddress.Address {
 				textBuffer.WriteString(fmt.Sprintf(trans("sent_format"), amountText, currencySymbol, item.To))
 			} else if item.To == walletAddress.Address {
