@@ -44,6 +44,7 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 		" users(id INTEGER NOT NULL PRIMARY KEY" +
 		",chat_id INTEGER UNIQUE NOT NULL" +
 		",language TEXT NOT NULL" +
+		",timezone TEXT NOT NULL" +
 		")")
 
 	database.db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS" +
@@ -131,8 +132,8 @@ func (database *AccountDb) GetUserId(chatId int64, userLangCode string) (userId 
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO users(chat_id, language) "+
-		"VALUES (%d, '%s')", chatId, userLangCode))
+	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO users(chat_id, language, timezone) "+
+		"VALUES (%d, '%s', 'CET')", chatId, userLangCode))
 
 	rows, err := database.db.Query(fmt.Sprintf("SELECT id FROM users WHERE chat_id=%d", chatId))
 	if err != nil {
@@ -355,6 +356,39 @@ func (database *AccountDb) GetUserLanguage(userId int64) (language string) {
 	return
 }
 
+func (database *AccountDb) SetUserTimezone(userId int64, timezone string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK users SET timezone='%s' WHERE id=%d", timezone, userId))
+}
+
+func (database *AccountDb) GetUserTimezone(userId int64) (timezone string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT timezone FROM users WHERE id=%d AND timezone IS NOT NULL", userId))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		err := rows.Scan(&timezone)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	} else {
+		err = rows.Err()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// empty timezone
+	}
+
+	return
+}
+
 func (database *AccountDb) RenameWallet(walletId int64, newName string) {
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
@@ -465,6 +499,32 @@ func (database *AccountDb) GetAllWalletAddresses() (addresses []WalletAddressDbW
 				WalletId: walletId,
 			},
 		)
+	}
+
+	return
+}
+
+func (database *AccountDb)GetWalletOwner(walletId int64) (userId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT user_id FROM wallets WHERE id=%d AND is_removed IS NULL", walletId))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		err := rows.Scan(&userId)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	} else {
+		err = rows.Err()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// wallet not found
 	}
 
 	return

@@ -73,6 +73,8 @@ func SendTransactionNotifications(staticData *processing.StaticProccessStructs, 
 	userChatId := db.GetUserChatId(balanceNotify.UserId)
 	walletName := db.GetWalletName(balanceNotify.WalletId)
 
+	userTimezone := db.GetUserTimezone(balanceNotify.UserId)
+
 	currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, balanceNotify.WalletAddress.Currency, balanceNotify.WalletAddress.ContractAddress)
 
 	// for each notification backwards
@@ -94,7 +96,7 @@ func SendTransactionNotifications(staticData *processing.StaticProccessStructs, 
 			"To":     transaction.To,
 			"Amount": amountText,
 			"Sign":   currencySymbol,
-			"Time":   staticFunctions.FormatTimestamp(transaction.Time),
+			"Time":   staticFunctions.FormatTimestamp(transaction.Time, userTimezone),
 		}
 
 		translateFn := staticFunctions.FindTransFunction(balanceNotify.UserId, staticData)

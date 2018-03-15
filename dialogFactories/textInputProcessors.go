@@ -8,6 +8,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"log"
 	"regexp"
+	"time"
 )
 
 func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
@@ -18,6 +19,7 @@ func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
 			"newWalletContractAddress" : processNewWalletContractAddress,
 			"renamingWallet" : processRenamingWallet,
 			"setWalletPriceId" : processSetWalletPriceId,
+			"newTimezone" : processSetTimezone,
 		},
 	}
 }
@@ -137,4 +139,20 @@ func processSetWalletPriceId(walletId int64, data *processing.ProcessData) bool 
 	staticFunctions.GetDb(data.Static).SetWalletPriceId(walletId, matches[1])
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
+}
+
+func processSetTimezone(additionalId int64, data *processing.ProcessData) bool {
+	_, err := time.LoadLocation(data.Message)
+
+	if err == nil {
+		staticFunctions.GetDb(data.Static).SetUserTimezone(data.UserId, data.Message)
+		data.SendDialog(data.Static.MakeDialogFn("us", data.UserId, data.Trans, data.Static))
+		return true
+	} else {
+		data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
+			ProcessorId: "newTimezone",
+		})
+		data.SendMessage(data.Trans("wrong_timezone") + "\n" + data.Trans("send_timezone"))
+		return true
+	}
 }

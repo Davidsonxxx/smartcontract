@@ -9,7 +9,7 @@ import (
 
 const (
 	minimalVersion = "0.1"
-	latestVersion  = "0.3"
+	latestVersion  = "0.4"
 )
 
 type dbUpdater struct {
@@ -82,6 +82,13 @@ func makeAllUpdaters() (updaters []dbUpdater) {
 				db.db.Exec(b.String())
 				// clean the contract_address field filled because of a bug
 				db.db.Exec("UPDATE OR ROLLBACK wallets SET contract_address='' WHERE currency!=5")
+			},
+		},
+		dbUpdater{
+			version: "0.4",
+			updateDb: func(db *AccountDb) {
+				// add new field 'timezone'
+				db.db.Exec("ALTER TABLE users ADD COLUMN timezone TEXT NOT NULL DEFAULT('EST')")
 			},
 		},
 	}
