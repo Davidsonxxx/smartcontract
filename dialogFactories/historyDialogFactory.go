@@ -11,6 +11,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strconv"
+	"strings"
 )
 
 type historyVariantPrototype struct {
@@ -56,7 +57,7 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 	processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
 
 	if processor != nil {
-		history := (*processor).GetTransactionsHistory(walletAddress, 0)
+		history := (*processor).GetTransactionsHistory(walletAddress, 25)
 
 		for _, item := range history {
 			textBuffer.WriteString("\n\n")
@@ -66,9 +67,9 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 			currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
 			amountText := cryptoFunctions.FormatCurrencyAmount(item.Amount, currencyDecimals)
 
-			if item.From == walletAddress.Address {
+			if strings.EqualFold(item.From, walletAddress.Address) {
 				textBuffer.WriteString(fmt.Sprintf(trans("sent_format"), amountText, currencySymbol, item.To))
-			} else if item.To == walletAddress.Address {
+			} else if strings.EqualFold(item.To, walletAddress.Address) {
 				textBuffer.WriteString(fmt.Sprintf(trans("recieved_format"), amountText, currencySymbol, item.From))
 			}
 		}

@@ -8,6 +8,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"log"
+	"strings"
 )
 
 func updateBalanceNotifies(staticData *processing.StaticProccessStructs, balanceNotifies []currencies.BalanceNotify) {
@@ -84,9 +85,9 @@ func SendTransactionNotifications(staticData *processing.StaticProccessStructs, 
 		amountText := cryptoFunctions.FormatCurrencyAmount(transaction.Amount, currencyDecimals)
 
 		var translateTemplate string
-		if transaction.From == balanceNotify.WalletAddress.Address {
+		if strings.EqualFold(transaction.From, balanceNotify.WalletAddress.Address) {
 			translateTemplate = "sent_transaction_notify_template"
-		} else if transaction.To == balanceNotify.WalletAddress.Address {
+		} else if strings.EqualFold(transaction.To, balanceNotify.WalletAddress.Address) {
 			translateTemplate = "recieved_transaction_notify_template"
 		}
 
