@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"sort"
 	"time"
 )
 
@@ -137,14 +138,14 @@ func (processor *EtherProcessor) GetTransactionsHistory(address currencies.Addre
 	var requestText string
 	if limit > 0 {
 		requestText = fmt.Sprintf(
-			"http://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
+			"https://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&page=1&offset=%d&sort=asc&apikey=%s",
 			address.Address,
 			limit,
 			etherscanApiKey,
 		)
 	} else {
 		requestText = fmt.Sprintf(
-			"https://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&page=1&offset=%d&sort=asc&apikey=%s",
+			"http://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
 			address.Address,
 			etherscanApiKey,
 		)
@@ -166,7 +167,8 @@ func (processor *EtherProcessor) GetTransactionsHistory(address currencies.Addre
 	var parsedResp = new(EtherHistoryResp)
 	err = json.Unmarshal(body, &parsedResp)
 	if(err != nil){
-		log.Print(string(body[:]))
+		log.Print("Request: " + requestText)
+		log.Print("Responce: " + string(body[:]))
 		log.Print(err)
 		return nil
 	}
@@ -201,6 +203,10 @@ func (processor *EtherProcessor) GetTransactionsHistory(address currencies.Addre
 				Time: time.Unix(intTime, int64(0)),
 			})
 	}
+
+	sort.Slice(history, func(i, j int) bool {
+		return history[i].Time.After(history[j].Time)
+	})
 
 	return history
 }

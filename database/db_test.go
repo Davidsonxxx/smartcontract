@@ -6,6 +6,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"os"
 	"testing"
+	"time"
 )
 
 const (
@@ -477,6 +478,7 @@ func TestNotifications(t *testing.T) {
 	}
 
 	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", walletAddress)
+	transactionTime := time.Now()
 
 	{
 		notifies := db.GetBalanceNotifies([]int64{walletId})
@@ -496,6 +498,7 @@ func TestNotifications(t *testing.T) {
 
 		// test initing balance
 		notifies[0].NewBalance = big.NewInt(10)
+		notifies[0].NewTransactionTime = transactionTime
 		db.UpdateBalanceNotifies(notifies)
 
 		newNotifies := db.GetBalanceNotifies([]int64{walletId})
@@ -503,6 +506,7 @@ func TestNotifications(t *testing.T) {
 		if len(notifies) > 0 {
 			assert.Equal(walletId, newNotifies[0].WalletId)
 			assert.Equal(big.NewInt(10), newNotifies[0].OldBalance)
+			assert.True(transactionTime.Equal(newNotifies[0].OldTransactionTime))
 		}
 
 		// test updating balance
@@ -514,6 +518,7 @@ func TestNotifications(t *testing.T) {
 		if len(notifies) > 0 {
 			assert.Equal(walletId, newNotifies[0].WalletId)
 			assert.Equal(big.NewInt(30), newNotifies[0].OldBalance)
+			assert.True(transactionTime.Equal(newNotifies[0].OldTransactionTime))
 		}
 	}
 
@@ -526,6 +531,7 @@ func TestNotifications(t *testing.T) {
 		if len(notifies) > 0 {
 			assert.Equal(walletId, notifies[0].WalletId)
 			assert.Equal(big.NewInt(30), notifies[0].OldBalance)
+			assert.True(transactionTime.Equal(notifies[0].OldTransactionTime))
 		}
 	}
 

@@ -38,9 +38,11 @@
 	"no_data": { "other": "Информация недоступна" },
 	"sent_format": { "other": "\nОтправлено: %s %s\nНа адрес: \n%s" },
 	"recieved_format": { "other": "\nПолучено: %s %s\nОт: \n%s" },
-	"balance_notify_template": { "other": "Баланс кошелька <b>{{.Name}}</b> изменен\nОт {{.OldBal}} {{.Sign}}\nДо {{.NewBal}} {{.Sign}}" },
+	"balance_notify_template": { "other": "Баланс кошелька <b>{{.Name}}</b> изменен\nС {{.OldBal}} {{.Sign}}\nНа {{.NewBal}} {{.Sign}}" },
 	"balance_notify_enabled": { "other": "Нотификации: <b>Включены</b>" },
 	"balance_notify_disabled": { "other": "Нотификации: <b>Выключены</b>" },
 	"enable_notify": { "other": "Включить нотификации" },
-	"disable_notify": { "other": "Выключить нотификации" }
+	"disable_notify": { "other": "Выключить нотификации" },
+	"recieved_transaction_notify_template": { "other": "Получено {{.Amount}} {{.Sign}} на кошелек <b>{{.Name}}</b>\nС адреса <code>{{.From}}</code>\nВремя: {{.Time}}" },
+	"sent_transaction_notify_template": { "other": "Отправлено {{.Amount}} {{.Sign}} с кошелька <b>{{.Name}}</b>\nНа адрес <code>{{.To}}</code>\nВремя: {{.Time}}" }
 }
