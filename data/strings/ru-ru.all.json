@@ -44,5 +44,10 @@
 	"enable_notify": { "other": "Включить нотификации" },
 	"disable_notify": { "other": "Выключить нотификации" },
 	"recieved_transaction_notify_template": { "other": "Получено {{.Amount}} {{.Sign}} на кошелек <b>{{.Name}}</b>\nС адреса <code>{{.From}}</code>\nВремя: {{.Time}}" },
-	"sent_transaction_notify_template": { "other": "Отправлено {{.Amount}} {{.Sign}} с кошелька <b>{{.Name}}</b>\nНа адрес <code>{{.To}}</code>\nВремя: {{.Time}}" }
+	"sent_transaction_notify_template": { "other": "Отправлено {{.Amount}} {{.Sign}} с кошелька <b>{{.Name}}</b>\nНа адрес <code>{{.To}}</code>\nВремя: {{.Time}}" },
+	"user_settings_title": { "other": "  Настройки\n<b>Язык</b>: {{.Lang}}\n<b>Часовой пояс</b>: {{.Timezone}}" },
+	"change_language": { "other": "Изменить язык" },
+	"change_timezone": { "other": "Изменить часовой пояс" },
+	"send_timezone": { "other": "Отправьте значение из поля TZ, соответствующее вашему часовому поясу, из этого списка: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones\nПримеры значений: <code>CET</code>, <code>Europe/Moscow</code>, <code>Etc/GMT-5</code>" },
+	"wrong_timezone": { "other": "<b>Таймзона не распознана</b>" }
 }

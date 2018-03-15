@@ -133,7 +133,7 @@ func (database *AccountDb) GetUserId(chatId int64, userLangCode string) (userId 
 	defer database.mutex.Unlock()
 
 	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO users(chat_id, language, timezone) "+
-		"VALUES (%d, '%s', 'EST')", chatId, userLangCode))
+		"VALUES (%d, '%s', 'CET')", chatId, userLangCode))
 
 	rows, err := database.db.Query(fmt.Sprintf("SELECT id FROM users WHERE chat_id=%d", chatId))
 	if err != nil {
