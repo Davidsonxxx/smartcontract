@@ -94,8 +94,8 @@ func (processor *Erc20Processor) GetTokenData(contractAddress string) *currencie
 	return &tokenData
 }
 
-func (processor *Erc20Processor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
-	return make([]currencies.TransactionsHistoryItem, 0)
+func (processor *Erc20Processor) GetTransactionsHistory(address currencies.AddressData, limit int) (isAvailable bool, history []currencies.TransactionsHistoryItem) {
+	return false, make([]currencies.TransactionsHistoryItem, 0)
 }
 
 func (processor *Erc20Processor) IsAddressValid(address string) bool {

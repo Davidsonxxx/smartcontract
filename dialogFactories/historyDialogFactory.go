@@ -50,28 +50,33 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 	userTimezone := db.GetUserTimezone(db.GetWalletOwner(walletId))
 
 	var textBuffer bytes.Buffer
-	textBuffer.WriteString(trans("history_title"))
 
 	walletAddress := db.GetWalletAddress(walletId)
 
 	processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
 
 	if processor != nil {
-		history := (*processor).GetTransactionsHistory(walletAddress, 25)
+		success, history := (*processor).GetTransactionsHistory(walletAddress, 25)
 
-		for _, item := range history {
-			textBuffer.WriteString("\n\n")
+		if success {
+			textBuffer.WriteString(fmt.Sprintf(trans("history_title"), len(history)))
+			
+			for _, item := range history {
+				textBuffer.WriteString("\n\n")
 
-			textBuffer.WriteString(staticFunctions.FormatTimestamp(item.Time, userTimezone))
+				textBuffer.WriteString(staticFunctions.FormatTimestamp(item.Time, userTimezone))
 
-			currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
-			amountText := cryptoFunctions.FormatCurrencyAmount(item.Amount, currencyDecimals)
+				currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
+				amountText := cryptoFunctions.FormatCurrencyAmount(item.Amount, currencyDecimals)
 
-			if strings.EqualFold(item.From, walletAddress.Address) {
-				textBuffer.WriteString(fmt.Sprintf(trans("sent_format"), amountText, currencySymbol, item.To))
-			} else if strings.EqualFold(item.To, walletAddress.Address) {
-				textBuffer.WriteString(fmt.Sprintf(trans("recieved_format"), amountText, currencySymbol, item.From))
+				if strings.EqualFold(item.From, walletAddress.Address) {
+					textBuffer.WriteString(fmt.Sprintf(trans("sent_format"), amountText, currencySymbol, item.To))
+				} else if strings.EqualFold(item.To, walletAddress.Address) {
+					textBuffer.WriteString(fmt.Sprintf(trans("recieved_format"), amountText, currencySymbol, item.From))
+				}
 			}
+		} else {
+			textBuffer.WriteString(trans("history_unavailable"))
 		}
 	}
 

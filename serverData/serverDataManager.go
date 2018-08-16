@@ -107,7 +107,7 @@ func (serverDataManager *ServerDataManager) updateBalanceNotifications(db *datab
 				processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
 
 				if processor != nil {
-					lastTransactions := (*processor).GetTransactionsHistory(walletAddress, 10)
+					_, lastTransactions := (*processor).GetTransactionsHistory(walletAddress, 10)
 
 					fillLastTransactionsData(&notifyData, lastTransactions)
 				}
