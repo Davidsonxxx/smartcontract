@@ -3,7 +3,6 @@ package serverData
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"log"
 	"math/big"
@@ -48,34 +47,6 @@ func (serverDataManager *ServerDataManager) RegisterServerDataInterface(staticDa
 	}
 }
 
-func fillLastTransactionsData(notify *currencies.BalanceNotify, transactions []currencies.TransactionsHistoryItem) {
-	if notify == nil {
-		return
-	}
-
-	// fill transactions only if we're going to show the notify
-	if !notify.IsInitialChange {
-		lastKnownItemIdx := -1
-
-		for i, transaction := range transactions {
-			if transaction.Time.Equal(notify.OldTransactionTime) {
-				lastKnownItemIdx = i
-				break
-			}
-		}
-
-		if lastKnownItemIdx != -1 {
-			notify.LastTransactions = transactions[:lastKnownItemIdx]
-		} else {
-			notify.LastTransactions = transactions
-		}
-	}
-
-	if len(transactions) > 0 {
-		notify.NewTransactionTime = transactions[0].Time
-	}
-}
-
 func (serverDataManager *ServerDataManager) updateBalanceNotifications(db *database.AccountDb, balanceChanges balanceChangesData) []currencies.BalanceNotify {
 	walletIds := []int64{}
 
@@ -103,14 +74,6 @@ func (serverDataManager *ServerDataManager) updateBalanceNotifications(db *datab
 
 				walletAddress := db.GetWalletAddress(notifyData.WalletId)
 				notifyData.WalletAddress = walletAddress
-
-				processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
-
-				if processor != nil {
-					_, lastTransactions := (*processor).GetTransactionsHistory(walletAddress, 10)
-
-					fillLastTransactionsData(&notifyData, lastTransactions)
-				}
 
 				notifiesToProcess = append(notifiesToProcess, notifyData)
 			}

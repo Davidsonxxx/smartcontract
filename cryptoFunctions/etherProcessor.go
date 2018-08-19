@@ -138,7 +138,7 @@ func (processor *EtherProcessor) GetTransactionsHistory(address currencies.Addre
 	var requestText string
 	if limit > 0 {
 		requestText = fmt.Sprintf(
-			"https://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&page=1&offset=%d&sort=desc&apikey=%s",
+			"http://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&page=1&offset=%d&sort=desc&apikey=%s",
 			address.Address,
 			limit,
 			etherscanApiKey,

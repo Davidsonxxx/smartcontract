@@ -8,13 +8,15 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"log"
-	"strings"
+	"math/big"
 )
 
 func updateBalanceNotifies(staticData *processing.StaticProccessStructs, balanceNotifies []currencies.BalanceNotify) {
 	db := staticFunctions.GetDb(staticData)
 
 	serverData := serverData.GetServerData(staticData)
+
+	log.Print("Update balance notifies")
 
 	if serverData == nil {
 		log.Print("ServerData is nil")
@@ -26,84 +28,44 @@ func updateBalanceNotifies(staticData *processing.StaticProccessStructs, balance
 			continue
 		}
 
-		if len(balanceNotify.LastTransactions) > 0 {
-			SendTransactionNotifications(staticData, db, serverData, &balanceNotify)
-		} else {
-			// send info just about balance change
-			SendBalanceChangeNotification(staticData, db, serverData, &balanceNotify)
-		}
+		SendBalanceChangeNotification(staticData, db, serverData, &balanceNotify)
 	}
 }
 
 func SendBalanceChangeNotification(staticData *processing.StaticProccessStructs, db *database.AccountDb, serverData serverData.ServerDataInterface, balanceNotify *currencies.BalanceNotify) {
-	userChatId := db.GetUserChatId(balanceNotify.UserId)
-	walletName := db.GetWalletName(balanceNotify.WalletId)
+	log.Print("Notify process")
 
-	currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, balanceNotify.WalletAddress.Currency, balanceNotify.WalletAddress.ContractAddress)
+	if balanceNotify.OldBalance != nil && balanceNotify.NewBalance != nil {
+		userChatId := db.GetUserChatId(balanceNotify.UserId)
+		walletName := db.GetWalletName(balanceNotify.WalletId)
 
-	var oldBalanceStr string
-	if balanceNotify.OldBalance != nil {
-		oldBalanceStr = cryptoFunctions.FormatCurrencyAmount(balanceNotify.OldBalance, currencyDecimals)
-	} else {
-		oldBalanceStr = "0"
-	}
+		currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, balanceNotify.WalletAddress.Currency, balanceNotify.WalletAddress.ContractAddress)
 
-	var newBalanceStr string
-	if balanceNotify.NewBalance != nil {
-		newBalanceStr = cryptoFunctions.FormatCurrencyAmount(balanceNotify.NewBalance, currencyDecimals)
-	} else {
-		newBalanceStr = "0"
-	}
+		var balanceDiff = new(big.Int)
+		var balanceNotifyTemplate string
 
-	translateMap := map[string]interface{}{
-		"Name":   walletName,
-		"Sign":   currencySymbol,
-		"OldBal": oldBalanceStr,
-		"NewBal": newBalanceStr,
-	}
-
-	translateFn := staticFunctions.FindTransFunction(balanceNotify.UserId, staticData)
-
-	staticData.Chat.SendMessage(userChatId,
-		translateFn("balance_notify_template", translateMap),
-		0,
-	)
-}
-
-func SendTransactionNotifications(staticData *processing.StaticProccessStructs, db *database.AccountDb, serverData serverData.ServerDataInterface, balanceNotify *currencies.BalanceNotify) {
-	userChatId := db.GetUserChatId(balanceNotify.UserId)
-	walletName := db.GetWalletName(balanceNotify.WalletId)
-
-	userTimezone := db.GetUserTimezone(balanceNotify.UserId)
-
-	currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, balanceNotify.WalletAddress.Currency, balanceNotify.WalletAddress.ContractAddress)
-
-	// for each notification backwards
-	for i := len(balanceNotify.LastTransactions) - 1; i >= 0; i-- {
-		transaction := balanceNotify.LastTransactions[i]
-
-		amountText := cryptoFunctions.FormatCurrencyAmount(transaction.Amount, currencyDecimals)
-
-		var translateTemplate string
-		if strings.EqualFold(transaction.From, balanceNotify.WalletAddress.Address) {
-			translateTemplate = "sent_transaction_notify_template"
-		} else if strings.EqualFold(transaction.To, balanceNotify.WalletAddress.Address) {
-			translateTemplate = "recieved_transaction_notify_template"
+		if balanceNotify.NewBalance.Cmp(balanceNotify.OldBalance) > 0 {
+			balanceDiff.Sub(balanceNotify.NewBalance, balanceNotify.OldBalance)
+			balanceNotifyTemplate = "balance_notify_inc_template"
+		} else {
+			balanceDiff.Sub(balanceNotify.OldBalance, balanceNotify.NewBalance)
+			balanceNotifyTemplate = "balance_notify_dec_template"
 		}
+
+		var balanceDiffStr = cryptoFunctions.FormatCurrencyAmount(balanceDiff, currencyDecimals)
+		var newBalanceStr = cryptoFunctions.FormatCurrencyAmount(balanceNotify.NewBalance, currencyDecimals)
 
 		translateMap := map[string]interface{}{
 			"Name":   walletName,
-			"From":   transaction.From,
-			"To":     transaction.To,
-			"Amount": amountText,
 			"Sign":   currencySymbol,
-			"Time":   staticFunctions.FormatTimestamp(transaction.Time, userTimezone),
+			"Diff":   balanceDiffStr,
+			"NewBal": newBalanceStr,
 		}
 
 		translateFn := staticFunctions.FindTransFunction(balanceNotify.UserId, staticData)
 
 		staticData.Chat.SendMessage(userChatId,
-			translateFn(translateTemplate, translateMap),
+			translateFn(balanceNotifyTemplate, translateMap),
 			0,
 		)
 	}

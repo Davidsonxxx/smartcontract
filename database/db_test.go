@@ -6,7 +6,6 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"os"
 	"testing"
-	"time"
 )
 
 const (
@@ -477,67 +476,79 @@ func TestNotifications(t *testing.T) {
 		Address: "key",
 	}
 
-	walletId := db.CreateWatchOnlyWallet(userId, "testwallet", walletAddress)
-	transactionTime := time.Now()
+	walletId1 := db.CreateWatchOnlyWallet(userId, "testwallet1", walletAddress)
+	walletId2 := db.CreateWatchOnlyWallet(userId, "testwallet2", walletAddress)
 
 	{
-		notifies := db.GetBalanceNotifies([]int64{walletId})
+		notifies := db.GetBalanceNotifies([]int64{walletId1, walletId2})
 		assert.Equal(0, len(notifies))
 	}
+	
+	assert.False(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.False(db.IsBalanceNotifiesEnabled(walletId2))
 
 	// test enabling
-	db.EnableBalanceNotifies(walletId)
+	db.EnableBalanceNotifies(walletId1)
+	assert.Equal(1, len(db.GetBalanceNotifies([]int64{walletId1, walletId2})))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.False(db.IsBalanceNotifiesEnabled(walletId2))
 
 	{
-		notifies := db.GetBalanceNotifies([]int64{walletId})
+		notifies := db.GetBalanceNotifies([]int64{walletId1})
 		assert.Equal(1, len(notifies))
 		if len(notifies) > 0 {
-			assert.Equal(walletId, notifies[0].WalletId)
+			assert.Equal(walletId1, notifies[0].WalletId)
 			assert.True(notifies[0].OldBalance == nil)
 		}
 
 		// test initing balance
 		notifies[0].NewBalance = big.NewInt(10)
-		notifies[0].NewTransactionTime = transactionTime
 		db.UpdateBalanceNotifies(notifies)
 
-		newNotifies := db.GetBalanceNotifies([]int64{walletId})
+		newNotifies := db.GetBalanceNotifies([]int64{walletId1})
 		assert.Equal(1, len(newNotifies))
 		if len(notifies) > 0 {
-			assert.Equal(walletId, newNotifies[0].WalletId)
+			assert.Equal(walletId1, newNotifies[0].WalletId)
 			assert.Equal(big.NewInt(10), newNotifies[0].OldBalance)
-			assert.True(transactionTime.Equal(newNotifies[0].OldTransactionTime))
 		}
 
 		// test updating balance
 		notifies[0].NewBalance = big.NewInt(30)
 		db.UpdateBalanceNotifies(notifies)
 
-		newNotifies = db.GetBalanceNotifies([]int64{walletId})
+		newNotifies = db.GetBalanceNotifies([]int64{walletId1})
 		assert.Equal(1, len(newNotifies))
 		if len(notifies) > 0 {
-			assert.Equal(walletId, newNotifies[0].WalletId)
+			assert.Equal(walletId1, newNotifies[0].WalletId)
 			assert.Equal(big.NewInt(30), newNotifies[0].OldBalance)
-			assert.True(transactionTime.Equal(newNotifies[0].OldTransactionTime))
 		}
 	}
 
 	// test double enabling
-	db.EnableBalanceNotifies(walletId)
+	db.EnableBalanceNotifies(walletId1)
+	assert.Equal(1, len(db.GetBalanceNotifies([]int64{walletId1, walletId2})))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.False(db.IsBalanceNotifiesEnabled(walletId2))
 
 	{
-		notifies := db.GetBalanceNotifies([]int64{walletId})
+		notifies := db.GetBalanceNotifies([]int64{walletId1})
 		assert.Equal(1, len(notifies))
 		if len(notifies) > 0 {
-			assert.Equal(walletId, notifies[0].WalletId)
+			assert.Equal(walletId1, notifies[0].WalletId)
 			assert.Equal(big.NewInt(30), notifies[0].OldBalance)
-			assert.True(transactionTime.Equal(notifies[0].OldTransactionTime))
 		}
 	}
+	
+	db.EnableBalanceNotifies(walletId2)
+	assert.Equal(2, len(db.GetBalanceNotifies([]int64{walletId1, walletId2})))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId2))
 
 	// test disabling
-	db.DisableBalanceNotifies(walletId)
+	db.DisableBalanceNotifies(walletId1)
 
-	assert.Equal(0, len(db.GetBalanceNotifies([]int64{walletId})))
+	assert.Equal(1, len(db.GetBalanceNotifies([]int64{walletId1, walletId2})))
+	assert.False(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId2))
 }
 

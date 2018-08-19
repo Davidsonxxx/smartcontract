@@ -44,7 +44,8 @@
 	"wrong_contract_address": { "other": "Wrong contract address. Try again" },
 	"change_price_id": { "other": "Set coinmarketcap link" },
 	"send_price_id": { "other": "Send coinmarketcap.com link of the currency.\nExample:\n<code>https://coinmarketcap.com/currencies/bitcoin/</code>" },
-	"balance_notify_template": { "other": "Balance changed for wallet <b>{{.Name}}</b>\nFrom {{.OldBal}} {{.Sign}}\nTo {{.NewBal}} {{.Sign}}" },
+	"balance_notify_inc_template": { "other": "Balance of the wallet <b>{{.Name}}</b> has increased by {{.Diff}}\nNew balance is {{.NewBal}} {{.Sign}}" },
+	"balance_notify_dec_template": { "other": "Balance of the wallet <b>{{.Name}}</b> has decreased by {{.Diff}}\nNew balance is {{.NewBal}} {{.Sign}}" },
 	"balance_notify_enabled": { "other": "Balance notifies: <b>Enabled</b>" },
 	"balance_notify_disabled": { "other": "Balance notifies: <b>Disabled</b>" },
 	"enable_notify": { "other": "Enable notifies" },
@@ -55,5 +56,5 @@
 	"change_language": { "other": "Change Language" },
 	"change_timezone": { "other": "Change Timezone" },
 	"send_timezone": { "other": "Send TZ value of your timezone from this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones\nValid values: <code>CET</code>, <code>Europe/London</code>, <code>Etc/GMT-5</code>" },
-	"wrong_timezone": { "other": "<b>Sent timezone not recognized</b>" }
+	"wrong_timezone": { "other": "<b>The sent timezone is not recognized</b>" }
 }
