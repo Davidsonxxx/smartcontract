@@ -61,7 +61,8 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 		if success {
 			textBuffer.WriteString(fmt.Sprintf(trans("history_title"), len(history)))
 			
-			for _, item := range history {
+			for i := len(history)-1; i >= 0; i-- {
+				item := history[i]
 				textBuffer.WriteString("\n\n")
 
 				textBuffer.WriteString(staticFunctions.FormatTimestamp(item.Time, userTimezone))
