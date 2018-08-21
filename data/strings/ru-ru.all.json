@@ -52,5 +52,6 @@
 	"change_language": { "other": "Изменить язык" },
 	"change_timezone": { "other": "Изменить часовой пояс" },
 	"send_timezone": { "other": "Отправьте значение из поля TZ, соответствующее вашему часовому поясу, из этого списка: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones\nПримеры значений: <code>CET</code>, <code>Europe/Moscow</code>, <code>Etc/GMT-5</code>" },
-	"wrong_timezone": { "other": "<b>Таймзона не распознана</b>" }
+	"wrong_timezone": { "other": "<b>Таймзона не распознана</b>" },
+	"command_canceled": { "other": "Действие отменено" }
 }

@@ -32,6 +32,11 @@ func helpCommand(data *processing.ProcessData) {
 	data.SendMessage(data.Trans("help_info"))
 }
 
+func cancelCommand(data *processing.ProcessData) {
+	data.Static.SetUserStateTextProcessor(data.UserId, nil)
+	data.SendMessage(data.Trans("command_canceled"))
+}
+
 func makeUserCommandProcessors() ProcessorFuncMap {
 	return map[string]ProcessorFunc{
 		"start":      startCommand,
@@ -39,6 +44,7 @@ func makeUserCommandProcessors() ProcessorFuncMap {
 		"new_wallet": createWalletCommand,
 		"settings":   settingsCommand,
 		"help":       helpCommand,
+		"cancel":     cancelCommand,
 	}
 }
 
