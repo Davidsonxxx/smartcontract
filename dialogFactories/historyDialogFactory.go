@@ -14,6 +14,10 @@ import (
 	"strings"
 )
 
+const (
+	maxHistoryRecords = 25
+)
+
 type historyVariantPrototype struct {
 	id string
 	textId string
@@ -59,7 +63,11 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 		success, history := (*processor).GetTransactionsHistory(walletAddress, 25)
 
 		if success {
-			textBuffer.WriteString(fmt.Sprintf(trans("history_title"), len(history)))
+			if (len(history) == maxHistoryRecords) {
+				textBuffer.WriteString(fmt.Sprintf(trans("history_cut_title"), len(history)))
+			} else {
+				textBuffer.WriteString(fmt.Sprintf(trans("history_title")))
+			}
 			
 			for i := len(history)-1; i >= 0; i-- {
 				item := history[i]

@@ -16,8 +16,6 @@ func updateBalanceNotifies(staticData *processing.StaticProccessStructs, balance
 
 	serverData := serverData.GetServerData(staticData)
 
-	log.Print("Update balance notifies")
-
 	if serverData == nil {
 		log.Print("ServerData is nil")
 		return
@@ -33,8 +31,6 @@ func updateBalanceNotifies(staticData *processing.StaticProccessStructs, balance
 }
 
 func SendBalanceChangeNotification(staticData *processing.StaticProccessStructs, db *database.AccountDb, serverData serverData.ServerDataInterface, balanceNotify *currencies.BalanceNotify) {
-	log.Print("Notify process")
-
 	if balanceNotify.OldBalance != nil && balanceNotify.NewBalance != nil {
 		userChatId := db.GetUserChatId(balanceNotify.UserId)
 		walletName := db.GetWalletName(balanceNotify.WalletId)
