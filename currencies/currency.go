@@ -59,7 +59,7 @@ func init() {
 			IsHistoryEnabled: false,
 		},
 		RippleXrp : {
-			FullName: "Ripple",
+			FullName: "XRP",
 			Symbol: "XRP",
 			Decimals: 6,
 			PriceId: "ripple",
