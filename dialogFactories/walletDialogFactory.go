@@ -6,6 +6,7 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"fmt"
@@ -45,6 +46,7 @@ func MakeWalletDialogFactory() dialogFactory.DialogFactory {
 				id: "hist",
 				textId: "history",
 				process: showHistory,
+				isActiveFn: isHistoryEnabled,
 				rowId:1,
 			},
 			walletVariantPrototype{
@@ -61,6 +63,11 @@ func MakeWalletDialogFactory() dialogFactory.DialogFactory {
 			},
 		},
 	})
+}
+
+func isHistoryEnabled(walletId int64, staticData *processing.StaticProccessStructs) bool {
+	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
+	return currencies.IsHistoryEnabled(walletAddress.Currency)
 }
 
 func sendFromWallet(walletId int64, data *processing.ProcessData) bool {

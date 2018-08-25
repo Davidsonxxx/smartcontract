@@ -16,7 +16,6 @@
 	"receive_title": { "other": "Send the address below to a person who you want to receive money from." },
 	"history_title": { "other": "Trasactions list:" },
 	"history_cut_title": { "other": "Last %d transactions:" },
-	"history_unavailable": { "other": "Transactions history is unavailable for this wallet" },
 	"settings_title": { "other": "Settings" },
 	"send": { "other": "Send" },
 	"receive": { "other": "Receive" },

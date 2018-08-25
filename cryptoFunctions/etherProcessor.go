@@ -133,8 +133,7 @@ func (processor *EtherProcessor) GetBalanceBunch(addresses []currencies.AddressD
 	return balances
 }
 
-func (processor *EtherProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) (isAvailable bool, history []currencies.TransactionsHistoryItem) {
-	isAvailable = true
+func (processor *EtherProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) (history []currencies.TransactionsHistoryItem) {
 	var requestText string
 	if limit > 0 {
 		requestText = fmt.Sprintf(

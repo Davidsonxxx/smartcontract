@@ -20,8 +20,10 @@ const (
 type currencyStaticData struct {
 	FullName string
 	Symbol string
-	Decimals int // how mady decimal digits after zero can it have
+	Decimals int // how many decimal digits after zero can it have
 	PriceId string
+	// feature flags
+	IsHistoryEnabled bool
 }
 
 var currencyStaticDataMap map[Currency]currencyStaticData
@@ -33,36 +35,42 @@ func init() {
 			Symbol: "BTC",
 			Decimals: 8,
 			PriceId: "bitcoin",
+			IsHistoryEnabled: false,
 		},
 		Ether : {
 			FullName: "Ethereum",
 			Symbol: "ETH",
 			Decimals: 18,
 			PriceId: "ethereum",
+			IsHistoryEnabled: true,
 		},
 		BitcoinCash : {
 			FullName: "Bitcoin Cash",
 			Symbol: "BCH",
 			Decimals: 8,
 			PriceId: "bitcoin-cash",
+			IsHistoryEnabled: false,
 		},
 		BitcoinGold : {
 			FullName: "Bitcoin Gold",
 			Symbol: "BTG",
 			Decimals: 8,
 			PriceId: "bitcoin-gold",
+			IsHistoryEnabled: false,
 		},
 		RippleXrp : {
 			FullName: "Ripple",
 			Symbol: "XRP",
 			Decimals: 6,
 			PriceId: "ripple",
+			IsHistoryEnabled: false,
 		},
 		Erc20Token : {
 			FullName: "ERC20 Token",
 			Symbol: "",
 			Decimals: 18,
 			PriceId: "",
+			IsHistoryEnabled: false,
 		},
 	}
 }
@@ -109,6 +117,17 @@ func GetCurrencyDecimals(currency Currency) int {
 	}
 
 	return currencyData.Decimals
+}
+
+func IsHistoryEnabled(currency Currency) bool {
+	currencyData, ok := currencyStaticDataMap[currency]
+
+	if !ok {
+		log.Printf("Unknown currency: %d ", int8(currency))
+		return false
+	}
+
+	return currencyData.IsHistoryEnabled
 }
 
 func GetAllCurrencies() (availableCurrencies []Currency) {

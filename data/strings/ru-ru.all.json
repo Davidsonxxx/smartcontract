@@ -16,7 +16,6 @@
 	"receive_title": { "other": "Отправьте данный адрес человеку от которого вы хотите получить платеж." },
 	"history_title": { "other": "Список транзакций:" },
 	"history_cut_title": { "other": "Последние %d транзакций:" },
-	"history_unavailable": { "other": "История транзакций недоступна для данного кошелька" },
 	"settings_title": { "other": "Настройки" },
 	"send": { "other": "Отправить" },
 	"receive": { "other": "Получить" },
