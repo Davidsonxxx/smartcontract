@@ -29,6 +29,10 @@ func processNewWalletName(additionalId int64, data *processing.ProcessData) bool
 	if !ok {
 		return false
 	}
+	
+	if len(data.Message) == 0 {
+		return false
+	}
 
 	data.Static.SetUserStateValue(data.UserId, "walletName", data.Message)
 
@@ -48,6 +52,11 @@ func processNewWalletName(additionalId int64, data *processing.ProcessData) bool
 }
 
 func processNewWalletContractAddress(additionalId int64, data *processing.ProcessData) bool {
+	if len(data.Message) == 0 {
+		data.SendMessage(data.Trans("wrong_contract_address"))
+		return true
+	}
+	
 	erc20TokenProcessor := cryptoFunctions.GetErc20TokenProcessor()
 	if erc20TokenProcessor == nil {
 		return false
@@ -67,6 +76,11 @@ func processNewWalletContractAddress(additionalId int64, data *processing.Proces
 }
 
 func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool {
+	if len(data.Message) == 0 {
+		data.SendMessage(data.Trans("wrong_wallet_address"))
+		return true
+	}
+	
 	walletName, ok := data.Static.GetUserStateValue(data.UserId, "walletName").(string)
 	if !ok {
 		return false
@@ -108,6 +122,10 @@ func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool 
 
 func processRenamingWallet(walletId int64, data *processing.ProcessData) bool {
 	if walletId == 0 {
+		return false
+	}
+	
+	if len(data.Message) == 0 {
 		return false
 	}
 
