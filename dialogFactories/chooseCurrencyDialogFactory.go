@@ -49,7 +49,7 @@ func MakeChooseCurrencyDialogFactory() dialogFactory.DialogFactory {
 			chooseCurrencyItemVariantPrototype{
 				id: "erc20",
 				currencyId: currencies.Erc20Token,
-				rowId: 4,
+				rowId: 3,
 			},
 		},
 	})

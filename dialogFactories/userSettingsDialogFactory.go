@@ -60,7 +60,7 @@ func changeTimezone(userId int64, data *processing.ProcessData) bool {
 	data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
 		ProcessorId: "newTimezone",
 	})
-	data.SendMessage(data.Trans("send_timezone"))
+	data.SubstitudeMessage(data.Trans("send_timezone"))
 	return true
 }
 
