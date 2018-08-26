@@ -35,7 +35,7 @@
 	"sent_format": { "other": "\nSent: %s %s\nTo: \n<code>%s</code>" },
 	"recieved_format": { "other": "\nRecieved: %s %s\nFrom: \n<code>%s</code>" },
 	"wrong_coinmarketcap_link": { "other": "I can't open this coinmarketcap link. I've set no link." },
-	"wrong_wallet_address": { "other": "This address seems to be incorrect. Check it and try again.\nNote: don't try to send me your private key or mnemonic phrase or something bad could happen." },
+	"wrong_wallet_address": { "other": "This address seems to be incorrect. Check it and try again.\nNote: don't try to send me your private key or mnemonic phrase." },
 	"wrong_contract_address": { "other": "This contract address seems to be incorrect. Try again with a valid one." },
 	"change_price_id": { "other": "Set coinmarketcap link" },
 	"send_price_id": { "other": "Send me the coinmarketcap.com link of this currency.\nExample:\n<code>https://coinmarketcap.com/currencies/bitcoin/</code>" },
