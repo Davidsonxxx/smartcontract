@@ -7,9 +7,19 @@ import (
 	"net/http"
 	"strconv"
 	"math/big"
+	"regexp"
 )
 
+var bitcoinGoldAddressRegex *regexp.Regexp
+
 type BitcoinGoldProcessor struct {
+}
+
+func init() {
+	bitcoinGoldAddressRegex = regexp.MustCompile("^[GA][1-9A-HJ-NP-Za-km-z]{10,51}$")
+	if bitcoinGoldAddressRegex == nil {
+		log.Fatal("Wrong regexp")
+	}
 }
 
 func (processor *BitcoinGoldProcessor) GetBalance(address currencies.AddressData) *big.Int {
@@ -51,5 +61,5 @@ func (processor *BitcoinGoldProcessor) GetTransactionsHistory(address currencies
 }
 
 func (processor *BitcoinGoldProcessor) IsAddressValid(address string) bool {
-	return isBitcoinAddressValid(address)
+	return bitcoinGoldAddressRegex.MatchString(address)
 }
