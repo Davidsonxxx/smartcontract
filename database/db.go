@@ -63,12 +63,6 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 		")")
 
 	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
-		" rates(id INTEGER NOT NULL PRIMARY KEY" +
-		",rate_to_usd REAL NOT NULL" +
-		",time TIMESTAMP NOT NULL" +
-		")")
-
-	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
 		" balance_notifies(id INTEGER NOT NULL PRIMARY KEY" +
 		",wallet_id INTEGER NOT NULL UNIQUE" +
 		",last_balance TEXT NOT NULL" + // always save balances as TEXT

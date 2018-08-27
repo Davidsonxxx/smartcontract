@@ -89,6 +89,7 @@ func makeAllUpdaters() (updaters []dbUpdater) {
 			updateDb: func(db *AccountDb) {
 				// add new field 'timezone'
 				db.db.Exec("ALTER TABLE users ADD COLUMN timezone TEXT NOT NULL DEFAULT('EST')")
+				db.db.Exec("DROP TABLE rates")
 			},
 		},
 	}
