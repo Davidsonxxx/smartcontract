@@ -91,9 +91,8 @@ func main() {
 	chat.SetDebugModeEnabled(config.ExtendedLog)
 
 	dialogManager := &(dialogManager.DialogManager{})
+	dialogManager.RegisterDialogFactory("us", dialogFactories.MakeUserSettingsDialogFactory())
 	dialogManager.RegisterDialogFactory("lc", dialogFactories.MakeLanguageSelectDialogFactory())
-	dialogManager.RegisterDialogFactory("mn", dialogFactories.MakeMainMenuDialogFactory())
-	dialogManager.RegisterDialogFactory("wt", dialogFactories.MakeWalletTypeDialogFactory())
 	dialogManager.RegisterDialogFactory("wl", dialogFactories.MakeWalletsListDialogFactory())
 	dialogManager.RegisterDialogFactory("wa", dialogFactories.MakeWalletDialogFactory())
 	dialogManager.RegisterDialogFactory("ws", dialogFactories.MakeWalletSettingsDialogFactory())
@@ -117,7 +116,8 @@ func main() {
 
 	serverDataManager := serverData.ServerDataManager{}
 	serverDataManager.RegisterServerDataInterface(staticData)
-	serverDataManager.InitialUpdate(db)
+	tickUpdateData := serverDataManager.InitialUpdate(db)
+	tickAfterupdate(staticData, tickUpdateData)
 
 	startUpdating(chat, dialogManager, staticData, &serverDataManager, config.UpdateIntervalSec)
 }

@@ -11,7 +11,7 @@ type CurrencyProcessor interface {
 	// get multiple accounts balance
 	GetBalanceBunch(addresses []currencies.AddressData) []*big.Int
 	// get history of transactions sorted from new to old
-	GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem
+	GetTransactionsHistory(address currencies.AddressData, limit int) (history []currencies.TransactionsHistoryItem)
 	// check adress for validness
 	IsAddressValid(address string) bool
 }

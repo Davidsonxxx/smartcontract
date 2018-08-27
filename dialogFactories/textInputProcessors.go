@@ -8,6 +8,7 @@ import (
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"log"
 	"regexp"
+	"time"
 )
 
 func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
@@ -18,6 +19,7 @@ func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
 			"newWalletContractAddress" : processNewWalletContractAddress,
 			"renamingWallet" : processRenamingWallet,
 			"setWalletPriceId" : processSetWalletPriceId,
+			"newTimezone" : processSetTimezone,
 		},
 	}
 }
@@ -25,6 +27,10 @@ func GetTextInputProcessorManager() dialogManager.TextInputProcessorManager {
 func processNewWalletName(additionalId int64, data *processing.ProcessData) bool {
 	walletCurrency, ok := data.Static.GetUserStateValue(data.UserId, "walletCurrency").(currencies.Currency)
 	if !ok {
+		return false
+	}
+	
+	if len(data.Message) == 0 {
 		return false
 	}
 
@@ -46,6 +52,11 @@ func processNewWalletName(additionalId int64, data *processing.ProcessData) bool
 }
 
 func processNewWalletContractAddress(additionalId int64, data *processing.ProcessData) bool {
+	if len(data.Message) == 0 {
+		data.SendMessage(data.Trans("wrong_contract_address"))
+		return true
+	}
+	
 	erc20TokenProcessor := cryptoFunctions.GetErc20TokenProcessor()
 	if erc20TokenProcessor == nil {
 		return false
@@ -65,6 +76,11 @@ func processNewWalletContractAddress(additionalId int64, data *processing.Proces
 }
 
 func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool {
+	if len(data.Message) == 0 {
+		data.SendMessage(data.Trans("wrong_wallet_address"))
+		return true
+	}
+	
 	walletName, ok := data.Static.GetUserStateValue(data.UserId, "walletName").(string)
 	if !ok {
 		return false
@@ -98,6 +114,7 @@ func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool 
 	}
 
 	walletId := staticFunctions.GetDb(data.Static).CreateWatchOnlyWallet(data.UserId, walletName, walletAddress)
+	staticFunctions.GetDb(data.Static).EnableBalanceNotifies(walletId)
 	data.SendMessage(data.Trans("wallet_created"))
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
@@ -105,6 +122,10 @@ func processNewWalletKey(additionalId int64, data *processing.ProcessData) bool 
 
 func processRenamingWallet(walletId int64, data *processing.ProcessData) bool {
 	if walletId == 0 {
+		return false
+	}
+	
+	if len(data.Message) == 0 {
 		return false
 	}
 
@@ -136,4 +157,20 @@ func processSetWalletPriceId(walletId int64, data *processing.ProcessData) bool 
 	staticFunctions.GetDb(data.Static).SetWalletPriceId(walletId, matches[1])
 	data.SendDialog(data.Static.MakeDialogFn("wa", walletId, data.Trans, data.Static))
 	return true
+}
+
+func processSetTimezone(additionalId int64, data *processing.ProcessData) bool {
+	_, err := time.LoadLocation(data.Message)
+
+	if err == nil {
+		staticFunctions.GetDb(data.Static).SetUserTimezone(data.UserId, data.Message)
+		data.SendDialog(data.Static.MakeDialogFn("us", data.UserId, data.Trans, data.Static))
+		return true
+	} else {
+		data.Static.SetUserStateTextProcessor(data.UserId, &processing.AwaitingTextProcessorData{
+			ProcessorId: "newTimezone",
+		})
+		data.SendMessage(data.Trans("wrong_timezone") + "\n" + data.Trans("send_timezone"))
+		return true
+	}
 }

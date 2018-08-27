@@ -12,8 +12,9 @@ type ProcessorFunc func(*processing.ProcessData)
 type ProcessorFuncMap map[string]ProcessorFunc
 
 func startCommand(data *processing.ProcessData) {
-	data.SendMessage(data.Trans("disclaimer_message"))
-	data.SendDialog(data.Static.MakeDialogFn("wl", data.UserId, data.Trans, data.Static))
+	data.SendMessage(data.Trans("start_message"))
+	data.Static.SetUserStateTextProcessor(data.UserId, nil)
+	data.SendDialog(data.Static.MakeDialogFn("lc", data.UserId, data.Trans, data.Static))
 }
 
 func walletsCommand(data *processing.ProcessData) {
@@ -25,20 +26,26 @@ func createWalletCommand(data *processing.ProcessData) {
 }
 
 func settingsCommand(data *processing.ProcessData) {
-	data.SendDialog(data.Static.MakeDialogFn("lc", data.UserId, data.Trans, data.Static))
+	data.SendDialog(data.Static.MakeDialogFn("us", data.UserId, data.Trans, data.Static))
 }
 
 func helpCommand(data *processing.ProcessData) {
 	data.SendMessage(data.Trans("help_info"))
 }
 
+func cancelCommand(data *processing.ProcessData) {
+	data.Static.SetUserStateTextProcessor(data.UserId, nil)
+	data.SendMessage(data.Trans("command_canceled"))
+}
+
 func makeUserCommandProcessors() ProcessorFuncMap {
 	return map[string]ProcessorFunc{
 		"start":      startCommand,
 		"wallets":    walletsCommand,
-		"new_wallet": createWalletCommand,
+		"add_wallet": createWalletCommand,
 		"settings":   settingsCommand,
 		"help":       helpCommand,
+		"cancel":     cancelCommand,
 	}
 }
 

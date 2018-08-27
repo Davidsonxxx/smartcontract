@@ -8,9 +8,15 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
+	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strconv"
+	"strings"
+)
+
+const (
+	maxHistoryRecords = 25
 )
 
 type historyVariantPrototype struct {
@@ -44,28 +50,40 @@ func (factory *historyDialogFactory) createText(walletId int64, trans i18n.Trans
 		return "Error"
 	}
 
-	var textBuffer bytes.Buffer
-	textBuffer.WriteString(trans("history_title"))
+	db := staticFunctions.GetDb(staticData)
 
-	walletAddress := staticFunctions.GetDb(staticData).GetWalletAddress(walletId)
+	userTimezone := db.GetUserTimezone(db.GetWalletOwner(walletId))
+
+	var textBuffer bytes.Buffer
+
+	walletAddress := db.GetWalletAddress(walletId)
 
 	processor := cryptoFunctions.GetProcessor(walletAddress.Currency)
 
 	if processor != nil {
-		history := (*processor).GetTransactionsHistory(walletAddress, 0)
+		if currencies.IsHistoryEnabled(walletAddress.Currency) {
+			history := (*processor).GetTransactionsHistory(walletAddress, 25)
 
-		for _, item := range history {
-			textBuffer.WriteString("\n\n")
+			if (len(history) == maxHistoryRecords) {
+				textBuffer.WriteString(fmt.Sprintf(trans("history_cut_title"), len(history)))
+			} else {
+				textBuffer.WriteString(fmt.Sprintf(trans("history_title")))
+			}
 			
-			textBuffer.WriteString(staticFunctions.FormatTimestamp(item.Time))
-			
-			currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
-			amountText := cryptoFunctions.FormatCurrencyAmount(item.Amount, currencyDecimals)
-			
-			if item.From == walletAddress.Address {
-				textBuffer.WriteString(fmt.Sprintf(trans("sent_format"), amountText, currencySymbol, item.To))
-			} else if item.To == walletAddress.Address {
-				textBuffer.WriteString(fmt.Sprintf(trans("recieved_format"), amountText, currencySymbol, item.From))
+			for i := len(history)-1; i >= 0; i-- {
+				item := history[i]
+				textBuffer.WriteString("\n\n")
+
+				textBuffer.WriteString(staticFunctions.FormatTimestamp(item.Time, userTimezone))
+
+				currencySymbol, currencyDecimals := staticFunctions.GetCurrencySymbolAndDecimals(serverData, walletAddress.Currency, walletAddress.ContractAddress)
+				amountText := cryptoFunctions.FormatCurrencyAmount(item.Amount, currencyDecimals)
+
+				if strings.EqualFold(item.From, walletAddress.Address) {
+					textBuffer.WriteString(fmt.Sprintf(trans("sent_format"), amountText, currencySymbol, item.To))
+				} else if strings.EqualFold(item.To, walletAddress.Address) {
+					textBuffer.WriteString(fmt.Sprintf(trans("recieved_format"), amountText, currencySymbol, item.From))
+				}
 			}
 		}
 	}

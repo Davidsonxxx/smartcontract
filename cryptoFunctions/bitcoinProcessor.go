@@ -105,8 +105,8 @@ func (processor *BitcoinProcessor) GetBalanceBunch(addresses []currencies.Addres
 	return balances
 }
 
-func (processor *BitcoinProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
-	return make([]currencies.TransactionsHistoryItem, 0)
+func (processor *BitcoinProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) (history []currencies.TransactionsHistoryItem) {
+	return
 }
 
 func (processor *BitcoinProcessor) IsAddressValid(address string) bool {

@@ -1,12 +1,15 @@
 package database
 
 import (
+	"bytes"
 	"fmt"
+	"math/big"
 	_ "github.com/mattn/go-sqlite3"
 	dbBase "github.com/gameraccoon/telegram-bot-skeleton/database"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/wallettypes"
 	"log"
+	"strings"
 	"sync"
 )
 
@@ -40,6 +43,7 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 		" users(id INTEGER NOT NULL PRIMARY KEY" +
 		",chat_id INTEGER UNIQUE NOT NULL" +
 		",language TEXT NOT NULL" +
+		",timezone TEXT NOT NULL" +
 		")")
 
 	database.db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS" +
@@ -59,9 +63,10 @@ func ConnectDb(path string) (database *AccountDb, err error) {
 		")")
 
 	database.db.Exec("CREATE TABLE IF NOT EXISTS" +
-		" rates(id INTEGER NOT NULL PRIMARY KEY" +
-		",rate_to_usd REAL NOT NULL" +
-		",time TIME NOT NULL" +
+		" balance_notifies(id INTEGER NOT NULL PRIMARY KEY" +
+		",wallet_id INTEGER NOT NULL UNIQUE" +
+		",last_balance TEXT NOT NULL" + // always save balances as TEXT
+		",FOREIGN KEY(wallet_id) REFERENCES wallets(id) ON DELETE CASCADE" +
 		")")
 
 	return
@@ -119,8 +124,8 @@ func (database *AccountDb) GetUserId(chatId int64, userLangCode string) (userId 
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO users(chat_id, language) "+
-		"VALUES (%d, '%s')", chatId, userLangCode))
+	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO users(chat_id, language, timezone) "+
+		"VALUES (%d, '%s', 'CET')", chatId, userLangCode))
 
 	rows, err := database.db.Query(fmt.Sprintf("SELECT id FROM users WHERE chat_id=%d", chatId))
 	if err != nil {
@@ -343,6 +348,39 @@ func (database *AccountDb) GetUserLanguage(userId int64) (language string) {
 	return
 }
 
+func (database *AccountDb) SetUserTimezone(userId int64, timezone string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK users SET timezone='%s' WHERE id=%d", timezone, userId))
+}
+
+func (database *AccountDb) GetUserTimezone(userId int64) (timezone string) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT timezone FROM users WHERE id=%d AND timezone IS NOT NULL", userId))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		err := rows.Scan(&timezone)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	} else {
+		err = rows.Err()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// empty timezone
+	}
+
+	return
+}
+
 func (database *AccountDb) RenameWallet(walletId int64, newName string) {
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
@@ -419,36 +457,66 @@ func (database *AccountDb) GetUserWalletAddresses(userId int64) (addresses []cur
 	return
 }
 
-func (database *AccountDb) GetAllWalletAddresses() (addresses []currencies.AddressData) {
+func (database *AccountDb) GetAllWalletAddresses() (addresses []WalletAddressDbWrapper) {
 	database.mutex.Lock()
 	defer database.mutex.Unlock()
 
-	rows, err := database.db.Query("SELECT currency, address, contract_address, price_id FROM wallets WHERE is_removed IS NULL")
+	rows, err := database.db.Query("SELECT id, currency, address, contract_address, price_id FROM wallets WHERE is_removed IS NULL")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	defer rows.Close()
 
 	for rows.Next() {
+		var walletId int64
 		var currency int64
 		var address string
 		var contractAddress string
 		var priceId string
 
-		err := rows.Scan(&currency, &address, &contractAddress, &priceId)
+		err := rows.Scan(&walletId, &currency, &address, &contractAddress, &priceId)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
 		addresses = append(
 			addresses,
-			currencies.AddressData{
-				Currency: currencies.Currency(currency),
-				Address: address,
-				ContractAddress: contractAddress,
-				PriceId: priceId,
+			WalletAddressDbWrapper{
+				Data: currencies.AddressData{
+					Currency: currencies.Currency(currency),
+					Address: address,
+					ContractAddress: contractAddress,
+					PriceId: priceId,
+				},
+				WalletId: walletId,
 			},
 		)
+	}
+
+	return
+}
+
+func (database *AccountDb)GetWalletOwner(walletId int64) (userId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT user_id FROM wallets WHERE id=%d AND is_removed IS NULL", walletId))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		err := rows.Scan(&userId)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	} else {
+		err = rows.Err()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// wallet not found
 	}
 
 	return
@@ -507,4 +575,107 @@ func (database *AccountDb) SetWalletPriceId(walletId int64, priceId string) {
 	defer database.mutex.Unlock()
 
 	database.db.Exec(fmt.Sprintf("UPDATE OR ROLLBACK wallets SET price_id='%s' WHERE id=%d AND is_removed IS NULL", priceId, walletId))
+}
+
+func (database *AccountDb) GetBalanceNotifies(walletIds []int64) (notifies []currencies.BalanceNotify) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	idsString := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(walletIds)), ","), "[]")
+	rows, err := database.db.Query(fmt.Sprintf("SELECT n.id, w.user_id, n.wallet_id, n.last_balance FROM balance_notifies AS n LEFT JOIN wallets AS w ON n.wallet_id=w.id WHERE n.wallet_id IN (%s)", idsString))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var notifyId int64
+		var userId int64
+		var walletId int64
+		var lastBalance string
+
+		err := rows.Scan(&notifyId, &userId, &walletId, &lastBalance)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		intBalance, ok := new(big.Int).SetString(lastBalance, 10)
+
+		if !ok {
+			intBalance = nil
+		}
+
+		notifies = append(notifies, currencies.BalanceNotify{
+				UserId: userId,
+				NotifyId: notifyId,
+				WalletId: walletId,
+				OldBalance: intBalance,
+			})
+	}
+
+	return
+}
+
+func (database *AccountDb) UpdateBalanceNotifies(updatedNotifies []currencies.BalanceNotify) {
+	if len(updatedNotifies) <= 0 {
+		return
+	}
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	var b bytes.Buffer
+
+	for _, notify := range updatedNotifies {
+		if notify.NewBalance != nil {
+			b.WriteString(fmt.Sprintf("UPDATE OR ROLLBACK balance_notifies SET last_balance='%s' WHERE id=%d;",
+			notify.NewBalance.String(),
+			notify.NotifyId,
+		))
+		}
+	}
+
+	database.db.Exec(b.String())
+}
+
+func (database *AccountDb) EnableBalanceNotifies(walletId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO balance_notifies(wallet_id, last_balance) VALUES(%d,'')", walletId))
+}
+
+func (database *AccountDb) DisableBalanceNotifies(walletId int64) {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	database.db.Exec(fmt.Sprintf("DELETE FROM balance_notifies WHERE wallet_id=%d", walletId))
+}
+
+func (database *AccountDb) IsBalanceNotifiesEnabled(walletId int64) bool {
+	database.mutex.Lock()
+	defer database.mutex.Unlock()
+
+	rows, err := database.db.Query(fmt.Sprintf("SELECT COUNT(*) FROM balance_notifies WHERE wallet_id=%d", walletId))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var count int
+		err := rows.Scan(&count)
+		if err != nil {
+			log.Fatal(err.Error())
+		} else {
+			if count > 1 || count < 0 {
+				log.Fatal("unique count of some balance_notifies record is not 0 or 1")
+			}
+
+			if count >= 1 {
+				return true
+			}
+		}
+	}
+
+	return false
 }

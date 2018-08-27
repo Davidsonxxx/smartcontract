@@ -133,18 +133,18 @@ func (processor *EtherProcessor) GetBalanceBunch(addresses []currencies.AddressD
 	return balances
 }
 
-func (processor *EtherProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) []currencies.TransactionsHistoryItem {
+func (processor *EtherProcessor) GetTransactionsHistory(address currencies.AddressData, limit int) (history []currencies.TransactionsHistoryItem) {
 	var requestText string
 	if limit > 0 {
 		requestText = fmt.Sprintf(
-			"http://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
+			"http://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&page=1&offset=%d&sort=desc&apikey=%s",
 			address.Address,
 			limit,
 			etherscanApiKey,
 		)
 	} else {
 		requestText = fmt.Sprintf(
-			"https://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&page=1&offset=%d&sort=asc&apikey=%s",
+			"http://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&sort=desc&apikey=%s",
 			address.Address,
 			etherscanApiKey,
 		)
@@ -153,25 +153,26 @@ func (processor *EtherProcessor) GetTransactionsHistory(address currencies.Addre
 	resp, err := http.Get(requestText)
 	if err != nil {
 		log.Print(err)
-		return nil
+		return
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err)
-		return nil
+		return
 	}
 
 	var parsedResp = new(EtherHistoryResp)
 	err = json.Unmarshal(body, &parsedResp)
 	if(err != nil){
-		log.Print(string(body[:]))
+		log.Print("Request: " + requestText)
+		log.Print("Responce: " + string(body[:]))
 		log.Print(err)
-		return nil
+		return
 	}
 
-	history := make([]currencies.TransactionsHistoryItem, 0, len(parsedResp.Result))
+	history = make([]currencies.TransactionsHistoryItem, 0, len(parsedResp.Result))
 
 	for _, historyItem := range parsedResp.Result {
 		amount, ok := new(big.Int).SetString(historyItem.Value, 10)
@@ -202,7 +203,7 @@ func (processor *EtherProcessor) GetTransactionsHistory(address currencies.Addre
 			})
 	}
 
-	return history
+	return
 }
 
 func (processor *EtherProcessor) IsAddressValid(address string) bool {

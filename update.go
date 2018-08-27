@@ -34,8 +34,13 @@ func updateTimer(staticData *processing.StaticProccessStructs, serverDataManager
 
 	for {
 		time.Sleep(time.Duration(updateIntervalSec) * time.Second)
-		serverDataManager.TimerTick(staticFunctions.GetDb(staticData))
+		tickUpdateData := serverDataManager.TimerTick(staticFunctions.GetDb(staticData))
+		tickAfterupdate(staticData, tickUpdateData)
 	}
+}
+
+func tickAfterupdate(staticData *processing.StaticProccessStructs, tickUpdateData serverData.TickUpdateData) {
+	updateBalanceNotifies(staticData, tickUpdateData.BalanceNotifies)
 }
 
 func updateBot(chat *telegramChat.TelegramChat, staticData *processing.StaticProccessStructs, dialogManager *dialogManager.DialogManager) {

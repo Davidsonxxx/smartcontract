@@ -1,6 +1,7 @@
 package database
 
 import (
+	"math/big"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
 	"os"
@@ -394,10 +395,11 @@ func TestErc20TokenWallets(t *testing.T) {
 
 		assert.Equal(1, len(addresses))
 		if len(addresses) > 0 {
-			assert.Equal("key", addresses[0].Address)
-			assert.Equal("cid", addresses[0].ContractAddress)
-			assert.Equal("price", addresses[0].PriceId)
-			assert.Equal(currencies.Bitcoin, addresses[0].Currency)
+			assert.Equal(walletId, addresses[0].WalletId)
+			assert.Equal("key", addresses[0].Data.Address)
+			assert.Equal("cid", addresses[0].Data.ContractAddress)
+			assert.Equal("price", addresses[0].Data.PriceId)
+			assert.Equal(currencies.Bitcoin, addresses[0].Data.Currency)
 		}
 	}
 
@@ -456,3 +458,97 @@ func TestSetWalletPriceId(t *testing.T) {
 		assert.Equal("priceId2", localWalletAddress.PriceId)
 	}
 }
+
+func TestNotifications(t *testing.T) {
+	assert := require.New(t)
+	db := createDbAndConnect(t)
+	defer clearDb()
+	if db == nil {
+		t.Fail()
+		return
+	}
+	defer db.Disconnect()
+
+	userId := db.GetUserId(123, "")
+
+	walletAddress := currencies.AddressData{
+		Currency: currencies.Bitcoin,
+		Address: "key",
+	}
+
+	walletId1 := db.CreateWatchOnlyWallet(userId, "testwallet1", walletAddress)
+	walletId2 := db.CreateWatchOnlyWallet(userId, "testwallet2", walletAddress)
+
+	{
+		notifies := db.GetBalanceNotifies([]int64{walletId1, walletId2})
+		assert.Equal(0, len(notifies))
+	}
+	
+	assert.False(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.False(db.IsBalanceNotifiesEnabled(walletId2))
+
+	// test enabling
+	db.EnableBalanceNotifies(walletId1)
+	assert.Equal(1, len(db.GetBalanceNotifies([]int64{walletId1, walletId2})))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.False(db.IsBalanceNotifiesEnabled(walletId2))
+
+	{
+		notifies := db.GetBalanceNotifies([]int64{walletId1})
+		assert.Equal(1, len(notifies))
+		if len(notifies) > 0 {
+			assert.Equal(walletId1, notifies[0].WalletId)
+			assert.True(notifies[0].OldBalance == nil)
+		}
+
+		// test initing balance
+		notifies[0].NewBalance = big.NewInt(10)
+		db.UpdateBalanceNotifies(notifies)
+
+		newNotifies := db.GetBalanceNotifies([]int64{walletId1})
+		assert.Equal(1, len(newNotifies))
+		if len(notifies) > 0 {
+			assert.Equal(walletId1, newNotifies[0].WalletId)
+			assert.Equal(big.NewInt(10), newNotifies[0].OldBalance)
+		}
+
+		// test updating balance
+		notifies[0].NewBalance = big.NewInt(30)
+		db.UpdateBalanceNotifies(notifies)
+
+		newNotifies = db.GetBalanceNotifies([]int64{walletId1})
+		assert.Equal(1, len(newNotifies))
+		if len(notifies) > 0 {
+			assert.Equal(walletId1, newNotifies[0].WalletId)
+			assert.Equal(big.NewInt(30), newNotifies[0].OldBalance)
+		}
+	}
+
+	// test double enabling
+	db.EnableBalanceNotifies(walletId1)
+	assert.Equal(1, len(db.GetBalanceNotifies([]int64{walletId1, walletId2})))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.False(db.IsBalanceNotifiesEnabled(walletId2))
+
+	{
+		notifies := db.GetBalanceNotifies([]int64{walletId1})
+		assert.Equal(1, len(notifies))
+		if len(notifies) > 0 {
+			assert.Equal(walletId1, notifies[0].WalletId)
+			assert.Equal(big.NewInt(30), notifies[0].OldBalance)
+		}
+	}
+	
+	db.EnableBalanceNotifies(walletId2)
+	assert.Equal(2, len(db.GetBalanceNotifies([]int64{walletId1, walletId2})))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId2))
+
+	// test disabling
+	db.DisableBalanceNotifies(walletId1)
+
+	assert.Equal(1, len(db.GetBalanceNotifies([]int64{walletId1, walletId2})))
+	assert.False(db.IsBalanceNotifiesEnabled(walletId1))
+	assert.True(db.IsBalanceNotifiesEnabled(walletId2))
+}
+
