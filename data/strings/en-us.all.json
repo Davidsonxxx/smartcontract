@@ -10,7 +10,7 @@
 	"send_wallet_name": { "other": "Lets choose a name for this wallet" },
 	"send_contract_id": { "other": "Send your ERC20 contract address" },
 	"send_address": { "other": "Send me the address of your wallet" },
-	"wallet_created": { "other": "Wallet created successfully" },
+	"wallet_created": { "other": "Succeess! Wallet created" },
 	"receive_title": { "other": "Send the address below to a person who you want to receive money from" },
 	"history_title": { "other": "Trasactions list:" },
 	"history_cut_title": { "other": "Last %d transactions:" },
