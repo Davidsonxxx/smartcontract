@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const etherscanApiKey string = "KBT56RI9SUTF2GR1TNN41W48FUQ4YAK3GK"
+const etherscanApiKey string = "your-etherscan-code-here" // should have used config for this
 
 var ethereumAddressRegex *regexp.Regexp
 
