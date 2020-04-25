@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
+	"github.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/database"
+	"github.com/gameraccoon/telegram-accountant-bot/serverData"
+	"github.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"log"
 	"math/big"
 )

@@ -1,7 +1,7 @@
 package cryptoFunctions
 
 import (
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
 	"encoding/json"
 	"io/ioutil"
 	"log"

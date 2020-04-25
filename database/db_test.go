@@ -3,7 +3,7 @@ package database
 import (
 	"math/big"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
 	"os"
 	"testing"
 )

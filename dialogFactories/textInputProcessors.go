@@ -3,9 +3,9 @@ package dialogFactories
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/staticFunctions"
+	"github.com/gameraccoon/telegram-accountant-bot/cryptoFunctions"
 	"log"
 	"regexp"
 	"time"

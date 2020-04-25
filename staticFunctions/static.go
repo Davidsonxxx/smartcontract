@@ -2,10 +2,10 @@ package staticFunctions
 
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/serverData"
-	static "gitlab.com/gameraccoon/telegram-accountant-bot/staticData"
+	"github.com/gameraccoon/telegram-accountant-bot/database"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/serverData"
+	static "github.com/gameraccoon/telegram-accountant-bot/staticData"
 	"github.com/nicksnyder/go-i18n/i18n"
 	"log"
 	"time"

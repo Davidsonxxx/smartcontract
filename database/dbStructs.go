@@ -1,7 +1,7 @@
 package database
 
 import (
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
 )
 
 type WalletAddressDbWrapper struct {

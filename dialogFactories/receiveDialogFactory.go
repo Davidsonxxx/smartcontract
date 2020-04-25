@@ -5,7 +5,7 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
+	"github.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strconv"
 )
 

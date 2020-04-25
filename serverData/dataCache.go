@@ -1,7 +1,7 @@
 package serverData
 
 import (
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
 	"math/big"
 	"sync"
 )

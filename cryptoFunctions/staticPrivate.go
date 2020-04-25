@@ -2,7 +2,7 @@ package cryptoFunctions
 
 import (
 	"bytes"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
 )
 
 func joinAddresses(addresses []currencies.AddressData) string {

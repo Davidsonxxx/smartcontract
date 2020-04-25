@@ -3,7 +3,7 @@ package database
 import (
 	"bytes"
 	"fmt"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
 	"log"
 )
 

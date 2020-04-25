@@ -1,7 +1,7 @@
 package cryptoFunctions
 
 import (
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
 )
 
 var erc20Processor Erc20Processor = Erc20Processor{}

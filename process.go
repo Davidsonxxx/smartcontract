@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogManager"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
+	"github.com/gameraccoon/telegram-accountant-bot/staticFunctions"
 	"strings"
 )
 

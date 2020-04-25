@@ -5,8 +5,8 @@ import (
 	"github.com/gameraccoon/telegram-bot-skeleton/dialogFactory"
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/staticFunctions"
-	static "gitlab.com/gameraccoon/telegram-accountant-bot/staticData"
+	"github.com/gameraccoon/telegram-accountant-bot/staticFunctions"
+	static "github.com/gameraccoon/telegram-accountant-bot/staticData"
 )
 
 type userSettingsData struct {

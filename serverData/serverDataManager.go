@@ -2,8 +2,8 @@ package serverData
 
 import (
 	"github.com/gameraccoon/telegram-bot-skeleton/processing"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/database"
-	"gitlab.com/gameraccoon/telegram-accountant-bot/currencies"
+	"github.com/gameraccoon/telegram-accountant-bot/database"
+	"github.com/gameraccoon/telegram-accountant-bot/currencies"
 	"log"
 	"math/big"
 )
